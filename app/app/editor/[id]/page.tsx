@@ -57,6 +57,8 @@ const initialReferences: ReferenceItem[] = [
   },
 ];
 
+const documentSections = ["Introduction", "Context", "Evidence", "Conclusion"];
+
 export default function EditorPage({ params }: { params: { id: string } }) {
   const [draft, setDraft] = useState(initialDraft);
   const [activeTab, setActiveTab] = useState("Draft");
@@ -126,26 +128,30 @@ export default function EditorPage({ params }: { params: { id: string } }) {
   const tabs = ["Draft", "Notes", "References", "Review"];
 
   return (
-    <div className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-6 flex flex-col gap-4 border-b border-white/10 pb-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-200">Draft workspace</p>
-            <h1 className="mt-2 text-3xl font-black text-white">{title}</h1>
-          </div>
+    <div className="min-h-screen bg-[#050b16] px-4 py-6 text-slate-100 md:px-6">
+      <div className="mx-auto max-w-[1500px]">
+        <header className="mb-6 rounded-[26px] border border-white/10 bg-slate-900/80 px-4 py-4 shadow-2xl shadow-cyan-950/10 backdrop-blur-sm md:px-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-cyan-200">Academic writing workspace</p>
+              <h1 className="mt-2 text-2xl font-black text-white md:text-3xl">{title}</h1>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setFocusMode((current) => !current)}
-              className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white"
-            >
-              {focusMode ? "Exit focus" : "Focus mode"}
-            </button>
-            <button className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white">
-              Save draft
-            </button>
-            <button className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950">Seal & submit</button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setFocusMode((current) => !current)}
+                className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+              >
+                {focusMode ? "Exit focus" : "Focus mode"}
+              </button>
+              <button className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10">
+                Save
+              </button>
+              <button className="rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-300">
+                Submit
+              </button>
+            </div>
           </div>
         </header>
 
@@ -162,13 +168,44 @@ export default function EditorPage({ params }: { params: { id: string } }) {
           ))}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
-          <section className={`rounded-[28px] border border-white/10 bg-slate-900/70 p-4 ${focusMode ? "lg:col-span-2" : ""}`}>
-            <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
-              <span className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Editor</span>
-              <div className="flex flex-wrap gap-2 text-xs text-slate-300">
+        <div className="grid gap-6 xl:grid-cols-[220px_1.5fr_320px]">
+          <aside className="rounded-[28px] border border-white/10 bg-slate-900/75 p-4">
+            <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">Structure</p>
+            <div className="mt-4 space-y-2">
+              {documentSections.map((section, index) => (
+                <button
+                  key={section}
+                  type="button"
+                  className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm ${index === 0 ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-100" : "border-white/10 bg-slate-950/40 text-slate-300"}`}
+                >
+                  <span>{section}</span>
+                  <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400">{index + 1}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/40 p-3">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-violet-200">Progress</p>
+              <div className="mt-3 text-2xl font-black text-white">{draftHealth}%</div>
+              <div className="mt-3 h-2.5 rounded-full bg-slate-800">
+                <span className="block h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400" style={{ width: `${draftHealth}%` }} />
+              </div>
+            </div>
+          </aside>
+
+          <section className={`rounded-[28px] border border-white/10 bg-slate-900/75 p-4 ${focusMode ? "xl:col-span-2" : ""}`}>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                <span>Draft</span>
                 <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{draft.length} chars</span>
                 <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{draft.trim().split(/\s+/).filter(Boolean).length} words</span>
+              </div>
+
+              <div className="flex gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                <button className="rounded-full border border-white/10 bg-white/5 px-2 py-1.5 text-slate-200">B</button>
+                <button className="rounded-full border border-white/10 bg-white/5 px-2 py-1.5 text-slate-200 italic">I</button>
+                <button className="rounded-full border border-white/10 bg-white/5 px-2 py-1.5 text-slate-200">•</button>
+                <button className="rounded-full border border-white/10 bg-white/5 px-2 py-1.5 text-slate-200">1.</button>
               </div>
             </div>
 
@@ -176,21 +213,21 @@ export default function EditorPage({ params }: { params: { id: string } }) {
               <textarea
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
-                className="h-[620px] w-full resize-none rounded-2xl border border-white/10 bg-slate-950/50 p-5 text-base leading-8 text-slate-100 outline-none ring-0 placeholder:text-slate-500"
+                className="h-[620px] w-full resize-none rounded-[22px] border border-white/10 bg-slate-950/60 p-5 text-base leading-8 text-slate-100 outline-none ring-0 placeholder:text-slate-500"
                 placeholder="Write your document here..."
               />
             ) : activeTab === "Notes" ? (
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-violet-200">Working notes</p>
+                <div className="rounded-[22px] border border-white/10 bg-slate-950/40 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-violet-200">Working notes</p>
                   <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-300">
                     <li>• Clarify the decision context before the recommendation section.</li>
                     <li>• Include evidence of review accountability in the final summary.</li>
                     <li>• Keep the outcome measurable and defensible to stakeholders.</li>
                   </ul>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-200">Reflection</p>
+                <div className="rounded-[22px] border border-white/10 bg-slate-950/40 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-200">Reflection</p>
                   <p className="mt-4 text-sm leading-7 text-slate-300">
                     Keep the writing clear and direct. The document should explain why the decision was made, what was reviewed, and how this outcome can be defended when others check the record.
                   </p>
@@ -199,13 +236,13 @@ export default function EditorPage({ params }: { params: { id: string } }) {
             ) : activeTab === "References" ? (
               <div className="space-y-4">
                 {references.map((reference) => (
-                  <div key={reference.id} className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
+                  <div key={reference.id} className="rounded-[22px] border border-white/10 bg-slate-950/40 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-base font-semibold text-white">{reference.title}</p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">{reference.type} • {reference.pages}</p>
+                        <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-slate-400">{reference.type} • {reference.pages}</p>
                       </div>
-                      <span className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-cyan-200">
+                      <span className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-cyan-200">
                         {reference.status}
                       </span>
                     </div>
@@ -227,16 +264,16 @@ export default function EditorPage({ params }: { params: { id: string } }) {
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-200">Review checklist</p>
+                <div className="rounded-[22px] border border-white/10 bg-slate-950/40 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-200">Checklist</p>
                   <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-300">
-                    <li>• Evidence is clearly linked to conclusions.</li>
-                    <li>• The argument remains focused and verifiable.</li>
+                    <li>• Evidence is clearly connected to conclusions.</li>
+                    <li>• The argument stays focused and verifiable.</li>
                     <li>• Each claim has a traceable reference or note.</li>
                   </ul>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-violet-200">Outcome</p>
+                <div className="rounded-[22px] border border-white/10 bg-slate-950/40 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-violet-200">Outcome</p>
                   <p className="mt-4 text-sm leading-7 text-slate-300">
                     Final review is ready when the argument is accurate, aligned to evidence, and clearly supported by the reference list.
                   </p>
@@ -247,21 +284,21 @@ export default function EditorPage({ params }: { params: { id: string } }) {
 
           {!focusMode ? (
             <aside className="space-y-5">
-              <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-6">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-violet-200">Document status</p>
+              <div className="rounded-[28px] border border-white/10 bg-slate-900/75 p-5">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-violet-200">Status</p>
                 <div className="mt-4 text-4xl font-black text-white">{draftHealth}%</div>
-                <div className="mt-4 h-3 rounded-full bg-slate-800">
+                <div className="mt-4 h-2.5 rounded-full bg-slate-800">
                   <span className="block h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400" style={{ width: `${draftHealth}%` }} />
                 </div>
                 <div className="mt-5 space-y-3 text-sm text-slate-300">
-                  <div className="flex items-center justify-between"><span>Draft completeness</span><span className="font-semibold text-white">{draftHealth}%</span></div>
+                  <div className="flex items-center justify-between"><span>Draft</span><span className="font-semibold text-white">{draftHealth}%</span></div>
                   <div className="flex items-center justify-between"><span>References</span><span className="font-semibold text-white">{citedCount}/{references.length}</span></div>
-                  <div className="flex items-center justify-between"><span>Approval trail</span><span className="font-semibold text-white">Ready</span></div>
+                  <div className="flex items-center justify-between"><span>Review trail</span><span className="font-semibold text-white">Ready</span></div>
                 </div>
               </div>
 
-              <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-6">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-200">Add collaborator</p>
+              <div className="rounded-[28px] border border-white/10 bg-slate-900/75 p-5">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-200">Add collaborator</p>
                 <div className="mt-4 flex gap-2">
                   <input
                     value={inviteEmail}
