@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+  PUBLISHER
+}
+
+model Organization {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  createdAt   DateTime  @default(now())
+  users       User[]
+  documents   Document[]
+}
+
+model User {
+  id             String     @id @default(cuid())
+  name           String
+  email          String     @unique
+  passwordHash   String
+  role           Role       @default(STUDENT)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  documents      Document[]
+  sessions       Session[]
+  auditEvents    AuditEvent[]
+  createdAt      DateTime   @default(now())
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Document {
+  id            String      @id @default(cuid())
+  title         String
+  content       String
+  status        String      @default("draft")
+  documentType  String      @default("essay")
+  ownerId       String
+  owner         User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  organizationId String?
+  organization  Organization? @relation(fields: [organizationId], references: [id])
+  sealedHash    String?
+  integrityStatus String     @default("verified")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  auditEvents   AuditEvent[]
+}
+
+model AuditEvent {
+  id          String    @id @default(cuid())
+  action      String
+  metadata    String?
+  createdAt   DateTime  @default(now())
+  actorId     String?
+  actor       User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  documentId  String?
+  document    Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+}

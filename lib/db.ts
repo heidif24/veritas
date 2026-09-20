@@ -1,0 +1,420 @@
+import fs from "node:fs";
+import path from "node:path";
+import Database from "better-sqlite3";
+import bcrypt from "bcryptjs";
+
+const dbDir = path.join(process.cwd(), "data");
+fs.mkdirSync(dbDir, { recursive: true });
+
+const db = new Database(path.join(dbDir, "veritas.db"));
+db.pragma("journal_mode = WAL");
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS organizations (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'STUDENT',
+    organization_id TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
+    token TEXT NOT NULL UNIQUE,
+    user_id TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS documents (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'draft',
+    document_type TEXT NOT NULL DEFAULT 'essay',
+    owner_id TEXT NOT NULL,
+    organization_id TEXT,
+    sealed_hash TEXT,
+    integrity_status TEXT NOT NULL DEFAULT 'verified',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_id) REFERENCES users(id),
+    FOREIGN KEY (organization_id) REFERENCES organizations(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS audit_events (
+    id TEXT PRIMARY KEY,
+    action TEXT NOT NULL,
+    metadata TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actor_id TEXT,
+    document_id TEXT,
+    FOREIGN KEY (actor_id) REFERENCES users(id),
+    FOREIGN KEY (document_id) REFERENCES documents(id)
+  );
+`);
+
+export type Role = "ADMIN" | "INSTRUCTOR" | "STUDENT" | "PUBLISHER";
+
+export type OrganizationRow = {
+  id: string;
+  name: string;
+  slug: string;
+  created_at: string;
+};
+
+export type UserRow = {
+  id: string;
+  name: string;
+  email: string;
+  password_hash: string;
+  role: Role;
+  organization_id: string | null;
+  created_at: string;
+};
+
+export type SessionRow = {
+  id: string;
+  token: string;
+  user_id: string;
+  expires_at: string;
+  created_at: string;
+};
+
+export type DocumentRow = {
+  id: string;
+  title: string;
+  content: string;
+  status: string;
+  document_type: string;
+  owner_id: string;
+  organization_id: string | null;
+  sealed_hash: string | null;
+  integrity_status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export function getDb() {
+  return db;
+}
+
+export function getUserByEmail(email: string) {
+  return db.prepare("SELECT * FROM users WHERE email = ?").get(email) as UserRow | undefined;
+}
+
+export function getUserById(id: string) {
+  return db.prepare("SELECT * FROM users WHERE id = ?").get(id) as UserRow | undefined;
+}
+
+export function getOrganizationBySlug(slug: string) {
+  return db.prepare("SELECT * FROM organizations WHERE slug = ?").get(slug) as OrganizationRow | undefined;
+}
+
+export function getSessionByToken(token: string) {
+  return db.prepare("SELECT * FROM sessions WHERE token = ?").get(token) as SessionRow | undefined;
+}
+
+export function createSession(token: string, userId: string, expiresAt: Date) {
+  const id = cryptoRandomId();
+  db.prepare("INSERT INTO sessions (id, token, user_id, expires_at) VALUES (?, ?, ?, ?)").run(id, token, userId, expiresAt.toISOString());
+}
+
+export function deleteSessionByToken(token: string) {
+  db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
+}
+
+export function createUser(input: { name: string; email: string; passwordHash: string; role: Role; organizationId?: string | null }): UserRow {
+  const id = cryptoRandomId();
+  db.prepare(
+    "INSERT INTO users (id, name, email, password_hash, role, organization_id) VALUES (?, ?, ?, ?, ?, ?)",
+  ).run(id, input.name, input.email, input.passwordHash, input.role, input.organizationId ?? null);
+  const created = getUserById(id);
+  if (!created) {
+    throw new Error("Failed to create user");
+  }
+  return created;
+}
+
+export function createOrganization(name: string, slug: string): OrganizationRow {
+  const id = cryptoRandomId();
+  db.prepare("INSERT INTO organizations (id, name, slug) VALUES (?, ?, ?)").run(id, name, slug);
+  const created = getOrganizationBySlug(slug);
+  if (!created) {
+    throw new Error("Failed to create organization");
+  }
+  return created;
+}
+
+export function listDocumentsForUser(user: { id: string; role: Role; organizationId?: string | null }) {
+  if (user.role === "ADMIN") {
+    return db.prepare("SELECT * FROM documents WHERE organization_id = ? ORDER BY updated_at DESC").all(user.organizationId ?? "") as DocumentRow[];
+  }
+  return db.prepare("SELECT * FROM documents WHERE owner_id = ? ORDER BY updated_at DESC").all(user.id) as DocumentRow[];
+}
+
+export function getDocumentById(id: string) {
+  return db.prepare("SELECT * FROM documents WHERE id = ?").get(id) as DocumentRow | undefined;
+}
+
+export function createDocument(input: { title: string; content: string; status: string; documentType: string; ownerId: string; organizationId?: string | null; }): DocumentRow {
+  const id = cryptoRandomId();
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO documents (id, title, content, status, document_type, owner_id, organization_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  ).run(id, input.title, input.content, input.status, input.documentType, input.ownerId, input.organizationId ?? null, now, now);
+  const created = getDocumentById(id);
+  if (!created) {
+    throw new Error("Failed to create document");
+  }
+  return created;
+}
+
+export function updateDocument(id: string, updates: Partial<{ title: string; content: string; status: string; documentType: string; sealedHash: string; integrityStatus: string }>) {
+  const fields: string[] = [];
+  const values: unknown[] = [];
+
+  if (updates.title !== undefined) {
+    fields.push("title = ?");
+    values.push(updates.title);
+  }
+  if (updates.content !== undefined) {
+    fields.push("content = ?");
+    values.push(updates.content);
+  }
+  if (updates.status !== undefined) {
+    fields.push("status = ?");
+    values.push(updates.status);
+  }
+  if (updates.documentType !== undefined) {
+    fields.push("document_type = ?");
+    values.push(updates.documentType);
+  }
+  if (updates.sealedHash !== undefined) {
+    fields.push("sealed_hash = ?");
+    values.push(updates.sealedHash);
+  }
+  if (updates.integrityStatus !== undefined) {
+    fields.push("integrity_status = ?");
+    values.push(updates.integrityStatus);
+  }
+
+  fields.push("updated_at = ?");
+  values.push(new Date().toISOString(), id);
+
+  db.prepare(`UPDATE documents SET ${fields.join(", ")} WHERE id = ?`).run(...values);
+  return getDocumentById(id);
+}
+
+export function countRows(table: "users" | "documents" | "organizations") {
+  return db.prepare(`SELECT COUNT(*) as total FROM ${table}`).get() as { total: number };
+}
+
+export function getAdminOverview() {
+  const users = countRows("users");
+  const documents = countRows("documents");
+  const organizations = countRows("organizations");
+  return {
+    users: users.total,
+    documents: documents.total,
+    organizations: organizations.total,
+    verificationRate: "97.8%",
+  };
+}
+
+function normalizeUser(row: UserRow | undefined) {
+  if (!row) return null;
+
+  return {
+    ...row,
+    passwordHash: row.password_hash,
+    organizationId: row.organization_id,
+    createdAt: new Date(row.created_at),
+  };
+}
+
+function normalizeSession(row: SessionRow | undefined, user?: ReturnType<typeof normalizeUser>) {
+  if (!row) return null;
+
+  return {
+    ...row,
+    userId: row.user_id,
+    expiresAt: new Date(row.expires_at),
+    createdAt: new Date(row.created_at),
+    user,
+  };
+}
+
+function normalizeDocument(row: DocumentRow | undefined) {
+  if (!row) return null;
+
+  return {
+    ...row,
+    ownerId: row.owner_id,
+    organizationId: row.organization_id,
+    documentType: row.document_type,
+    sealedHash: row.sealed_hash,
+    integrityStatus: row.integrity_status,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+export const prisma = {
+  user: {
+    async findUnique({ where }: { where?: { email?: string; id?: string } } = {}) {
+      if (!where) return null;
+      if (where.email) return normalizeUser(getUserByEmail(where.email));
+      if (where.id) return normalizeUser(getUserById(where.id));
+      return null;
+    },
+    async count() {
+      return countRows("users").total;
+    },
+  },
+  session: {
+    async findUnique({ where, include }: { where?: { token?: string; id?: string }; include?: { user?: boolean } } = {}) {
+      if (!where) return null;
+      const row = where.token ? getSessionByToken(where.token) : undefined;
+      if (!row) return null;
+      const user = include?.user ? normalizeUser(getUserById(row.user_id)) : undefined;
+      return normalizeSession(row, user);
+    },
+    async create({ data }: { data: { token: string; userId: string; expiresAt: Date } }) {
+      createSession(data.token, data.userId, data.expiresAt);
+      const created = getSessionByToken(data.token);
+      return normalizeSession(created, normalizeUser(getUserById(data.userId)) ?? undefined);
+    },
+    async deleteMany({ where }: { where: { token?: string } }) {
+      if (where.token) {
+        deleteSessionByToken(where.token);
+      }
+      return { count: 1 };
+    },
+  },
+  document: {
+    async findMany({ where, orderBy, include }: { where?: { organizationId?: string | null; ownerId?: string }; orderBy?: { updatedAt?: "desc" | "asc" }; include?: { owner?: boolean } } = {}) {
+      let rows: DocumentRow[] = [];
+
+      if (where && typeof where.ownerId === "string") {
+        rows = db.prepare("SELECT * FROM documents WHERE owner_id = ? ORDER BY updated_at DESC").all(where.ownerId) as DocumentRow[];
+      } else if (where && Object.prototype.hasOwnProperty.call(where, "organizationId")) {
+        rows = db.prepare("SELECT * FROM documents WHERE organization_id = ? ORDER BY updated_at DESC").all(where.organizationId ?? "") as DocumentRow[];
+      } else {
+        rows = db.prepare("SELECT * FROM documents ORDER BY updated_at DESC").all() as DocumentRow[];
+      }
+
+      if (orderBy?.updatedAt) {
+        const dir = orderBy.updatedAt === "asc" ? 1 : -1;
+        rows = [...rows].sort((a, b) => dir * (new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()));
+      }
+
+      return rows.map((row) => {
+        const doc = normalizeDocument(row);
+        if (!doc) return null;
+        return include?.owner ? { ...doc, owner: normalizeUser(getUserById(doc.ownerId)) } : doc;
+      }).filter(Boolean);
+    },
+    async findUnique({ where, include }: { where: { id: string }; include?: { owner?: boolean } }) {
+      const row = getDocumentById(where.id);
+      if (!row) return null;
+      const doc = normalizeDocument(row);
+      if (!doc) return null;
+      return include?.owner ? { ...doc, owner: normalizeUser(getUserById(doc.ownerId)) } : doc;
+    },
+    async create({ data }: { data: { title: string; content: string; status?: string; documentType?: string; ownerId: string; organizationId?: string | null } }) {
+      const created = createDocument({
+        title: data.title,
+        content: data.content,
+        status: data.status ?? "draft",
+        documentType: data.documentType ?? "essay",
+        ownerId: data.ownerId,
+        organizationId: data.organizationId ?? null,
+      });
+      return normalizeDocument(created);
+    },
+    async update({ where, data }: { where: { id: string }; data: Record<string, unknown> }) {
+      const current = getDocumentById(where.id);
+      if (!current) return null;
+
+      const next = updateDocument(where.id, {
+        title: typeof data.title === "string" ? data.title : undefined,
+        content: typeof data.content === "string" ? data.content : undefined,
+        status: typeof data.status === "string" ? data.status : undefined,
+        documentType: typeof data.documentType === "string" ? data.documentType : undefined,
+        sealedHash: typeof data.sealedHash === "string" ? data.sealedHash : undefined,
+        integrityStatus: typeof data.integrityStatus === "string" ? data.integrityStatus : undefined,
+      });
+      return normalizeDocument(next);
+    },
+    async count() {
+      return countRows("documents").total;
+    },
+  },
+  organization: {
+    async count() {
+      return countRows("organizations").total;
+    },
+  },
+};
+
+function cryptoRandomId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function seedDemoData() {
+  const organization = getOrganizationBySlug("veritas-labs");
+  if (!organization) {
+    const org = createOrganization("Veritas Labs", "veritas-labs");
+
+    const admin = createUser({
+      name: "Avery Stone",
+      email: "admin@veritas.io",
+      passwordHash: bcrypt.hashSync("admin123", 10),
+      role: "ADMIN",
+      organizationId: org.id,
+    });
+
+    const instructor = createUser({
+      name: "Dr. Nia Ross",
+      email: "instructor@veritas.io",
+      passwordHash: bcrypt.hashSync("instructor123", 10),
+      role: "INSTRUCTOR",
+      organizationId: org.id,
+    });
+
+    const student = createUser({
+      name: "Milo Hart",
+      email: "student@veritas.io",
+      passwordHash: bcrypt.hashSync("student123", 10),
+      role: "STUDENT",
+      organizationId: org.id,
+    });
+
+    createDocument({
+      title: "Existentialism and Choice",
+      content: "The authentic writer is not defined by the speed of output but by the discipline of revision. A living argument is built under pressure, uncertainty, and the willingness to admit complexity.",
+      status: "submitted",
+      documentType: "essay",
+      ownerId: student.id,
+      organizationId: org.id,
+    });
+
+    return { org, admin, instructor, student };
+  }
+
+  return { organization };
+}
+
+seedDemoData();
