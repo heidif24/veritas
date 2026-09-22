@@ -98,6 +98,14 @@ export default function InstitutionOnboardingPage() {
                 </div>
 
                 <div>
+                  <label htmlFor="organizationType" className="mb-2 block text-sm font-medium text-slate-300">Institution type</label>
+                  <select id="organizationType" name="organizationType" defaultValue="UNIVERSITY" className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-cyan-400">
+                    <option value="UNIVERSITY">University / Campus</option>
+                    <option value="PUBLISHER">Journal / Publisher</option>
+                  </select>
+                </div>
+
+                <div>
                   <label htmlFor="adminName" className="mb-2 block text-sm font-medium text-slate-300">Primary admin</label>
                   <input id="adminName" name="adminName" required className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-cyan-400" placeholder="Alicia Morgan" />
                 </div>

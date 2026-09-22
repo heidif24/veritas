@@ -8,7 +8,7 @@ export default function InstructorCoursesPage() {
         <header className="mb-8 flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Instructor portal</p>
-            <h1 className="mt-2 text-3xl font-black text-white">Course manager</h1>
+            <h1 className="mt-2 text-3xl font-black text-white">Course and assignment manager</h1>
           </div>
           <button className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950">Create assignment</button>
         </header>
@@ -27,7 +27,7 @@ export default function InstructorCoursesPage() {
               </div>
               <div className="mt-6 flex gap-3">
                 <Link href="/instructor/assignment/a-102" className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950">Open queue</Link>
-                <button className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white">Assign</button>
+                <button className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white">Secure dropbox</button>
               </div>
             </div>
           ))}

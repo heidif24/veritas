@@ -14,12 +14,19 @@ export async function GET() {
       prisma.organization.count(),
     ]);
 
+    const institutionRows = await prisma.organization.findMany();
+    const tracker = {
+      university: institutionRows.filter((org) => (org.organization_type ?? "UNIVERSITY") === "UNIVERSITY").length,
+      publisher: institutionRows.filter((org) => (org.organization_type ?? "UNIVERSITY") === "PUBLISHER").length,
+    };
+
     return NextResponse.json({
       summary: {
         documents,
         users,
         organizations,
         verificationRate: "97.8%",
+        institutionBreakdown: tracker,
       },
     });
   } catch {

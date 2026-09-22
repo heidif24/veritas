@@ -39,46 +39,46 @@ export type Submission = {
 };
 
 export const metrics: Stat[] = [
-  { label: "Documents reviewed", value: "2.4M", detail: "Across campuses and independent studios" },
-  { label: "Average verification latency", value: "8.2s", detail: "From upload to trust verdict" },
-  { label: "Tamper detection precision", value: "99.97%", detail: "Offline-export integrity checks" },
-  { label: "Institutional onboarding", value: "430+", detail: "Schools and departments live" },
+  { label: "Composition events sealed", value: "2.4M", detail: "Keystrokes, edits, focus changes, and paste events" },
+  { label: "Verifier response time", value: "2.1s", detail: "Public certificate and bundle checks" },
+  { label: "Tamper detection precision", value: "99.97%", detail: "Post-export hash break detection" },
+  { label: "Institutions and publishers", value: "430+", detail: "Campuses, departments, and editorial teams live" },
 ];
 
 export const platformCapabilities = [
-  { title: "Review workspace", description: "Give teams a secure place to draft, manage versions, and track approvals with role-based access." },
-  { title: "Document timeline", description: "Every revision, decision, and review note is captured in a clear, time-stamped operational history." },
-  { title: "Signed export verification", description: "Downloadable secure bundles detect tampering and confirm integrity before external sharing." },
-  { title: "Collaboration workflow", description: "Multi-user review sessions keep commentary, approvals, and ownership aligned across the document lifecycle." },
+  { title: "Browser-native telemetry", description: "Capture keystroke cadence, pause intervals, focus loss, and paste events while writers draft in the editor." },
+  { title: "Append-only lineage", description: "Record inserts, deletes, and structural changes as a replayable document history instead of a final-text guess." },
+  { title: "Signed export bundles", description: "Seal text hashes, telemetry summaries, and author metadata into tamper-evident .veritas submissions." },
+  { title: "Institutional review", description: "Route assignments into professor queues with verdict cards, heatmaps, and LMS-ready audit records." },
 ];
 
 export const features: Feature[] = [
   {
-    title: "Secure review workspace",
-    description: "A shared drafting environment for teams to organize content, comments, and approvals without losing accountability.",
+    title: "Cognitive drafting proof",
+    description: "Organic writing is measured through rhythm, revision behavior, and natural pause patterns captured during composition.",
     accent: "from-cyan-500/30 to-blue-500/30",
   },
   {
-    title: "Immutable document history",
-    description: "Every update and review decision is preserved in a tamper-evident timeline that supports audit readiness.",
+    title: "Paste and transcription flags",
+    description: "Large pasted blocks, automated-looking bursts, and state changes are surfaced directly in the lineage report.",
     accent: "from-violet-500/30 to-purple-500/30",
   },
   {
-    title: "Operational assurance",
-    description: "Faculty, editors, and administrators review version status, audit records, and final sign-off in one dashboard.",
+    title: "Cryptographic sealing",
+    description: "Final submissions are signed as secure bundles, making offline edits immediately visible in the verifier.",
     accent: "from-emerald-500/30 to-teal-500/30",
   },
   {
-    title: "Trust certificates",
-    description: "Independent teams share signed evidence and verification records with clients, partners, and stakeholders.",
+    title: "Public trust certificates",
+    description: "Writers can share human-authorship certificates with professors, editors, publishers, and readers.",
     accent: "from-orange-500/30 to-amber-500/30",
   },
 ];
 
 export const pricingTiers = [
-  { name: "Starter", price: "$39", description: "For freelancers and pitch submissions", features: ["1 workspace", "Public verification certs", "Secure export bundles"] },
-  { name: "Institutional", price: "$2,400", description: "For academic departments and campuses", features: ["LMS integrations", "Assignment review queues", "Faculty and role controls"] },
-  { name: "Enterprise", price: "Custom", description: "For publishers and large organizations", features: ["Custom SSO", "Priority support", "Advanced audit controls"] },
+  { name: "Writer", price: "$19", description: "For independent creators and freelance pitches", features: ["Human-authorship certificates", "Secure export bundles", "Public verifier links"] },
+  { name: "Institutional", price: "$2,400", description: "For academic departments and campuses", features: ["LMS dropboxes", "Assignment replay reports", "SSO and FERPA controls"] },
+  { name: "Publisher", price: "Custom", description: "For editorial teams and high-volume verification", features: ["Pitch queues", "Embeddable trust badges", "Advanced review policy controls"] },
 ];
 
 export const courseCards: Course[] = [
@@ -101,14 +101,14 @@ export const submissionRows: Submission[] = [
 ];
 
 export const verificationChecks = [
-  { label: "Document status", value: "Verified" },
-  { label: "Review queue", value: "2 pending" },
+  { label: "Signature", value: "Platform key valid" },
+  { label: "Raw text hash", value: "Matched" },
   { label: "Offline tamper check", value: "Passed" },
-  { label: "Integrity confidence", value: "High" },
+  { label: "Lineage confidence", value: "High" },
 ];
 
 export const publisherPitches = [
-  { title: "Allegory of the Edge", writer: "Mira S.", status: "Verified", score: 97 },
-  { title: "The Quiet Infrastructure", writer: "Eli B.", status: "Verified", score: 94 },
-  { title: "Weathering the Long Shift", writer: "Rae K.", status: "Review", score: 81 },
+  { title: "Allegory of the Edge", writer: "Mira S.", status: "Human-authored", score: 97 },
+  { title: "The Quiet Infrastructure", writer: "Eli B.", status: "Human-authored", score: 94 },
+  { title: "Weathering the Long Shift", writer: "Rae K.", status: "Needs lineage review", score: 81 },
 ];

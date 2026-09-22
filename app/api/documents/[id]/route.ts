@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { createDocumentRevision, prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -43,6 +43,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const body = await request.json();
+    const nextReferences = Array.isArray(body.references) ? body.references : currentDocument.references;
     const document = await prisma.document.update({
       where: { id },
       data: {
@@ -50,8 +51,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         content: body.content ?? currentDocument.content,
         status: body.status ?? currentDocument.status,
         documentType: body.documentType ?? currentDocument.documentType,
+        references: nextReferences,
       },
     });
+
+    if (body.content !== undefined || body.title !== undefined || Array.isArray(body.references)) {
+      const revisionCreated = createDocumentRevision(id, document.title, document.content, nextReferences);
+      if (revisionCreated) {
+        await prisma.document.update({
+          where: { id },
+          data: {
+            status: body.status ?? currentDocument.status,
+          },
+        });
+      }
+    }
 
     return NextResponse.json({ document });
   } catch {

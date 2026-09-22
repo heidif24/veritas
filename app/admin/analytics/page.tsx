@@ -1,6 +1,20 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { PortalShell } from "../../components/portal-shell";
 
 export default function AdminAnalyticsPage() {
+  const [stats, setStats] = useState({ documents: 0, users: 0, organizations: 0, verificationRate: "97.8%", institutionBreakdown: { university: 0, publisher: 0 } });
+
+  useEffect(() => {
+    fetch("/api/admin/overview")
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.summary) setStats(result.summary);
+      })
+      .catch(() => undefined);
+  }, []);
+
   return (
     <PortalShell
       title="Platform analytics"
@@ -16,10 +30,10 @@ export default function AdminAnalyticsPage() {
     >
       <div className="grid gap-5 md:grid-cols-4">
         {[
-          ["Submissions", "2,184"],
-          ["Verification success", "97.8%"],
-          ["Risk alerts", "87"],
-          ["Avg. review time", "12m"],
+          ["Submissions", String(stats.documents)],
+          ["Verification success", stats.verificationRate],
+          ["Total users", String(stats.users)],
+          ["Institutions", String(stats.organizations)],
         ].map(([label, value]) => (
           <div key={label} className="rounded-2xl border border-white/10 bg-slate-950/40 p-5">
             <div className="text-xs uppercase tracking-[0.2em] text-slate-400">{label}</div>
@@ -42,17 +56,15 @@ export default function AdminAnalyticsPage() {
         </div>
 
         <div className="rounded-[24px] border border-white/10 bg-slate-950/40 p-6">
-          <h2 className="text-xl font-bold text-white">Departments</h2>
+          <h2 className="text-xl font-bold text-white">Tenant mix</h2>
           <div className="mt-5 space-y-4">
             {[
-              ["Philosophy", "94%"],
-              ["Biology", "89%"],
-              ["History", "91%"],
-              ["Literature", "96%"],
+              ["Universities", String(stats.institutionBreakdown.university)],
+              ["Journal sites", String(stats.institutionBreakdown.publisher)],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl border border-white/10 bg-slate-900/65 p-3">
                 <div className="mb-2 flex items-center justify-between text-sm text-slate-300"><span>{label}</span><span className="text-white">{value}</span></div>
-                <div className="progress-bar h-2 rounded-full bg-slate-800"><span style={{ width: value }} /></div>
+                <div className="progress-bar h-2 rounded-full bg-slate-800"><span style={{ width: value === "0" ? "0%" : "72%" }} /></div>
               </div>
             ))}
           </div>

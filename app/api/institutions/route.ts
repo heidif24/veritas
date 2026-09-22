@@ -18,6 +18,7 @@ export async function POST(request: Request) {
     const name = String(body.name ?? "").trim();
     const slug = String(body.slug ?? "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-");
     const sector = String(body.sector ?? "Education").trim();
+    const organizationType = String(body.organizationType ?? "UNIVERSITY").trim().toUpperCase();
     const adminName = String(body.adminName ?? "").trim();
     const adminEmail = String(body.adminEmail ?? "").trim().toLowerCase();
     const adminPassword = String(body.adminPassword ?? "");
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "An institution with that slug already exists." }, { status: 409 });
     }
 
-    const organization = createOrganization(name, slug);
+    const organization = createOrganization(name, slug, sector, organizationType);
     const admin = createUser({
       name: adminName,
       email: adminEmail,
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
           name: organization.name,
           slug: organization.slug,
           sector,
+          organizationType,
         },
         admin: {
           id: admin.id,

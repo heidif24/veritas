@@ -57,6 +57,9 @@ model Document {
   organizationId String?
   organization  Organization? @relation(fields: [organizationId], references: [id])
   sealedHash    String?
+  sealedSignature String?
+  telemetryJson String?
+  referencesJson String      @default("[]")
   integrityStatus String     @default("verified")
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt

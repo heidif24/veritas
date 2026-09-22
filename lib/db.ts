@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
+import { buildWindowHashes } from "./plagiarism/chunker";
 
 const dbDir = path.join(process.cwd(), "data");
 fs.mkdirSync(dbDir, { recursive: true });
@@ -14,6 +15,8 @@ db.exec(`
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE,
+    sector TEXT NOT NULL DEFAULT 'Education',
+    organization_type TEXT NOT NULL DEFAULT 'UNIVERSITY',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -46,11 +49,24 @@ db.exec(`
     owner_id TEXT NOT NULL,
     organization_id TEXT,
     sealed_hash TEXT,
+    sealed_signature TEXT,
+    telemetry_json TEXT,
+    references_json TEXT NOT NULL DEFAULT '[]',
     integrity_status TEXT NOT NULL DEFAULT 'verified',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (owner_id) REFERENCES users(id),
     FOREIGN KEY (organization_id) REFERENCES organizations(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS document_revisions (
+    id TEXT PRIMARY KEY,
+    document_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    references_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (document_id) REFERENCES documents(id)
   );
 
   CREATE TABLE IF NOT EXISTS audit_events (
@@ -63,7 +79,49 @@ db.exec(`
     FOREIGN KEY (actor_id) REFERENCES users(id),
     FOREIGN KEY (document_id) REFERENCES documents(id)
   );
+
+  CREATE TABLE IF NOT EXISTS plagiarism_checks (
+    id TEXT PRIMARY KEY,
+    document_id TEXT NOT NULL,
+    organization_id TEXT,
+    overall_score INTEGER NOT NULL DEFAULT 0,
+    matched_segments_json TEXT NOT NULL DEFAULT '[]',
+    checked_words INTEGER NOT NULL DEFAULT 0,
+    provider TEXT NOT NULL DEFAULT 'institutional-index',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (document_id) REFERENCES documents(id),
+    FOREIGN KEY (organization_id) REFERENCES organizations(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS plagiarism_chunks (
+    id TEXT PRIMARY KEY,
+    document_id TEXT NOT NULL,
+    organization_id TEXT NOT NULL,
+    hash TEXT NOT NULL,
+    window_index INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (document_id, hash, window_index),
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS plagiarism_chunks_lookup ON plagiarism_chunks (organization_id, hash);
 `);
+
+for (const statement of [
+  "ALTER TABLE organizations ADD COLUMN sector TEXT NOT NULL DEFAULT 'Education'",
+  "ALTER TABLE organizations ADD COLUMN organization_type TEXT NOT NULL DEFAULT 'UNIVERSITY'",
+  "ALTER TABLE documents ADD COLUMN sealed_signature TEXT",
+  "ALTER TABLE documents ADD COLUMN telemetry_json TEXT",
+  "ALTER TABLE documents ADD COLUMN references_json TEXT NOT NULL DEFAULT '[]'",
+  "CREATE TABLE IF NOT EXISTS document_revisions (id TEXT PRIMARY KEY, document_id TEXT NOT NULL, title TEXT NOT NULL, content TEXT NOT NULL, references_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (document_id) REFERENCES documents(id))",
+]) {
+  try {
+    db.exec(statement);
+  } catch {
+    // Existing installations already have the column.
+  }
+}
 
 export type Role = "ADMIN" | "INSTRUCTOR" | "STUDENT" | "PUBLISHER";
 
@@ -71,6 +129,8 @@ export type OrganizationRow = {
   id: string;
   name: string;
   slug: string;
+  sector: string;
+  organization_type: string;
   created_at: string;
 };
 
@@ -101,9 +161,23 @@ export type DocumentRow = {
   owner_id: string;
   organization_id: string | null;
   sealed_hash: string | null;
+  sealed_signature: string | null;
+  telemetry_json: string | null;
+  references_json: string;
   integrity_status: string;
   created_at: string;
   updated_at: string;
+};
+
+export type PlagiarismCheckRow = {
+  id: string;
+  document_id: string;
+  organization_id: string | null;
+  overall_score: number;
+  matched_segments_json: string;
+  checked_words: number;
+  provider: string;
+  created_at: string;
 };
 
 export function getDb() {
@@ -147,9 +221,9 @@ export function createUser(input: { name: string; email: string; passwordHash: s
   return created;
 }
 
-export function createOrganization(name: string, slug: string): OrganizationRow {
+export function createOrganization(name: string, slug: string, sector = "Education", organizationType = "UNIVERSITY"): OrganizationRow {
   const id = cryptoRandomId();
-  db.prepare("INSERT INTO organizations (id, name, slug) VALUES (?, ?, ?)").run(id, name, slug);
+  db.prepare("INSERT INTO organizations (id, name, slug, sector, organization_type) VALUES (?, ?, ?, ?, ?)").run(id, name, slug, sector, organizationType);
   const created = getOrganizationBySlug(slug);
   if (!created) {
     throw new Error("Failed to create organization");
@@ -181,7 +255,95 @@ export function createDocument(input: { title: string; content: string; status: 
   return created;
 }
 
-export function updateDocument(id: string, updates: Partial<{ title: string; content: string; status: string; documentType: string; sealedHash: string; integrityStatus: string }>) {
+export function createDocumentRevision(documentId: string, title: string, content: string, references: unknown[] = []) {
+  const id = cryptoRandomId();
+  db.prepare(
+    "INSERT INTO document_revisions (id, document_id, title, content, references_json) VALUES (?, ?, ?, ?, ?)",
+  ).run(id, documentId, title, content, JSON.stringify(references));
+  return { id };
+}
+
+export function listDocumentRevisions(documentId: string) {
+  return db.prepare("SELECT * FROM document_revisions WHERE document_id = ? ORDER BY created_at DESC").all(documentId) as Array<{
+    id: string;
+    document_id: string;
+    title: string;
+    content: string;
+    references_json: string;
+    created_at: string;
+  }>;
+}
+
+export function createPlagiarismCheck(input: {
+  documentId: string;
+  organizationId?: string | null;
+  overallScore: number;
+  matchedSegments: unknown[];
+  checkedWords: number;
+  provider: string;
+}) {
+  const id = cryptoRandomId();
+  db.prepare(
+    "INSERT INTO plagiarism_checks (id, document_id, organization_id, overall_score, matched_segments_json, checked_words, provider) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  ).run(
+    id,
+    input.documentId,
+    input.organizationId ?? null,
+    input.overallScore,
+    JSON.stringify(input.matchedSegments),
+    input.checkedWords,
+    input.provider,
+  );
+  return id;
+}
+
+export function listSubmittedDocumentsForOrganization(organizationId: string) {
+  return db.prepare(
+    "SELECT * FROM documents WHERE organization_id = ? AND status = 'submitted' ORDER BY updated_at DESC",
+  ).all(organizationId) as DocumentRow[];
+}
+
+export function replacePlagiarismChunks(documentId: string, organizationId: string, hashes: string[]) {
+  const replace = db.transaction(() => {
+    db.prepare("DELETE FROM plagiarism_chunks WHERE document_id = ?").run(documentId);
+    const insert = db.prepare(
+      "INSERT OR IGNORE INTO plagiarism_chunks (id, document_id, organization_id, hash, window_index) VALUES (?, ?, ?, ?, ?)",
+    );
+    hashes.forEach((hash, index) => insert.run(cryptoRandomId(), documentId, organizationId, hash, index));
+  });
+  replace();
+}
+
+export function backfillSubmittedPlagiarismChunks() {
+  const submitted = db.prepare(
+    "SELECT id, organization_id, content FROM documents WHERE status = 'submitted' AND organization_id IS NOT NULL",
+  ).all() as Array<{ id: string; organization_id: string; content: string }>;
+
+  for (const document of submitted) {
+    replacePlagiarismChunks(document.id, document.organization_id, buildWindowHashes(document.content, 5));
+  }
+}
+
+export function listSubmittedDocumentsByHashes(organizationId: string, hashes: string[]) {
+  if (!hashes.length) return [] as DocumentRow[];
+
+  const placeholders = hashes.map(() => "?").join(", ");
+  return db.prepare(
+    `SELECT DISTINCT documents.* FROM documents INNER JOIN plagiarism_chunks ON plagiarism_chunks.document_id = documents.id WHERE documents.organization_id = ? AND documents.status = 'submitted' AND plagiarism_chunks.organization_id = ? AND plagiarism_chunks.hash IN (${placeholders}) ORDER BY documents.updated_at DESC`,
+  ).all(organizationId, organizationId, ...hashes) as DocumentRow[];
+}
+
+export function updateDocument(id: string, updates: Partial<{
+  title: string;
+  content: string;
+  status: string;
+  documentType: string;
+  sealedHash: string;
+  sealedSignature: string;
+  telemetryJson: string;
+  references: unknown[];
+  integrityStatus: string;
+}>) {
   const fields: string[] = [];
   const values: unknown[] = [];
 
@@ -204,6 +366,18 @@ export function updateDocument(id: string, updates: Partial<{ title: string; con
   if (updates.sealedHash !== undefined) {
     fields.push("sealed_hash = ?");
     values.push(updates.sealedHash);
+  }
+  if (updates.sealedSignature !== undefined) {
+    fields.push("sealed_signature = ?");
+    values.push(updates.sealedSignature);
+  }
+  if (updates.telemetryJson !== undefined) {
+    fields.push("telemetry_json = ?");
+    values.push(updates.telemetryJson);
+  }
+  if (updates.references !== undefined) {
+    fields.push("references_json = ?");
+    values.push(JSON.stringify(updates.references));
   }
   if (updates.integrityStatus !== undefined) {
     fields.push("integrity_status = ?");
@@ -265,6 +439,9 @@ function normalizeDocument(row: DocumentRow | undefined) {
     organizationId: row.organization_id,
     documentType: row.document_type,
     sealedHash: row.sealed_hash,
+    sealedSignature: row.sealed_signature,
+    telemetryJson: row.telemetry_json,
+    references: JSON.parse(row.references_json || "[]"),
     integrityStatus: row.integrity_status,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -272,6 +449,14 @@ function normalizeDocument(row: DocumentRow | undefined) {
 }
 
 export const prisma = {
+  organization: {
+    async findMany() {
+      return db.prepare("SELECT * FROM organizations ORDER BY created_at DESC").all() as OrganizationRow[];
+    },
+    async count() {
+      return countRows("organizations").total;
+    },
+  },
   user: {
     async findUnique({ where }: { where?: { email?: string; id?: string } } = {}) {
       if (!where) return null;
@@ -348,13 +533,16 @@ export const prisma = {
       const current = getDocumentById(where.id);
       if (!current) return null;
 
-      const next = updateDocument(where.id, {
+          const next = updateDocument(where.id, {
         title: typeof data.title === "string" ? data.title : undefined,
         content: typeof data.content === "string" ? data.content : undefined,
         status: typeof data.status === "string" ? data.status : undefined,
         documentType: typeof data.documentType === "string" ? data.documentType : undefined,
         sealedHash: typeof data.sealedHash === "string" ? data.sealedHash : undefined,
         integrityStatus: typeof data.integrityStatus === "string" ? data.integrityStatus : undefined,
+        sealedSignature: typeof data.sealedSignature === "string" ? data.sealedSignature : undefined,
+        telemetryJson: typeof data.telemetryJson === "string" ? data.telemetryJson : undefined,
+        references: Array.isArray(data.references) ? data.references : undefined,
       });
       return normalizeDocument(next);
     },
@@ -362,9 +550,9 @@ export const prisma = {
       return countRows("documents").total;
     },
   },
-  organization: {
-    async count() {
-      return countRows("organizations").total;
+  documentRevision: {
+    async findMany({ where }: { where: { documentId: string } }) {
+      return listDocumentRevisions(where.documentId);
     },
   },
 };
@@ -418,3 +606,4 @@ function seedDemoData() {
 }
 
 seedDemoData();
+backfillSubmittedPlagiarismChunks();

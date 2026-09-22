@@ -46,6 +46,22 @@ export default function RegisterPage() {
           </div>
 
           <div className="rounded-[30px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-violet-950/20">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-violet-200">For journals and publishers</p>
+            <h2 className="mt-4 text-2xl font-bold text-white">Verify certificates and submitted work</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-300">
+              Create a journal or publisher account to validate submissions, review provenance links, and approve certificate-backed work.
+            </p>
+
+            <div className="mt-6 space-y-3 text-sm text-slate-200">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">Certificate verification</div>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">Submission review queue</div>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">Trusted publication approval</div>
+            </div>
+
+            <Link href="/onboarding" className="mt-8 inline-flex rounded-full bg-violet-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-violet-400">Continue as journal</Link>
+          </div>
+
+          <div className="rounded-[30px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-violet-950/20">
             <p className="text-[11px] uppercase tracking-[0.22em] text-violet-200">For individuals</p>
             <h2 className="mt-4 text-2xl font-bold text-white">Use your email to register</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">

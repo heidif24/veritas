@@ -6,8 +6,8 @@ export default function PricingPage() {
     <div className="min-h-screen bg-slate-950 px-6 py-12 text-slate-100">
       <div className="mx-auto max-w-7xl">
         <header className="mb-12 text-center">
-          <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">Transparent pricing</p>
-          <h1 className="mt-4 text-4xl font-black text-white md:text-5xl">Built for every scale of trusted review and operations.</h1>
+          <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">Simple, transparent pricing</p>
+          <h1 className="mt-4 text-4xl font-black text-white md:text-5xl">Trust and workflow clarity for every writing team.</h1>
         </header>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -19,7 +19,7 @@ export default function PricingPage() {
               <ul className="mt-6 space-y-3 text-sm text-slate-200">
                 {tier.features.map((feature) => (
                   <li key={feature} className="flex items-center gap-3">
-                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/15 text-[11px] text-emerald-200">✓</span>
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/15 text-[9px] font-bold text-emerald-200">✓</span>
                     {feature}
                   </li>
                 ))}

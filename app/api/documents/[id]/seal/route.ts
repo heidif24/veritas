@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { replacePlagiarismChunks, prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { createDocumentSeal } from "@/lib/crypto";
+import { buildWindowHashes } from "@/lib/plagiarism/chunker";
 
 export const runtime = "nodejs";
 
-export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth();
     const { id } = await params;
@@ -19,24 +20,32 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { hash } = createDocumentSeal({
+    const body = await request.json().catch(() => ({}));
+    const seal = createDocumentSeal({
       title: document.title,
       content: document.content,
       ownerId: document.ownerId,
       organizationId: document.organizationId,
-      status: document.status,
+      status: "submitted",
+      telemetry: body.telemetry ?? {},
     });
 
     const updated = await prisma.document.update({
       where: { id },
       data: {
-        sealedHash: hash,
+        sealedHash: seal.hash,
+        sealedSignature: seal.signature,
+        telemetryJson: JSON.stringify(seal.payload.telemetry),
         integrityStatus: "verified",
         status: "submitted",
       },
     });
 
-    return NextResponse.json({ document: updated, seal: hash });
+    if (document.organizationId) {
+      replacePlagiarismChunks(document.id, document.organizationId, buildWindowHashes(document.content, 5));
+    }
+
+    return NextResponse.json({ document: updated, seal: { hash: seal.hash, signature: seal.signature } });
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
