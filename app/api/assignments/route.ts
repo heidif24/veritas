@@ -4,6 +4,7 @@ import { listAssignmentsForCourse, ensureAssignmentColumns } from "@/lib/assignm
 import { createRichAssignment } from "@/lib/assignments-extended";
 import { getDb } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
+import { rateLimit, clientIp, sanitizePlainText, withSecurityHeaders } from "@/lib/security";
 
 export const runtime = "nodejs";
 
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
     const courseId = url.searchParams.get("courseId");
     ensureAssignmentColumns();
     if (courseId) {
-      return NextResponse.json({ assignments: listAssignmentsForCourse(courseId) });
+      return withSecurityHeaders(NextResponse.json({ assignments: listAssignmentsForCourse(courseId) }));
     }
     const db = getDb();
     if (user.role === "INSTRUCTOR" || user.role === "ADMIN") {
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
            ORDER BY a.created_at DESC LIMIT 100`,
         )
         .all(user.id, user.role);
-      return NextResponse.json({ assignments: rows });
+      return withSecurityHeaders(NextResponse.json({ assignments: rows }));
     }
     const rows = db
       .prepare(
@@ -40,9 +41,9 @@ export async function GET(request: Request) {
          ORDER BY created_at DESC LIMIT 100`,
       )
       .all(user.id, user.email);
-    return NextResponse.json({ assignments: rows });
+    return withSecurityHeaders(NextResponse.json({ assignments: rows }));
   } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return withSecurityHeaders(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
   }
 }
 
@@ -50,12 +51,16 @@ export async function POST(request: Request) {
   try {
     const user = await requireAuth();
     if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return withSecurityHeaders(NextResponse.json({ error: "Forbidden" }, { status: 403 }));
     }
+    const ip = clientIp(request);
+    const limited = rateLimit(`assignment-create:${user.id}:${ip}`, 30, 60_000);
+    if (limited) return withSecurityHeaders(limited);
+
     const body = await request.json().catch(() => ({}));
     let courseId = String(body.courseId || "");
-    const title = String(body.title || "").trim();
-    if (!title) return NextResponse.json({ error: "title required" }, { status: 400 });
+    const title = sanitizePlainText(String(body.title || ""), 300);
+    if (!title) return withSecurityHeaders(NextResponse.json({ error: "title required" }, { status: 400 }));
 
     const db = getDb();
     if (!courseId || courseId === "default-course") {
@@ -93,17 +98,18 @@ export async function POST(request: Request) {
       kind: body.kind,
       timeLimitMinutes: body.timeLimitMinutes,
       objectives: body.objectives,
+      proctored: Boolean(body.proctored),
     });
 
     recordAudit({
       action: "assignment_created",
       actorId: user.id,
-      metadata: { assignmentId: assignment?.id, title, kind: body.kind },
+      metadata: { assignmentId: assignment?.id, title, kind: body.kind, proctored: Boolean(body.proctored) },
     });
 
-    return NextResponse.json({ assignment });
+    return withSecurityHeaders(NextResponse.json({ assignment }));
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return withSecurityHeaders(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
   }
 }
