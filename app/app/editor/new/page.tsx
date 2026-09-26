@@ -1,12 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 export default function NewDocumentPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [title, setTitle] = useState("Untitled research draft");
+  const [title, setTitle] = useState("Untitled document");
   const [documentType, setDocumentType] = useState("essay");
   const [error, setError] = useState("");
 
@@ -20,8 +21,8 @@ export default function NewDocumentPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: title.trim() || "Untitled research draft",
-          content: "",
+          title: title.trim() || "Untitled document",
+          content: "<p></p>",
           status: "draft",
           documentType,
         }),
@@ -49,32 +50,37 @@ export default function NewDocumentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 md:px-6">
-      <div className="mx-auto max-w-4xl rounded-[30px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-cyan-950/20">
-        <div className="mb-8">
-          <p className="text-[10px] uppercase tracking-[0.22em] text-cyan-200">Create</p>
-          <h1 className="mt-2 text-3xl font-black text-white">Start a new document</h1>
-        </div>
+    <main className="min-h-screen bg-[#f3f3f3] px-4 py-12 text-slate-900">
+      <div className="mx-auto max-w-lg rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b579a]">New document</p>
+        <h1 className="mt-2 text-2xl font-bold text-slate-900">Start writing</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Opens in a familiar word-processor layout with originality checks and sealed export.
+        </p>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <div>
-            <label htmlFor="title" className="mb-2 block text-sm font-medium text-slate-300">Document title</label>
+            <label htmlFor="title" className="mb-1.5 block text-sm font-medium text-slate-700">
+              Title
+            </label>
             <input
               id="title"
               value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-cyan-400"
-              placeholder="Untitled research draft"
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-[#2b579a] focus:ring-2 focus:ring-blue-100"
+              placeholder="Untitled document"
             />
           </div>
 
           <div>
-            <label htmlFor="documentType" className="mb-2 block text-sm font-medium text-slate-300">Document type</label>
+            <label htmlFor="documentType" className="mb-1.5 block text-sm font-medium text-slate-700">
+              Type
+            </label>
             <select
               id="documentType"
               value={documentType}
-              onChange={(event) => setDocumentType(event.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-cyan-400"
+              onChange={(e) => setDocumentType(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-[#2b579a] focus:ring-2 focus:ring-blue-100"
             >
               <option value="essay">Essay</option>
               <option value="research">Research paper</option>
@@ -84,22 +90,27 @@ export default function NewDocumentPage() {
             </select>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm leading-7 text-slate-300">
-            This draft will open in the editor with tracking enabled, source references, and originality monitoring ready to use.
-          </div>
+          {error ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+          ) : null}
 
-          {error ? <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">{error}</div> : null}
-
-          <div className="flex flex-wrap gap-3">
-            <button type="submit" disabled={loading} className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-300 disabled:opacity-60">
-              {loading ? "Creating..." : "Create document"}
+          <div className="flex flex-wrap gap-3 pt-1">
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-lg bg-[#2b579a] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#1e3f6f] disabled:opacity-60"
+            >
+              {loading ? "Creating…" : "Create & open"}
             </button>
-            <button type="button" onClick={() => router.push("/app/dashboard")} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
-              Back to dashboard
-            </button>
+            <Link
+              href="/app/dashboard"
+              className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Cancel
+            </Link>
           </div>
         </form>
       </div>
-    </div>
+    </main>
   );
 }
