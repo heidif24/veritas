@@ -10,8 +10,15 @@ export type CompositionHealth = {
   revisionRatio: number;
   medianFlightMs: number | null;
   risk: "organic" | "mixed" | "high-paste" | "transcription";
+  aiRiskScore: number;
+  aiRiskLabel: "Low" | "Moderate" | "High" | "Critical";
+  signalSummary: string;
   notes: string[];
 };
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
 
 function median(values: number[]) {
   if (!values.length) return null;
@@ -51,6 +58,9 @@ export function scoreCompositionHealth(
   const medianFlightMs = median(flightTimes);
   const transcription = medianFlightMs !== null && medianFlightMs < 40 && flightTimes.length > 24;
   const organicRatio = Math.max(0, Math.min(1, 1 - pastedRatio - (transcription ? 0.18 : 0)));
+  const behaviouralRisk = clamp(1 - organicRatio + pastedRatio * 0.55 + (transcription ? 0.22 : 0) + (focusLosses > 4 ? 0.12 : 0) + (revisionRatio > 0.18 ? 0.08 : 0), 0, 1);
+  const aiRiskScore = Math.round(behaviouralRisk * 100);
+  const aiRiskLabel = aiRiskScore < 25 ? "Low" : aiRiskScore < 50 ? "Moderate" : aiRiskScore < 75 ? "High" : "Critical";
   const notes: string[] = [];
 
   if (pastedRatio > 0.15) notes.push("Paste volume is above the normal review threshold.");
@@ -64,12 +74,17 @@ export function scoreCompositionHealth(
   else if (transcription) risk = "transcription";
   else if (pastedRatio > 0.05) risk = "mixed";
 
+  const signalSummary = `${aiRiskLabel} behavioural authenticity risk (${aiRiskScore}%). ${notes[0] ?? "Writing pattern is stable."}`;
+
   return {
     organicRatio,
     pastedRatio,
     revisionRatio,
     medianFlightMs,
     risk,
+    aiRiskScore,
+    aiRiskLabel,
+    signalSummary,
     notes,
   };
 }

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { scoreCompositionHealth } from "./composition-health";
+import { stripHtml } from "./editor-utils";
 import { computeHealthScore, computeNGramSimilarity, createVeritasBundle, verifyVeritasBundle } from "./veritas";
 
 test("computeHealthScore produces a stable score and risk label", () => {
@@ -25,6 +27,34 @@ test("computeNGramSimilarity catches overlap", () => {
 
   assert.ok(similarity.score > 0.4);
   assert.ok(similarity.matches.length >= 1);
+});
+
+test("stripHtml removes markup while preserving readable content", () => {
+  const markup = '<h1>Choice <strong>matters</strong></h1><p>Writers need <span style="background: yellow">proof</span> before publication.</p>';
+
+  const plain = stripHtml(markup);
+
+  assert.ok(plain.includes("Choice matters"));
+  assert.ok(plain.includes("proof before publication"));
+  assert.equal(plain.includes("<"), false);
+});
+
+test("scoreCompositionHealth keeps behavioural risk in percentage range", () => {
+  const health = scoreCompositionHealth(
+    [
+      { timestamp: 10, kind: "type", chars: 30 },
+      { timestamp: 30, kind: "type", chars: 30 },
+      { timestamp: 50, kind: "type", chars: 30 },
+      { timestamp: 70, kind: "type", chars: 30 },
+      { timestamp: 90, kind: "type", chars: 30 },
+      { timestamp: 100, kind: "paste", chars: 120 },
+    ],
+    2,
+  );
+
+  assert.ok(health.aiRiskScore >= 0 && health.aiRiskScore <= 100);
+  assert.match(health.aiRiskLabel, /Low|Moderate|High|Critical/);
+  assert.ok(health.notes.length >= 1);
 });
 
 test("veritas bundle is signed and verified correctly", () => {

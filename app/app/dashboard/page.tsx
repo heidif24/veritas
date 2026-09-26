@@ -33,7 +33,7 @@ export default function DashboardPage() {
             <h1 className="mt-2 text-3xl font-black text-white">Operations workspace</h1>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/app/editor/quarterly-risk-brief" className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950">New draft</Link>
+            <Link href="/app/editor/new" className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950">New draft</Link>
             <Link href="/onboarding" className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white">Register institution</Link>
           </div>
         </header>

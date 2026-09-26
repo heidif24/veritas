@@ -65,7 +65,7 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center text-xs text-slate-400">
-          Sample enterprise access: admin@veritas.io / admin123, instructor@veritas.io / instructor123, student@veritas.io / student123
+          Secure access for your institution’s writing and review workflows.
         </div>
       </div>
     </div>

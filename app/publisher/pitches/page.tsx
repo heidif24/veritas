@@ -6,9 +6,9 @@ export default function PublisherPitchesPage() {
       <div className="mx-auto max-w-6xl">
         <header className="mb-8">
           <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Publisher portal</p>
-          <h1 className="mt-2 text-3xl font-black text-white">Human-authorship pitch queue</h1>
+          <h1 className="mt-2 text-3xl font-black text-white">Editorial review queue</h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-            Editors can inspect public certificates, verify sealed exports, and approve freelance work before assigning a story.
+            Review work, check provenance, and confirm readiness before assignment or publication.
           </p>
         </header>
 

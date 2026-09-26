@@ -5,12 +5,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ClipboardEvent, ReactNode } from "react";
 import { PlagiarismSidebar } from "@/components/editor/PlagiarismSidebar";
 import { scoreCompositionHealth, type CompositionOperation } from "@/lib/composition-health";
+import { stripHtml } from "@/lib/editor-utils";
 
-const initialDraft = `Choice is not an abstract condition; it is the visible residue of decisions made over time.
-
-This essay examines how existentialist thought treats authorship, responsibility, and revision as evidence of a person encountering uncertainty rather than merely producing a finished answer.
-
-The claim matters because a final document alone can conceal the path that created it. A trustworthy submission should preserve hesitation, correction, citation, and the smaller returns that show a writer thinking on the page.`;
+const initialDraft = `<h1>Choice and responsibility</h1>
+<p>Choice is not an abstract condition; it is the visible residue of decisions made over time.</p>
+<p>This essay examines how existentialist thought treats <strong>authorship, responsibility, and revision</strong> as evidence of a person encountering uncertainty rather than merely producing a finished answer.</p>
+<p>A trustworthy submission should preserve hesitation, <mark>correction</mark>, citation, and the smaller returns that show a writer thinking on the page.</p>`;
 
 const documentSections = ["Thesis", "Context", "Evidence", "Conclusion"];
 const tabs = ["Draft", "Lineage", "Sources", "Heatmap", "Seal"];
@@ -49,6 +49,8 @@ export default function EditorPage() {
   const [draft, setDraft] = useState(initialDraft);
   const [documentTitle, setDocumentTitle] = useState("");
   const [activeTab, setActiveTab] = useState("Draft");
+  const [editorSurfaceTheme, setEditorSurfaceTheme] = useState<"light" | "dark">("light");
+  const [fontSize, setFontSize] = useState("3");
   const [focusLosses, setFocusLosses] = useState(1);
   const [pasteEvents, setPasteEvents] = useState<PasteEvent[]>([]);
   const [compositionOperations, setCompositionOperations] = useState<CompositionOperation[]>([]);
@@ -64,6 +66,7 @@ export default function EditorPage() {
   const [currentDocument, setCurrentDocument] = useState<LoadedDocument | null>(null);
   const [currentSeal, setCurrentSeal] = useState<CurrentSeal | null>(null);
   const pendingPasteChars = useRef(0);
+  const editorRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!params.id) return;
@@ -108,15 +111,33 @@ export default function EditorPage() {
       .catch(() => undefined);
   }, [params.id]);
 
+  const draftText = useMemo(() => stripHtml(draft), [draft]);
+
   const stats = useMemo(() => {
-    const words = draft.trim().split(/\s+/).filter(Boolean).length;
+    const words = draftText.trim().split(/\s+/).filter(Boolean).length;
     const health = scoreCompositionHealth(compositionOperations, focusLosses);
     const organicRatio = Math.round(health.organicRatio * 100);
     const pastedRatio = Math.round(health.pastedRatio * 100);
     const transcriptionRisk = health.risk === "organic" ? "Low" : health.risk === "mixed" ? "Moderate" : "High";
 
     return { words, pastedRatio, organicRatio, transcriptionRisk, health };
-  }, [compositionOperations, draft, focusLosses]);
+  }, [compositionOperations, draftText, focusLosses]);
+
+  const finalAuthScore = Math.max(0, Math.min(100, Math.round(100 - similarityScore - stats.health.aiRiskScore * 0.35)));
+  const finalAuthLabel = finalAuthScore >= 85 ? "Strong" : finalAuthScore >= 70 ? "Moderate" : "Needs review";
+  const editorSurfaceStyles = editorSurfaceTheme === "light"
+    ? {
+        shell: "border-slate-200 bg-white text-slate-900",
+        draft: "border-slate-200 bg-white text-slate-900 shadow-inner",
+        button: "border-slate-200 bg-slate-50 text-slate-700",
+        muted: "text-slate-500",
+      }
+    : {
+        shell: "border-white/10 bg-slate-950 text-slate-100",
+        draft: "border-white/10 bg-slate-950 text-slate-50 shadow-inner shadow-cyan-950/20",
+        button: "border-white/10 bg-slate-900/70 text-slate-200",
+        muted: "text-slate-400",
+      };
 
   const title = documentTitle || decodeURIComponent(params.id ?? "untitled-draft").replace(/-/g, " ");
 
@@ -146,8 +167,8 @@ export default function EditorPage() {
     return result.document as LoadedDocument | undefined;
   }
 
-  function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>) {
-    const text = event.clipboardData.getData("text");
+  function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
+    const text = event.clipboardData.getData("text/plain");
     if (text.length < 40) return;
 
     pendingPasteChars.current = text.length;
@@ -164,7 +185,10 @@ export default function EditorPage() {
   }
 
   function handleDraftChange(nextDraft: string) {
-    const delta = nextDraft.length - draft.length;
+    const nextPlain = stripHtml(nextDraft);
+    const previousPlain = stripHtml(draft);
+    const delta = nextPlain.length - previousPlain.length;
+
     if (pendingPasteChars.current > 0) {
       pendingPasteChars.current = 0;
     } else if (delta > 0) {
@@ -172,7 +196,34 @@ export default function EditorPage() {
     } else if (delta < 0) {
       setCompositionOperations((current) => [...current, { timestamp: Date.now(), kind: "delete", chars: Math.abs(delta) }]);
     }
+
     setDraft(nextDraft);
+  }
+
+  function applyEditorFormatting(command: string, value?: string) {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand(command, false, value);
+    setDraft(editorRef.current.innerHTML);
+  }
+
+  function applyBlockFormatting(tag: string) {
+    applyEditorFormatting("formatBlock", tag);
+  }
+
+  function changeFontSize(size: string) {
+    setFontSize(size);
+    applyEditorFormatting("fontSize", size);
+  }
+
+  function insertLink() {
+    const url = window.prompt("Enter a link URL", "https://");
+    if (!url) return;
+    applyEditorFormatting("createLink", url);
+  }
+
+  function insertHorizontalRule() {
+    applyEditorFormatting("insertHorizontalRule");
   }
 
   async function sealDocument() {
@@ -203,6 +254,8 @@ export default function EditorPage() {
         return;
       }
 
+      const bundleHash = String(result.seal.hash ?? "");
+      const finalAIText = `${stats.health.aiRiskLabel} behavioural risk (${stats.health.aiRiskScore}%)`;
       setCurrentSeal({ hash: result.seal.hash, signature: result.seal.signature });
       if (result.document) {
         setCurrentDocument({
@@ -215,7 +268,7 @@ export default function EditorPage() {
         });
       }
 
-      setSealMessage(`Signed bundle ready. SHA-256: ${result.seal.hash}`);
+      setSealMessage(`Signed bundle ready. Verification hash: ${bundleHash.slice(0, 18)}... • AI risk: ${finalAIText} • Authenticity score: ${finalAuthScore}% (${finalAuthLabel})`);
     } catch {
       setSealMessage("Seal failed. Sign in and save the document before exporting.");
     }
@@ -302,15 +355,15 @@ export default function EditorPage() {
     const segments: ReactNode[] = [];
     let cursor = 0;
     flagged.forEach((match, index) => {
-      const start = Math.max(cursor, Math.min(draft.length, match.startOffset));
-      const end = Math.max(start, Math.min(draft.length, match.endOffset));
-      if (start > cursor) segments.push(<span key={`plain-${index}`}>{draft.slice(cursor, start)}</span>);
+      const start = Math.max(cursor, Math.min(draftText.length, match.startOffset));
+      const end = Math.max(start, Math.min(draftText.length, match.endOffset));
+      if (start > cursor) segments.push(<span key={`plain-${index}`}>{draftText.slice(cursor, start)}</span>);
       if (end > start) {
-        segments.push(<mark key={`match-${index}`} className="rounded bg-amber-400/25 text-transparent underline decoration-amber-300/80 decoration-2 underline-offset-4">{draft.slice(start, end)}</mark>);
+        segments.push(<mark key={`match-${index}`} className="rounded bg-amber-400/25 text-transparent underline decoration-amber-300/80 decoration-2 underline-offset-4">{draftText.slice(start, end)}</mark>);
       }
       cursor = end;
     });
-    if (cursor < draft.length) segments.push(<span key="plain-tail">{draft.slice(cursor)}</span>);
+    if (cursor < draftText.length) segments.push(<span key="plain-tail">{draftText.slice(cursor)}</span>);
     return segments;
   }
 
@@ -376,33 +429,69 @@ export default function EditorPage() {
             </div>
           </aside>
 
-          <section className="rounded-[28px] border border-white/10 bg-slate-900/75 p-4">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+          <section className={`rounded-[28px] border p-4 ${editorSurfaceStyles.shell}`}>
+            <div className={`mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-3 ${editorSurfaceTheme === "light" ? "border-slate-200" : "border-white/10"}`}>
+              <div className={`flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] ${editorSurfaceStyles.muted}`}>
                 <span>{activeTab}</span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{draft.length} chars</span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{stats.words} words</span>
+                <span className={`rounded-full border px-2 py-1 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-slate-50 text-slate-600" : "border-white/10 bg-white/5 text-slate-300"}`}>{draftText.length} chars</span>
+                <span className={`rounded-full border px-2 py-1 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-slate-50 text-slate-600" : "border-white/10 bg-white/5 text-slate-300"}`}>{stats.words} words</span>
               </div>
 
-              <div className="flex gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                <button className="rounded-full border border-white/10 bg-white/5 px-2 py-1.5 text-slate-200">B</button>
-                <button className="rounded-full border border-white/10 bg-white/5 px-2 py-1.5 text-slate-200 italic">I</button>
-                <button className="rounded-full border border-white/10 bg-white/5 px-2 py-1.5 text-slate-200">List</button>
+              <div className={`flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.2em] ${editorSurfaceTheme === "light" ? "text-slate-500" : "text-slate-400"}`}>
+                <div className={`mr-2 flex items-center gap-2 rounded-full border p-1 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-slate-50 text-slate-700" : "border-white/10 bg-slate-900/60 text-slate-300"}`}>
+                  {(["light", "dark"] as const).map((theme) => (
+                    <button
+                      key={theme}
+                      type="button"
+                      onClick={() => setEditorSurfaceTheme(theme)}
+                      className={`rounded-full px-2.5 py-1.5 font-semibold capitalize transition ${editorSurfaceTheme === theme ? (editorSurfaceTheme === "light" ? "bg-slate-900 text-white" : "bg-cyan-500 text-slate-950") : "text-current"}`}
+                    >
+                      {theme}
+                    </button>
+                  ))}
+                </div>
+
+                <button type="button" onClick={() => applyEditorFormatting("undo")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>Undo</button>
+                <button type="button" onClick={() => applyEditorFormatting("redo")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>Redo</button>
+                <button type="button" onClick={() => applyEditorFormatting("bold")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}><span className="font-black">B</span></button>
+                <button type="button" onClick={() => applyEditorFormatting("italic")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}><span className="italic">I</span></button>
+                <button type="button" onClick={() => applyEditorFormatting("underline")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}><span className="underline">U</span></button>
+                <button type="button" onClick={() => applyEditorFormatting("strikeThrough")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}><span className="line-through">S</span></button>
+                <button type="button" onClick={() => applyEditorFormatting("hiliteColor", "#fef08a")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>Highlight</button>
+                <button type="button" onClick={() => applyEditorFormatting("foreColor", "#0f172a")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>A</button>
+                <select
+                  aria-label="Font size"
+                  value={fontSize}
+                  onChange={(event) => changeFontSize(event.target.value)}
+                  className={`rounded-full border px-2 py-1.5 text-[10px] ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-slate-900/80 text-slate-200"}`}
+                >
+                  {["1","2","3","4","5","6","7"].map((size) => (
+                    <option key={size} value={size}>A{size}</option>
+                  ))}
+                </select>
+                <button type="button" onClick={() => applyEditorFormatting("justifyLeft")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>Left</button>
+                <button type="button" onClick={() => applyEditorFormatting("justifyCenter")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>Center</button>
+                <button type="button" onClick={() => applyEditorFormatting("justifyRight")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>Right</button>
+                <button type="button" onClick={() => applyBlockFormatting("h1")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>H1</button>
+                <button type="button" onClick={() => applyBlockFormatting("h2")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>H2</button>
+                <button type="button" onClick={() => applyEditorFormatting("insertUnorderedList")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>List</button>
+                <button type="button" onClick={() => applyEditorFormatting("insertOrderedList")} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>Num</button>
+                <button type="button" onClick={() => insertLink()} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>Link</button>
+                <button type="button" onClick={insertHorizontalRule} className={`rounded-full border px-2 py-1.5 ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"}`}>Divider</button>
               </div>
             </div>
 
             {activeTab === "Draft" ? (
-              <div className="relative h-[620px] overflow-hidden rounded-[22px] border border-white/10 bg-slate-950/60">
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-auto whitespace-pre-wrap break-words p-5 text-base leading-8 text-slate-100">
-                  {renderHighlightedDraft()}
-                </div>
-                <textarea
-                  value={draft}
-                  onChange={(event) => handleDraftChange(event.target.value)}
+              <div className={`rounded-[22px] border p-4 ${editorSurfaceStyles.draft}`}>
+                <div
+                  ref={editorRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  onInput={(event) => handleDraftChange((event.target as HTMLDivElement).innerHTML)}
                   onPaste={handlePaste}
                   onBlur={() => setFocusLosses((current) => current + 1)}
-                  className="relative h-full w-full resize-none bg-transparent p-5 text-base leading-8 text-transparent caret-white outline-none ring-0 selection:bg-cyan-400/30 placeholder:text-slate-500"
-                  placeholder="Write your document here..."
+                  className={`min-h-[620px] w-full rounded-xl border p-5 text-base leading-8 outline-none ${editorSurfaceTheme === "light" ? "border-slate-200 bg-white text-slate-900 focus:border-cyan-300" : "border-white/10 bg-slate-950 text-slate-100 focus:border-cyan-500/30"}`}
+                  dangerouslySetInnerHTML={{ __html: draft }}
                 />
               </div>
             ) : activeTab === "Lineage" ? (
@@ -474,6 +563,19 @@ export default function EditorPage() {
                   Veritas packages the raw text hash, telemetry summary, paste log, focus-loss count, and author metadata. Any offline edit breaks the hash when the file is checked in the public verifier.
                 </p>
 
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  {[
+                    ["AI risk", `${stats.health.aiRiskScore}%`],
+                    ["Originality", `${Math.min(100, similarityScore)}%`],
+                    ["Auth score", `${finalAuthScore}%`],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-2xl border border-white/10 bg-slate-950/40 p-3">
+                      <div className="text-[10px] uppercase tracking-[0.16em] text-slate-400">{label}</div>
+                      <div className="mt-2 text-xl font-black text-white">{value}</div>
+                    </div>
+                  ))}
+                </div>
+
                 {similarityScore >= similarityThreshold ? (
                   <div className="mt-5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-6 text-amber-100">
                     This draft exceeds the institution&apos;s {similarityThreshold}% similarity threshold. Review flagged passages before exporting the final .veritas package.
@@ -514,10 +616,12 @@ export default function EditorPage() {
 
             <div className="rounded-[28px] border border-white/10 bg-slate-900/75 p-5">
               <p className="text-[10px] uppercase tracking-[0.2em] text-violet-200">Live signals</p>
-              <div className="mt-4 text-4xl font-black text-white">{stats.organicRatio}%</div>
+              <div className="mt-4 text-4xl font-black text-white">{stats.health.aiRiskScore}%</div>
               <div className="mt-4 h-2.5 rounded-full bg-slate-800">
-                <span className="block h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400" style={{ width: `${stats.organicRatio}%` }} />
+                <span className="block h-full rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-red-500" style={{ width: `${Math.min(stats.health.aiRiskScore, 100)}%` }} />
               </div>
+              <p className="mt-2 text-xs uppercase tracking-[0.2em] text-slate-400">{stats.health.aiRiskLabel} behavioural risk</p>
+
               <div className="mt-5 space-y-3 text-sm text-slate-300">
                 <div className="flex items-center justify-between"><span>Pasted ratio</span><span className="font-semibold text-white">{stats.pastedRatio}%</span></div>
                 <div className="flex items-center justify-between"><span>Focus losses</span><span className="font-semibold text-white">{focusLosses}</span></div>
