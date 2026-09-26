@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -29,7 +30,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (!response.ok) {
-      setError(result.error || "Login failed.");
+      setError(result.error || "Sign-in failed. Check your email and password.");
       return;
     }
 
@@ -38,36 +39,61 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12 text-slate-100">
-      <div className="w-full max-w-md rounded-[30px] border border-white/10 bg-slate-900/80 p-8 shadow-2xl shadow-cyan-950/40">
+    <main className="flex min-h-[80vh] items-center justify-center bg-white px-6 py-16">
+      <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-500 text-xl font-black text-slate-950">V</div>
-          <h1 className="mt-4 text-3xl font-black text-white">Welcome back</h1>
-          <p className="mt-2 text-sm text-slate-400">Sign in to your Veritas workspace</p>
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 via-blue-600 to-violet-600 text-lg font-black text-white">
+            V
+          </div>
+          <h1 className="mt-5 text-2xl font-black text-slate-900">Sign in to Veritas</h1>
+          <p className="mt-2 text-sm text-slate-600">Access your workspace and documents</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5 rounded-[24px] border border-slate-200 bg-white p-7 shadow-sm">
           <div>
-            <label className="mb-2 block text-sm text-slate-300">Email</label>
-            <input name="email" type="email" defaultValue="admin@veritas.io" className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-3 text-white outline-none ring-0" />
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
+            <input
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+              placeholder="you@institution.edu"
+            />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-slate-300">Password</label>
-            <input name="password" type="password" defaultValue="admin123" className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-3 text-white outline-none ring-0" />
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Password</label>
+            <input
+              name="password"
+              type="password"
+              required
+              autoComplete="current-password"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+              placeholder="Your password"
+            />
           </div>
 
-          {error ? <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</div> : null}
+          {error ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+          ) : null}
 
-          <button type="submit" disabled={loading} className="w-full rounded-full bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950 disabled:opacity-60">
-            {loading ? "Signing in..." : "Sign in to Veritas"}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-60"
+          >
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-slate-400">
-          Secure access for your institution’s writing and review workflows.
-        </div>
+        <p className="mt-6 text-center text-sm text-slate-600">
+          New to Veritas?{" "}
+          <Link href="/register" className="font-semibold text-cyan-700 hover:text-cyan-800">
+            Create an account
+          </Link>
+        </p>
       </div>
-    </div>
+    </main>
   );
 }
