@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { replacePlagiarismChunks, prisma } from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { createDocumentSeal } from "@/lib/crypto";
-import { buildWindowHashes } from "@/lib/plagiarism/chunker";
 
 export const runtime = "nodejs";
 
@@ -10,6 +9,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   try {
     const user = await requireAuth();
     const { id } = await params;
+    const body = await request.json().catch(() => ({}));
 
     const document = await prisma.document.findUnique({ where: { id } });
     if (!document) {
@@ -20,33 +20,42 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await request.json().catch(() => ({}));
-    const seal = createDocumentSeal({
+    const payload = {
       title: document.title,
       content: document.content,
       ownerId: document.ownerId,
       organizationId: document.organizationId,
-      status: "submitted",
+      status: document.status,
+      ops: Array.isArray(body.ops) ? body.ops : [],
       telemetry: body.telemetry ?? {},
-    });
+      assignmentId: body.assignmentId ?? id,
+    };
+
+    const seal = createDocumentSeal(payload);
 
     const updated = await prisma.document.update({
       where: { id },
       data: {
         sealedHash: seal.hash,
-        sealedSignature: seal.signature,
-        telemetryJson: JSON.stringify(seal.payload.telemetry),
         integrityStatus: "verified",
         status: "submitted",
       },
     });
 
-    if (document.organizationId) {
-      replacePlagiarismChunks(document.id, document.organizationId, buildWindowHashes(document.content, 5));
-    }
-
-    return NextResponse.json({ document: updated, seal: { hash: seal.hash, signature: seal.signature } });
-  } catch {
+    return NextResponse.json({
+      document: updated,
+      seal: seal.hash,
+      bundle: {
+        version: 1,
+        format: "veritas",
+        payload: seal.payload,
+        sha256: seal.hash,
+        signature: seal.signature,
+        publicKeyPem: seal.publicKeyPem,
+      },
+    });
+  } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 }

@@ -2,7 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
-import { buildWindowHashes } from "./plagiarism/chunker";
 
 const dbDir = path.join(process.cwd(), "data");
 fs.mkdirSync(dbDir, { recursive: true });
@@ -10,13 +9,19 @@ fs.mkdirSync(dbDir, { recursive: true });
 const db = new Database(path.join(dbDir, "veritas.db"));
 db.pragma("journal_mode = WAL");
 
+function ensureColumn(tableName: string, columnName: string, definition: string) {
+  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
+  if (!columns.some((column) => column.name === columnName)) {
+    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition};`);
+  }
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS organizations (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE,
-    sector TEXT NOT NULL DEFAULT 'Education',
-    organization_type TEXT NOT NULL DEFAULT 'UNIVERSITY',
+    domain TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -49,9 +54,6 @@ db.exec(`
     owner_id TEXT NOT NULL,
     organization_id TEXT,
     sealed_hash TEXT,
-    sealed_signature TEXT,
-    telemetry_json TEXT,
-    references_json TEXT NOT NULL DEFAULT '[]',
     integrity_status TEXT NOT NULL DEFAULT 'verified',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -59,14 +61,81 @@ db.exec(`
     FOREIGN KEY (organization_id) REFERENCES organizations(id)
   );
 
-  CREATE TABLE IF NOT EXISTS document_revisions (
+  CREATE TABLE IF NOT EXISTS courses (
     id TEXT PRIMARY KEY,
-    document_id TEXT NOT NULL,
+    organization_id TEXT NOT NULL,
     title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    references_json TEXT NOT NULL DEFAULT '[]',
+    code TEXT NOT NULL,
+    join_code TEXT NOT NULL,
+    instructor_id TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (document_id) REFERENCES documents(id)
+    FOREIGN KEY (organization_id) REFERENCES organizations(id),
+    FOREIGN KEY (instructor_id) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS enrollments (
+    id TEXT PRIMARY KEY,
+    course_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'STUDENT',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(course_id, user_id),
+    FOREIGN KEY (course_id) REFERENCES courses(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS assignments (
+    id TEXT PRIMARY KEY,
+    course_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    instructions TEXT,
+    paste_threshold REAL NOT NULL DEFAULT 0.15,
+    similarity_threshold REAL NOT NULL DEFAULT 0.25,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_id) REFERENCES courses(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS submissions (
+    id TEXT PRIMARY KEY,
+    assignment_id TEXT NOT NULL,
+    document_id TEXT NOT NULL,
+    author_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'submitted',
+    health_score REAL,
+    similarity_score REAL,
+    sealed_hash TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (assignment_id) REFERENCES assignments(id),
+    FOREIGN KEY (document_id) REFERENCES documents(id),
+    FOREIGN KEY (author_id) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS corpus (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    source_url TEXT,
+    body TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS tenant_keys (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL UNIQUE,
+    public_key_pem TEXT NOT NULL,
+    private_key_pem TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS tenant_settings (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL UNIQUE,
+    branding_json TEXT,
+    lti_config TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id)
   );
 
   CREATE TABLE IF NOT EXISTS audit_events (
@@ -79,49 +148,9 @@ db.exec(`
     FOREIGN KEY (actor_id) REFERENCES users(id),
     FOREIGN KEY (document_id) REFERENCES documents(id)
   );
-
-  CREATE TABLE IF NOT EXISTS plagiarism_checks (
-    id TEXT PRIMARY KEY,
-    document_id TEXT NOT NULL,
-    organization_id TEXT,
-    overall_score INTEGER NOT NULL DEFAULT 0,
-    matched_segments_json TEXT NOT NULL DEFAULT '[]',
-    checked_words INTEGER NOT NULL DEFAULT 0,
-    provider TEXT NOT NULL DEFAULT 'institutional-index',
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (document_id) REFERENCES documents(id),
-    FOREIGN KEY (organization_id) REFERENCES organizations(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS plagiarism_chunks (
-    id TEXT PRIMARY KEY,
-    document_id TEXT NOT NULL,
-    organization_id TEXT NOT NULL,
-    hash TEXT NOT NULL,
-    window_index INTEGER NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (document_id, hash, window_index),
-    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
-    FOREIGN KEY (organization_id) REFERENCES organizations(id)
-  );
-
-  CREATE INDEX IF NOT EXISTS plagiarism_chunks_lookup ON plagiarism_chunks (organization_id, hash);
 `);
 
-for (const statement of [
-  "ALTER TABLE organizations ADD COLUMN sector TEXT NOT NULL DEFAULT 'Education'",
-  "ALTER TABLE organizations ADD COLUMN organization_type TEXT NOT NULL DEFAULT 'UNIVERSITY'",
-  "ALTER TABLE documents ADD COLUMN sealed_signature TEXT",
-  "ALTER TABLE documents ADD COLUMN telemetry_json TEXT",
-  "ALTER TABLE documents ADD COLUMN references_json TEXT NOT NULL DEFAULT '[]'",
-  "CREATE TABLE IF NOT EXISTS document_revisions (id TEXT PRIMARY KEY, document_id TEXT NOT NULL, title TEXT NOT NULL, content TEXT NOT NULL, references_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (document_id) REFERENCES documents(id))",
-]) {
-  try {
-    db.exec(statement);
-  } catch {
-    // Existing installations already have the column.
-  }
-}
+ensureColumn("organizations", "domain", "TEXT");
 
 export type Role = "ADMIN" | "INSTRUCTOR" | "STUDENT" | "PUBLISHER";
 
@@ -129,8 +158,7 @@ export type OrganizationRow = {
   id: string;
   name: string;
   slug: string;
-  sector: string;
-  organization_type: string;
+  domain: string | null;
   created_at: string;
 };
 
@@ -161,23 +189,9 @@ export type DocumentRow = {
   owner_id: string;
   organization_id: string | null;
   sealed_hash: string | null;
-  sealed_signature: string | null;
-  telemetry_json: string | null;
-  references_json: string;
   integrity_status: string;
   created_at: string;
   updated_at: string;
-};
-
-export type PlagiarismCheckRow = {
-  id: string;
-  document_id: string;
-  organization_id: string | null;
-  overall_score: number;
-  matched_segments_json: string;
-  checked_words: number;
-  provider: string;
-  created_at: string;
 };
 
 export function getDb() {
@@ -194,6 +208,10 @@ export function getUserById(id: string) {
 
 export function getOrganizationBySlug(slug: string) {
   return db.prepare("SELECT * FROM organizations WHERE slug = ?").get(slug) as OrganizationRow | undefined;
+}
+
+export function getOrganizationById(id: string) {
+  return db.prepare("SELECT * FROM organizations WHERE id = ?").get(id) as OrganizationRow | undefined;
 }
 
 export function getSessionByToken(token: string) {
@@ -221,14 +239,50 @@ export function createUser(input: { name: string; email: string; passwordHash: s
   return created;
 }
 
-export function createOrganization(name: string, slug: string, sector = "Education", organizationType = "UNIVERSITY"): OrganizationRow {
+export function createOrganization(name: string, slug: string, domain?: string | null): OrganizationRow {
   const id = cryptoRandomId();
-  db.prepare("INSERT INTO organizations (id, name, slug, sector, organization_type) VALUES (?, ?, ?, ?, ?)").run(id, name, slug, sector, organizationType);
+  db.prepare("INSERT INTO organizations (id, name, slug, domain) VALUES (?, ?, ?, ?)").run(id, name, slug, domain ?? null);
   const created = getOrganizationBySlug(slug);
   if (!created) {
     throw new Error("Failed to create organization");
   }
   return created;
+}
+
+export function createCourse(input: { organizationId: string; title: string; code: string; joinCode: string; instructorId: string }) {
+  const id = cryptoRandomId();
+  db.prepare(
+    "INSERT INTO courses (id, organization_id, title, code, join_code, instructor_id) VALUES (?, ?, ?, ?, ?, ?)",
+  ).run(id, input.organizationId, input.title, input.code, input.joinCode, input.instructorId);
+  return db.prepare("SELECT * FROM courses WHERE id = ?").get(id) as Record<string, unknown> | undefined;
+}
+
+export function createAssignment(input: { courseId: string; title: string; instructions?: string; pasteThreshold?: number; similarityThreshold?: number }) {
+  const id = cryptoRandomId();
+  db.prepare(
+    "INSERT INTO assignments (id, course_id, title, instructions, paste_threshold, similarity_threshold) VALUES (?, ?, ?, ?, ?, ?)",
+  ).run(id, input.courseId, input.title, input.instructions ?? "", input.pasteThreshold ?? 0.15, input.similarityThreshold ?? 0.25);
+  return db.prepare("SELECT * FROM assignments WHERE id = ?").get(id) as Record<string, unknown> | undefined;
+}
+
+export function createSubmission(input: { assignmentId: string; documentId: string; authorId: string; status?: string; healthScore?: number; similarityScore?: number; sealedHash?: string }) {
+  const id = cryptoRandomId();
+  db.prepare(
+    "INSERT INTO submissions (id, assignment_id, document_id, author_id, status, health_score, similarity_score, sealed_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+  ).run(id, input.assignmentId, input.documentId, input.authorId, input.status ?? "submitted", input.healthScore ?? 0, input.similarityScore ?? 0, input.sealedHash ?? null);
+  return db.prepare("SELECT * FROM submissions WHERE id = ?").get(id) as Record<string, unknown> | undefined;
+}
+
+export function createCorpusEntry(input: { organizationId: string; title: string; sourceUrl?: string; body: string }) {
+  const id = cryptoRandomId();
+  db.prepare("INSERT INTO corpus (id, organization_id, title, source_url, body) VALUES (?, ?, ?, ?, ?)").run(
+    id,
+    input.organizationId,
+    input.title,
+    input.sourceUrl ?? null,
+    input.body,
+  );
+  return db.prepare("SELECT * FROM corpus WHERE id = ?").get(id) as Record<string, unknown> | undefined;
 }
 
 export function listDocumentsForUser(user: { id: string; role: Role; organizationId?: string | null }) {
@@ -255,95 +309,7 @@ export function createDocument(input: { title: string; content: string; status: 
   return created;
 }
 
-export function createDocumentRevision(documentId: string, title: string, content: string, references: unknown[] = []) {
-  const id = cryptoRandomId();
-  db.prepare(
-    "INSERT INTO document_revisions (id, document_id, title, content, references_json) VALUES (?, ?, ?, ?, ?)",
-  ).run(id, documentId, title, content, JSON.stringify(references));
-  return { id };
-}
-
-export function listDocumentRevisions(documentId: string) {
-  return db.prepare("SELECT * FROM document_revisions WHERE document_id = ? ORDER BY created_at DESC").all(documentId) as Array<{
-    id: string;
-    document_id: string;
-    title: string;
-    content: string;
-    references_json: string;
-    created_at: string;
-  }>;
-}
-
-export function createPlagiarismCheck(input: {
-  documentId: string;
-  organizationId?: string | null;
-  overallScore: number;
-  matchedSegments: unknown[];
-  checkedWords: number;
-  provider: string;
-}) {
-  const id = cryptoRandomId();
-  db.prepare(
-    "INSERT INTO plagiarism_checks (id, document_id, organization_id, overall_score, matched_segments_json, checked_words, provider) VALUES (?, ?, ?, ?, ?, ?, ?)",
-  ).run(
-    id,
-    input.documentId,
-    input.organizationId ?? null,
-    input.overallScore,
-    JSON.stringify(input.matchedSegments),
-    input.checkedWords,
-    input.provider,
-  );
-  return id;
-}
-
-export function listSubmittedDocumentsForOrganization(organizationId: string) {
-  return db.prepare(
-    "SELECT * FROM documents WHERE organization_id = ? AND status = 'submitted' ORDER BY updated_at DESC",
-  ).all(organizationId) as DocumentRow[];
-}
-
-export function replacePlagiarismChunks(documentId: string, organizationId: string, hashes: string[]) {
-  const replace = db.transaction(() => {
-    db.prepare("DELETE FROM plagiarism_chunks WHERE document_id = ?").run(documentId);
-    const insert = db.prepare(
-      "INSERT OR IGNORE INTO plagiarism_chunks (id, document_id, organization_id, hash, window_index) VALUES (?, ?, ?, ?, ?)",
-    );
-    hashes.forEach((hash, index) => insert.run(cryptoRandomId(), documentId, organizationId, hash, index));
-  });
-  replace();
-}
-
-export function backfillSubmittedPlagiarismChunks() {
-  const submitted = db.prepare(
-    "SELECT id, organization_id, content FROM documents WHERE status = 'submitted' AND organization_id IS NOT NULL",
-  ).all() as Array<{ id: string; organization_id: string; content: string }>;
-
-  for (const document of submitted) {
-    replacePlagiarismChunks(document.id, document.organization_id, buildWindowHashes(document.content, 5));
-  }
-}
-
-export function listSubmittedDocumentsByHashes(organizationId: string, hashes: string[]) {
-  if (!hashes.length) return [] as DocumentRow[];
-
-  const placeholders = hashes.map(() => "?").join(", ");
-  return db.prepare(
-    `SELECT DISTINCT documents.* FROM documents INNER JOIN plagiarism_chunks ON plagiarism_chunks.document_id = documents.id WHERE documents.organization_id = ? AND documents.status = 'submitted' AND plagiarism_chunks.organization_id = ? AND plagiarism_chunks.hash IN (${placeholders}) ORDER BY documents.updated_at DESC`,
-  ).all(organizationId, organizationId, ...hashes) as DocumentRow[];
-}
-
-export function updateDocument(id: string, updates: Partial<{
-  title: string;
-  content: string;
-  status: string;
-  documentType: string;
-  sealedHash: string;
-  sealedSignature: string;
-  telemetryJson: string;
-  references: unknown[];
-  integrityStatus: string;
-}>) {
+export function updateDocument(id: string, updates: Partial<{ title: string; content: string; status: string; documentType: string; sealedHash: string; integrityStatus: string }>) {
   const fields: string[] = [];
   const values: unknown[] = [];
 
@@ -366,18 +332,6 @@ export function updateDocument(id: string, updates: Partial<{
   if (updates.sealedHash !== undefined) {
     fields.push("sealed_hash = ?");
     values.push(updates.sealedHash);
-  }
-  if (updates.sealedSignature !== undefined) {
-    fields.push("sealed_signature = ?");
-    values.push(updates.sealedSignature);
-  }
-  if (updates.telemetryJson !== undefined) {
-    fields.push("telemetry_json = ?");
-    values.push(updates.telemetryJson);
-  }
-  if (updates.references !== undefined) {
-    fields.push("references_json = ?");
-    values.push(JSON.stringify(updates.references));
   }
   if (updates.integrityStatus !== undefined) {
     fields.push("integrity_status = ?");
@@ -439,9 +393,6 @@ function normalizeDocument(row: DocumentRow | undefined) {
     organizationId: row.organization_id,
     documentType: row.document_type,
     sealedHash: row.sealed_hash,
-    sealedSignature: row.sealed_signature,
-    telemetryJson: row.telemetry_json,
-    references: JSON.parse(row.references_json || "[]"),
     integrityStatus: row.integrity_status,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -449,14 +400,6 @@ function normalizeDocument(row: DocumentRow | undefined) {
 }
 
 export const prisma = {
-  organization: {
-    async findMany() {
-      return db.prepare("SELECT * FROM organizations ORDER BY created_at DESC").all() as OrganizationRow[];
-    },
-    async count() {
-      return countRows("organizations").total;
-    },
-  },
   user: {
     async findUnique({ where }: { where?: { email?: string; id?: string } } = {}) {
       if (!where) return null;
@@ -533,16 +476,13 @@ export const prisma = {
       const current = getDocumentById(where.id);
       if (!current) return null;
 
-          const next = updateDocument(where.id, {
+      const next = updateDocument(where.id, {
         title: typeof data.title === "string" ? data.title : undefined,
         content: typeof data.content === "string" ? data.content : undefined,
         status: typeof data.status === "string" ? data.status : undefined,
         documentType: typeof data.documentType === "string" ? data.documentType : undefined,
         sealedHash: typeof data.sealedHash === "string" ? data.sealedHash : undefined,
         integrityStatus: typeof data.integrityStatus === "string" ? data.integrityStatus : undefined,
-        sealedSignature: typeof data.sealedSignature === "string" ? data.sealedSignature : undefined,
-        telemetryJson: typeof data.telemetryJson === "string" ? data.telemetryJson : undefined,
-        references: Array.isArray(data.references) ? data.references : undefined,
       });
       return normalizeDocument(next);
     },
@@ -550,9 +490,9 @@ export const prisma = {
       return countRows("documents").total;
     },
   },
-  documentRevision: {
-    async findMany({ where }: { where: { documentId: string } }) {
-      return listDocumentRevisions(where.documentId);
+  organization: {
+    async count() {
+      return countRows("organizations").total;
     },
   },
 };
@@ -562,11 +502,11 @@ function cryptoRandomId() {
 }
 
 function seedDemoData() {
-  const organization = getOrganizationBySlug("veritas-labs");
+  const organization = getOrganizationBySlug("unijos") ?? getOrganizationBySlug("university-of-jos");
   if (!organization) {
-    const org = createOrganization("Veritas Labs", "veritas-labs");
+    const org = createOrganization("University of Jos", "unijos", "unijos.edu.ng");
 
-    const admin = createUser({
+    const admin = getUserByEmail("admin@veritas.io") ?? createUser({
       name: "Avery Stone",
       email: "admin@veritas.io",
       passwordHash: bcrypt.hashSync("admin123", 10),
@@ -574,7 +514,7 @@ function seedDemoData() {
       organizationId: org.id,
     });
 
-    const instructor = createUser({
+    const instructor = getUserByEmail("instructor@veritas.io") ?? createUser({
       name: "Dr. Nia Ross",
       email: "instructor@veritas.io",
       passwordHash: bcrypt.hashSync("instructor123", 10),
@@ -582,7 +522,7 @@ function seedDemoData() {
       organizationId: org.id,
     });
 
-    const student = createUser({
+    const student = getUserByEmail("student@veritas.io") ?? createUser({
       name: "Milo Hart",
       email: "student@veritas.io",
       passwordHash: bcrypt.hashSync("student123", 10),
@@ -590,20 +530,49 @@ function seedDemoData() {
       organizationId: org.id,
     });
 
-    createDocument({
-      title: "Existentialism and Choice",
-      content: "The authentic writer is not defined by the speed of output but by the discipline of revision. A living argument is built under pressure, uncertainty, and the willingness to admit complexity.",
-      status: "submitted",
-      documentType: "essay",
-      ownerId: student.id,
+    const existingCourse = db.prepare("SELECT * FROM courses WHERE join_code = ?").get("JOS2025") as Record<string, unknown> | undefined;
+    const course = existingCourse ?? createCourse({
       organizationId: org.id,
+      title: "Academic Integrity Studio",
+      code: "AIS 101",
+      joinCode: "JOS2025",
+      instructorId: instructor.id,
     });
 
-    return { org, admin, instructor, student };
+    if (!db.prepare("SELECT 1 FROM assignments WHERE course_id = ? LIMIT 1").get((course as Record<string, unknown>)?.id ?? "")) {
+      createAssignment({
+        courseId: String((course as Record<string, unknown>)?.id ?? ""),
+        title: "Research Reflection Essay",
+        instructions: "Write a reflective essay that demonstrates original thinking and proper citation.",
+        pasteThreshold: 0.15,
+        similarityThreshold: 0.25,
+      });
+    }
+
+    if (!db.prepare("SELECT 1 FROM corpus WHERE title = ? LIMIT 1").get("Academic Integrity Code")) {
+      createCorpusEntry({
+        organizationId: org.id,
+        title: "Academic Integrity Code",
+        sourceUrl: "https://example.edu/academic-integrity",
+        body: "Students must produce original work, cite all sources accurately, and disclose all academic assistance received.",
+      });
+    }
+
+    if (!db.prepare("SELECT 1 FROM documents WHERE owner_id = ? AND title = ? LIMIT 1").get(student.id, "Existentialism and Choice")) {
+      createDocument({
+        title: "Existentialism and Choice",
+        content: "The authentic writer is not defined by the speed of output but by the discipline of revision. A living argument is built under pressure, uncertainty, and the willingness to admit complexity.",
+        status: "submitted",
+        documentType: "essay",
+        ownerId: student.id,
+        organizationId: org.id,
+      });
+    }
+
+    return { org, admin, instructor, student, course };
   }
 
   return { organization };
 }
 
 seedDemoData();
-backfillSubmittedPlagiarismChunks();

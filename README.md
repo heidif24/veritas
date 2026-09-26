@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Veritas
 
-## Getting Started
+Veritas is a browser-native academic authorship verification platform for universities and academic institutions. It captures composition behavior, computes a live authorship health score, checks text similarity against institutional corpus and prior submissions, and seals each submission in a portable .veritas bundle with a SHA-256 hash and an Ed25519 signature.
 
-First, run the development server:
+## Core product goals
+
+- Capture writing process telemetry: key events, deletes, pastes, focus loss, and timing
+- Score organic authorship risk in real time
+- Detect similarity against institutional corpora and other submissions
+- Seal and verify exports with cryptographic integrity checks
+- Support student, faculty, and institutional workflows in a multi-tenant setup
+
+## Key demo accounts
+
+- Admin: admin@veritas.io / admin123
+- Instructor: instructor@veritas.io / instructor123
+- Student: student@veritas.io / student123
+
+## Local setup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open http://localhost:3000
+
+## Environment variables
+
+Create a .env.local file with the following values:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+DATABASE_URL="file:./data/veritas.db"
+NODE_ENV="development"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Production build and tests
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm test
+npm run build
+npm run start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deployment options
 
-## Learn More
+### Docker
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+docker build -t veritas .
+docker run -p 3000:3000 veritas
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Vercel / Node host
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Set the environment variables above
+- Deploy this repository as a Next.js app
+- Ensure the application can write to the local SQLite file or switch to a managed Postgres instance for production multi-tenant use
 
-## Deploy on Vercel
+## Important product flows
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Student writes and saves work inside the editor
+- Document can be sealed via the seal endpoint to produce a signed .veritas JSON bundle
+- External verifiers upload the sealed bundle to /verify to confirm the hash + signature
+- Instructors review submissions and compare them against corpus and assignment thresholds
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project structure
+
+- app/ — routes and pages for student, instructor, admin, and verifier views
+- app/api/ — server routes for auth, documents, verification, and admin data
+- lib/ — data access, auth helpers, and Veritas scoring + seal logic
+- data/ — local SQLite database
+- scripts/ — seeding and helper scripts
+
+## Roadmap notes
+
+This version implements the operational core required for a pilot environment:
+
+- real login and registration flow
+- seeded University of Jos data
+- document sealing and bundle verification
+- health scoring and originality checks
+- instructor/admin route infrastructure
+- deployable Next.js app with Docker support

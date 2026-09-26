@@ -21,6 +21,13 @@
 # production
 /build
 
+# local database runtime files
+*.db-wal
+*.db-shm
+
+data/*.db-wal
+data/*.db-shm
+
 # misc
 .DS_Store
 *.pem

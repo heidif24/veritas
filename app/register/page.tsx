@@ -2,20 +2,50 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const trimmedEmail = email.trim();
+    const formData = new FormData(event.currentTarget);
+    const payload = {
+      name: String(formData.get("name") ?? "").trim(),
+      email: String(formData.get("email") ?? "").trim(),
+      password: String(formData.get("password") ?? ""),
+      role: "STUDENT",
+    };
 
-    if (!trimmedEmail) {
+    if (!payload.name || !payload.email || !payload.password) {
+      setError("Full name, email, and password are required.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+    setLoading(false);
+
+    if (!response.ok) {
+      setError(result.error || "Registration failed.");
       return;
     }
 
     setSubmitted(true);
+    setEmail(payload.email);
+    setTimeout(() => router.push("/login"), 1200);
   }
 
   return (
@@ -92,14 +122,28 @@ export default function RegisterPage() {
                 />
               </div>
 
-              <button type="submit" className="w-full rounded-full bg-violet-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-violet-400">
-                Send confirmation
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-300">Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  minLength={8}
+                  required
+                  placeholder="Create a secure password"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-violet-400"
+                />
+              </div>
+
+              {error ? <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</div> : null}
+
+              <button type="submit" disabled={loading} className="w-full rounded-full bg-violet-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-violet-400 disabled:opacity-60">
+                {loading ? "Creating account..." : "Create account"}
               </button>
             </form>
 
             {submitted ? (
               <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-                Confirmation sent to <span className="font-semibold">{email}</span>. Please check your inbox to activate your account.
+                Account created for <span className="font-semibold">{email}</span>. Redirecting to login...
               </div>
             ) : null}
           </div>

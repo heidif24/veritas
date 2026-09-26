@@ -1,84 +1,68 @@
 import crypto from "node:crypto";
 
-type SealDocument = {
+import { computeHealthScore, createVeritasBundle, verifyVeritasBundle } from "@/lib/veritas";
+
+export function createDocumentSeal(document: {
   title: string;
   content: string;
   ownerId: string;
   organizationId?: string | null;
   status?: string;
+  ops?: Array<Record<string, unknown>>;
   telemetry?: Record<string, unknown>;
-};
-
-const signingKeys = crypto.generateKeyPairSync("ed25519");
-
-function canonicalize(value: unknown) {
-  return JSON.stringify(value);
-}
-
-function buildSealPayload(document: SealDocument) {
-  return {
+  assignmentId?: string;
+}) {
+  const keyPair = crypto.generateKeyPairSync("ed25519");
+  const payload = {
+    authorId: document.ownerId,
     title: document.title,
-    content: document.content,
-    ownerId: document.ownerId,
-    organizationId: document.organizationId ?? null,
-    status: document.status ?? "draft",
+    text: document.content,
+    ops: document.ops ?? [],
     telemetry: document.telemetry ?? {},
-    version: "veritas-v1",
+    assignmentId: document.assignmentId ?? undefined,
+    sealedAt: new Date().toISOString(),
+  };
+
+  const bundle = createVeritasBundle(payload, keyPair);
+  const health = computeHealthScore(document.content, document.ops ?? []);
+
+  return {
+    hash: bundle.sha256,
+    payload: bundle.payload,
+    signature: bundle.signature,
+    publicKeyPem: bundle.publicKeyPem,
+    health,
+    bundle,
   };
 }
 
-function hashSealPayload(payload: ReturnType<typeof buildSealPayload>) {
-  return crypto.createHash("sha256").update(canonicalize(payload)).digest("hex");
-}
-
-function getPrivateKey() {
-  const configuredKey = process.env.VERITAS_PRIVATE_KEY;
-  if (configuredKey) return crypto.createPrivateKey(configuredKey);
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("VERITAS_PRIVATE_KEY must be configured in production");
+export function verifyDocumentSeal(input: {
+  title: string;
+  content: string;
+  ownerId: string;
+  organizationId?: string | null;
+  status?: string;
+  sealedHash?: string | null;
+  bundle?: { payload?: { text?: string; authorId?: string }; sha256?: string; signature?: string; publicKeyPem?: string } | null;
+}) {
+  if (!input.sealedHash) {
+    return { valid: false, reason: "No seal present" };
   }
-  return signingKeys.privateKey;
-}
 
-export function createDocumentSeal(document: SealDocument) {
-  const payload = buildSealPayload(document);
-  const hash = hashSealPayload(payload);
-  const signature = crypto.sign(null, Buffer.from(hash, "hex"), getPrivateKey()).toString("base64");
-  return { hash, signature, payload };
-}
-
-export function verifyDocumentSeal(input: SealDocument & { sealedHash?: string | null; signature?: string | null }) {
-  const payload = buildSealPayload({
+  const produced = createDocumentSeal({
     title: input.title,
     content: input.content,
     ownerId: input.ownerId,
     organizationId: input.organizationId,
     status: input.status,
-    telemetry: input.telemetry,
   });
-  const hash = hashSealPayload(payload);
 
-  if (!input.sealedHash || !input.signature) {
-    return { valid: false, reason: "No complete seal present" };
-  }
-
-  const configuredPublicKey = process.env.VERITAS_PUBLIC_KEY;
-  if (!configuredPublicKey && process.env.NODE_ENV === "production") {
-    return { valid: false, reason: "VERITAS_PUBLIC_KEY must be configured in production" };
-  }
-  const publicKey = configuredPublicKey ? crypto.createPublicKey(configuredPublicKey) : signingKeys.publicKey;
-  const signatureValid = crypto.verify(
-    null,
-    Buffer.from(input.sealedHash, "hex"),
-    publicKey,
-    Buffer.from(input.signature, "base64"),
-  );
-
+  const valid = produced.hash === input.sealedHash;
   return {
-    valid: hash === input.sealedHash && signatureValid,
-    hash,
-    reason: hash === input.sealedHash && signatureValid
-      ? "Document hash and Ed25519 signature match the recorded seal"
-      : "Document integrity broken post-export",
+    valid,
+    hash: produced.hash,
+    reason: valid ? "Document hash matches the recorded seal" : "Document integrity broken post-export",
   };
 }
+
+export { computeHealthScore, createVeritasBundle, verifyVeritasBundle };
