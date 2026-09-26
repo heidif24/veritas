@@ -1,50 +1,67 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
-
 import { createUser, getUserByEmail } from "@/lib/db";
+import {
+  clientIp,
+  isValidEmail,
+  pruneRateBuckets,
+  rateLimit,
+  sanitizePlainText,
+  validatePassword,
+  withSecurityHeaders,
+} from "@/lib/security";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  pruneRateBuckets();
+  const ip = clientIp(request);
+  const limited = rateLimit(`register:${ip}`, 5, 60 * 60 * 1000);
+  if (limited) return withSecurityHeaders(limited);
+
   const body = await request.json().catch(() => ({}));
-  const name = String(body.name ?? "").trim();
-  const email = String(body.email ?? "").trim().toLowerCase();
+  const name = sanitizePlainText(String(body.name ?? ""), 120);
+  const email = sanitizePlainText(String(body.email ?? "").toLowerCase(), 254);
   const password = String(body.password ?? "");
-  const role = String(body.role ?? "STUDENT").toUpperCase();
+  let role = String(body.role ?? "STUDENT").toUpperCase();
+
+  if (role === "ADMIN") role = "STUDENT";
+  if (!["INSTRUCTOR", "STUDENT", "PUBLISHER"].includes(role)) role = "STUDENT";
 
   if (!name || !email || !password) {
-    return NextResponse.json({ error: "Name, email, and password are required." }, { status: 400 });
+    return withSecurityHeaders(
+      NextResponse.json({ error: "Name, email, and password are required." }, { status: 400 }),
+    );
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json({ error: "Please provide a valid email address." }, { status: 400 });
+  if (!isValidEmail(email)) {
+    return withSecurityHeaders(
+      NextResponse.json({ error: "Please provide a valid email address." }, { status: 400 }),
+    );
   }
 
-  if (password.length < 8) {
-    return NextResponse.json({ error: "Password must be at least 8 characters long." }, { status: 400 });
+  const pwError = validatePassword(password);
+  if (pwError) {
+    return withSecurityHeaders(NextResponse.json({ error: pwError }, { status: 400 }));
   }
 
   if (getUserByEmail(email)) {
-    return NextResponse.json({ error: "An account with that email already exists." }, { status: 409 });
+    return withSecurityHeaders(
+      NextResponse.json({ error: "An account with that email already exists." }, { status: 409 }),
+    );
   }
 
-  const normalizedRole = ["ADMIN", "INSTRUCTOR", "STUDENT", "PUBLISHER"].includes(role) ? role : "STUDENT";
   const user = createUser({
     name,
     email,
-    passwordHash: await bcrypt.hash(password, 10),
-    role: normalizedRole as "ADMIN" | "INSTRUCTOR" | "STUDENT" | "PUBLISHER",
+    passwordHash: await bcrypt.hash(password, 12),
+    role: role as "INSTRUCTOR" | "STUDENT" | "PUBLISHER",
   });
 
-  return NextResponse.json(
-    {
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    },
-    { status: 201 },
+  return withSecurityHeaders(
+    NextResponse.json(
+      { user: { id: user.id, name: user.name, email: user.email, role: user.role } },
+      { status: 201 },
+    ),
   );
 }

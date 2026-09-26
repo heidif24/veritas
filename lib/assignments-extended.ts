@@ -1,8 +1,10 @@
 import { getDb } from "@/lib/db";
 import { ensureAssignmentColumns, getAssignment, type AssignmentRecord } from "@/lib/assignments";
+import { ensureProctoredColumn } from "@/lib/proctor-assignment";
 
 export function ensureRichAssignmentColumns() {
   ensureAssignmentColumns();
+  ensureProctoredColumn();
   const db = getDb();
   const cols = db.prepare(`PRAGMA table_info(assignments)`).all() as Array<{ name: string }>;
   const names = new Set(cols.map((c) => c.name));
@@ -30,6 +32,7 @@ export function createRichAssignment(input: {
   kind?: string;
   timeLimitMinutes?: number | null;
   objectives?: unknown[];
+  proctored?: boolean;
 }): AssignmentRecord | undefined {
   ensureRichAssignmentColumns();
   const id = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
@@ -38,8 +41,8 @@ export function createRichAssignment(input: {
       `INSERT INTO assignments (
         id, course_id, title, instructions, paste_threshold, similarity_threshold,
         due_at, max_attempts, allow_resubmit, genre, require_seal, group_work, rubric_json,
-        kind, time_limit_minutes, objectives_json
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        kind, time_limit_minutes, objectives_json, proctored
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       id,
@@ -58,6 +61,7 @@ export function createRichAssignment(input: {
       input.kind ?? "essay",
       input.timeLimitMinutes ?? null,
       JSON.stringify(input.objectives ?? []),
+      input.proctored ? 1 : 0,
     );
   return getAssignment(id);
 }
