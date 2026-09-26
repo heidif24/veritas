@@ -1,25 +1,28 @@
 import Link from "next/link";
 import { VeritasLogo } from "./veritas-logo";
+import { LanguageSwitcher } from "./language-switcher";
 
 export function SiteHeader() {
   const navItems = [
     { label: "Product", href: "/platform" },
-    { label: "For universities", href: "/universities" },
+    { label: "Universities", href: "/universities" },
+    { label: "Authors", href: "/authors" },
+    { label: "Publishers", href: "/publishers" },
     { label: "Pricing", href: "/pricing" },
     { label: "Verify", href: "/verify" },
   ];
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/85 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <VeritasLogo href="/" size="md" />
 
-        <nav className="hidden flex-1 items-center justify-center gap-0.5 text-sm text-slate-600 md:flex">
+        <nav className="hidden flex-1 items-center justify-center gap-0.5 text-sm text-slate-600 lg:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-full px-3.5 py-2 font-medium transition hover:bg-slate-100 hover:text-slate-900"
+              className="rounded-full px-3 py-2 font-medium transition hover:bg-slate-100 hover:text-slate-900"
             >
               {item.label}
             </Link>
@@ -27,9 +30,10 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageSwitcher />
           <Link
             href="/login"
-            className="rounded-full px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 sm:px-4 sm:text-sm"
+            className="rounded-full px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 sm:text-sm"
           >
             Sign in
           </Link>
