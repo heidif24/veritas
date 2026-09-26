@@ -3,58 +3,72 @@ import { submissionRows } from "../../../data";
 
 export default function AssignmentPage() {
   return (
-    <div className="min-h-screen bg-slate-950 px-6 py-10 text-slate-100">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex items-center justify-between">
+    <main className="min-h-screen bg-white text-slate-900">
+      <section className="mx-auto max-w-7xl px-6 pb-8 pt-14">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Assignment grading queue</p>
-            <h1 className="mt-2 text-3xl font-black text-white">Existentialism Term Paper</h1>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-700">Assignment queue</p>
+            <h1 className="mt-2 text-3xl font-black text-slate-900">Existentialism Term Paper</h1>
+            <p className="mt-2 text-slate-600">Review submissions with provenance and integrity signals.</p>
           </div>
-          <Link href="/instructor/report/S-101" className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950">Inspect report</Link>
-        </header>
+          <Link
+            href="/instructor/report/S-101"
+            className="inline-flex rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+          >
+            Open sample report
+          </Link>
+        </div>
+      </section>
 
-        <div className="overflow-hidden rounded-[28px] border border-white/10 bg-slate-900/70">
-          <div className="grid grid-cols-[1fr_320px]">
-            <div className="p-6">
-              <div className="grid gap-4">
-                {submissionRows.map((row) => (
-                  <div key={row.id} className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">{row.id}</div>
-                        <h2 className="mt-2 text-xl font-bold text-white">{row.student}</h2>
-                      </div>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-200">{row.status}</span>
+      <section className="mx-auto max-w-7xl px-6 pb-20">
+        <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+          <div className="grid lg:grid-cols-[1fr_280px]">
+            <div className="space-y-4 p-6">
+              {submissionRows.map((row) => (
+                <div key={row.id} className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{row.id}</div>
+                      <h2 className="mt-1 text-lg font-bold text-slate-900">{row.student}</h2>
                     </div>
-                    <p className="mt-3 text-sm text-slate-300">{row.title}</p>
-                    <div className="mt-4 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-slate-400">
-                      <span>Authenticity score</span>
-                      <span className="text-white">{row.score}</span>
-                    </div>
+                    <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
+                      {row.status}
+                    </span>
                   </div>
-                ))}
-              </div>
+                  <p className="mt-2 text-sm text-slate-600">{row.title}</p>
+                  <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                    <span>Authenticity</span>
+                    <span className="font-semibold text-slate-900">{row.score}/100</span>
+                  </div>
+                  <Link
+                    href={`/instructor/report/${row.id}`}
+                    className="mt-3 inline-block text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+                  >
+                    View report →
+                  </Link>
+                </div>
+              ))}
             </div>
 
-            <aside className="border-l border-white/10 bg-slate-950/50 p-6">
-              <p className="text-xs uppercase tracking-[0.2em] text-violet-200">Risk summary</p>
-              <div className="mt-4 space-y-4">
+            <aside className="border-t border-slate-100 bg-slate-50 p-6 lg:border-l lg:border-t-0">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Queue summary</p>
+              <div className="mt-4 space-y-3">
                 {[
                   ["Organic average", "81%"],
-                  ["Bulk paste flags", "2"],
-                  ["Transcription risks", "1"],
-                  ["Tamper failures", "0"],
+                  ["Flagged pastes", "2"],
+                  ["Needs attention", "1"],
+                  ["Tamper issues", "0"],
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-                    <div className="text-xs uppercase tracking-[0.18em] text-slate-400">{label}</div>
-                    <div className="mt-2 text-2xl font-black text-white">{value}</div>
+                  <div key={label} className="rounded-xl border border-slate-200 bg-white p-4">
+                    <div className="text-xs text-slate-500">{label}</div>
+                    <div className="mt-1 text-xl font-black text-slate-900">{value}</div>
                   </div>
                 ))}
               </div>
             </aside>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

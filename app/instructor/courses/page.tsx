@@ -3,36 +3,56 @@ import { courseCards } from "../../data";
 
 export default function InstructorCoursesPage() {
   return (
-    <div className="min-h-screen bg-slate-950 px-6 py-10 text-slate-100">
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex items-center justify-between">
+    <main className="min-h-screen bg-white text-slate-900">
+      <section className="mx-auto max-w-6xl px-6 pb-8 pt-14">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Instructor portal</p>
-            <h1 className="mt-2 text-3xl font-black text-white">Course and assignment manager</h1>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-700">Faculty</p>
+            <h1 className="mt-2 text-3xl font-black text-slate-900">Courses & assignments</h1>
+            <p className="mt-2 text-slate-600">Review queues, deadlines, and submission health for your classes.</p>
           </div>
-          <button className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950">Create assignment</button>
-        </header>
+          <button type="button" className="rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800">
+            Create assignment
+          </button>
+        </div>
+      </section>
 
+      <section className="mx-auto max-w-6xl px-6 pb-20">
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {courseCards.map((course) => (
-            <div key={course.id} className="rounded-[26px] border border-white/10 bg-slate-900/70 p-6">
-              <div className="flex items-center justify-between">
-                <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-100">{course.term}</span>
-                <span className="text-xs uppercase tracking-[0.2em] text-emerald-200">{course.risk}</span>
+            <div key={course.id} className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800">
+                  {course.term}
+                </span>
+                <span className="text-xs font-medium uppercase tracking-wide text-emerald-700">{course.risk} risk</span>
               </div>
-              <h2 className="mt-5 text-2xl font-bold text-white">{course.title}</h2>
-              <div className="mt-6 space-y-3 text-sm text-slate-300">
-                <div className="flex items-center justify-between"><span>Submissions</span><span className="font-semibold text-white">{course.submissions}</span></div>
-                <div className="flex items-center justify-between"><span>Next deadline</span><span className="font-semibold text-white">{course.nextDeadline}</span></div>
+              <h2 className="mt-5 text-xl font-bold text-slate-900">{course.title}</h2>
+              <div className="mt-5 space-y-2 text-sm text-slate-600">
+                <div className="flex justify-between">
+                  <span>Submissions</span>
+                  <span className="font-semibold text-slate-900">{course.submissions}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Next deadline</span>
+                  <span className="font-semibold text-slate-900">{course.nextDeadline}</span>
+                </div>
               </div>
-              <div className="mt-6 flex gap-3">
-                <Link href="/instructor/assignment/a-102" className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950">Open queue</Link>
-                <button className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white">Secure dropbox</button>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  href="/instructor/assignment/a-102"
+                  className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Open queue
+                </Link>
+                <button type="button" className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
+                  Dropbox
+                </button>
               </div>
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
