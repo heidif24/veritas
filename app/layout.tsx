@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Veritas | Human-Authenticity and Lineage Verification",
-  description: "Browser-native writing, behavioral telemetry, cryptographic sealing, and public verification for human-authored work.",
+  title: "Veritas — Trusted writing, verified",
+  description: "The platform for academic and professional writing with clear provenance, originality checks, and sealed submissions.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
@@ -26,8 +26,8 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-transparent text-slate-900">
-        <div className="min-h-screen bg-transparent">
+      <body className="min-h-full bg-white text-slate-900">
+        <div className="min-h-screen">
           <SiteHeader />
           <main className="w-full">{children}</main>
           <SiteFooter />
