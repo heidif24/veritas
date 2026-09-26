@@ -1,9 +1,10 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ClipboardEvent, ReactNode } from "react";
 import { PlagiarismSidebar } from "@/components/editor/PlagiarismSidebar";
+import { scoreCompositionHealth, type CompositionOperation } from "@/lib/composition-health";
 
 const initialDraft = `Choice is not an abstract condition; it is the visible residue of decisions made over time.
 
@@ -49,9 +50,8 @@ export default function EditorPage() {
   const [documentTitle, setDocumentTitle] = useState("");
   const [activeTab, setActiveTab] = useState("Draft");
   const [focusLosses, setFocusLosses] = useState(1);
-  const [pasteEvents, setPasteEvents] = useState<PasteEvent[]>([
-    { id: 1, chars: 86, preview: "Quoted note from class reading...", time: "18:05" },
-  ]);
+  const [pasteEvents, setPasteEvents] = useState<PasteEvent[]>([]);
+  const [compositionOperations, setCompositionOperations] = useState<CompositionOperation[]>([]);
   const [sealMessage, setSealMessage] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
   const [similarityScore, setSimilarityScore] = useState(0);
@@ -63,6 +63,7 @@ export default function EditorPage() {
   const [referenceDraft, setReferenceDraft] = useState({ title: "", author: "", url: "", note: "" });
   const [currentDocument, setCurrentDocument] = useState<LoadedDocument | null>(null);
   const [currentSeal, setCurrentSeal] = useState<CurrentSeal | null>(null);
+  const pendingPasteChars = useRef(0);
 
   useEffect(() => {
     if (!params.id) return;
@@ -109,13 +110,13 @@ export default function EditorPage() {
 
   const stats = useMemo(() => {
     const words = draft.trim().split(/\s+/).filter(Boolean).length;
-    const pastedChars = pasteEvents.reduce((total, event) => total + event.chars, 0);
-    const pastedRatio = Math.min(42, Math.round((pastedChars / Math.max(draft.length, 1)) * 100));
-    const organicRatio = Math.max(52, 98 - pastedRatio - focusLosses * 2);
-    const transcriptionRisk = organicRatio > 88 ? "Low" : organicRatio > 72 ? "Moderate" : "High";
+    const health = scoreCompositionHealth(compositionOperations, focusLosses);
+    const organicRatio = Math.round(health.organicRatio * 100);
+    const pastedRatio = Math.round(health.pastedRatio * 100);
+    const transcriptionRisk = health.risk === "organic" ? "Low" : health.risk === "mixed" ? "Moderate" : "High";
 
-    return { words, pastedRatio, organicRatio, transcriptionRisk };
-  }, [draft, focusLosses, pasteEvents]);
+    return { words, pastedRatio, organicRatio, transcriptionRisk, health };
+  }, [compositionOperations, draft, focusLosses]);
 
   const title = documentTitle || decodeURIComponent(params.id ?? "untitled-draft").replace(/-/g, " ");
 
@@ -149,6 +150,8 @@ export default function EditorPage() {
     const text = event.clipboardData.getData("text");
     if (text.length < 40) return;
 
+    pendingPasteChars.current = text.length;
+    setCompositionOperations((current) => [...current, { timestamp: Date.now(), kind: "paste", chars: text.length }]);
     setPasteEvents((current) => [
       {
         id: Date.now(),
@@ -158,6 +161,18 @@ export default function EditorPage() {
       },
       ...current,
     ]);
+  }
+
+  function handleDraftChange(nextDraft: string) {
+    const delta = nextDraft.length - draft.length;
+    if (pendingPasteChars.current > 0) {
+      pendingPasteChars.current = 0;
+    } else if (delta > 0) {
+      setCompositionOperations((current) => [...current, { timestamp: Date.now(), kind: "type", chars: delta }]);
+    } else if (delta < 0) {
+      setCompositionOperations((current) => [...current, { timestamp: Date.now(), kind: "delete", chars: Math.abs(delta) }]);
+    }
+    setDraft(nextDraft);
   }
 
   async function sealDocument() {
@@ -383,7 +398,7 @@ export default function EditorPage() {
                 </div>
                 <textarea
                   value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
+                  onChange={(event) => handleDraftChange(event.target.value)}
                   onPaste={handlePaste}
                   onBlur={() => setFocusLosses((current) => current + 1)}
                   className="relative h-full w-full resize-none bg-transparent p-5 text-base leading-8 text-transparent caret-white outline-none ring-0 selection:bg-cyan-400/30 placeholder:text-slate-500"
@@ -507,7 +522,11 @@ export default function EditorPage() {
                 <div className="flex items-center justify-between"><span>Pasted ratio</span><span className="font-semibold text-white">{stats.pastedRatio}%</span></div>
                 <div className="flex items-center justify-between"><span>Focus losses</span><span className="font-semibold text-white">{focusLosses}</span></div>
                 <div className="flex items-center justify-between"><span>AI transcription risk</span><span className="font-semibold text-white">{stats.transcriptionRisk}</span></div>
+                <div className="flex items-center justify-between"><span>Median typing interval</span><span className="font-semibold text-white">{stats.health.medianFlightMs ? `${Math.round(stats.health.medianFlightMs)} ms` : "Not enough data"}</span></div>
               </div>
+              <ul className="mt-5 space-y-2 border-t border-white/10 pt-4 text-xs leading-5 text-slate-400">
+                {stats.health.notes.map((note) => <li key={note}>{note}</li>)}
+              </ul>
             </div>
 
             <div className="rounded-[28px] border border-white/10 bg-slate-900/75 p-5">
