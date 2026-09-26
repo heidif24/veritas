@@ -3,44 +3,29 @@
 import Link from "next/link";
 import { ChangeEvent, useMemo, useState } from "react";
 
-const verificationChecks = [
+const initialChecks = [
   { label: "Document status", value: "Awaiting file" },
-  { label: "Review queue", value: "Pending" },
-  { label: "Offline tamper check", value: "Pending" },
-  { label: "Integrity confidence", value: "Pending" },
+  { label: "Signature", value: "Pending" },
+  { label: "Integrity", value: "Pending" },
+  { label: "Confidence", value: "Pending" },
 ];
 
 export default function VerifyPage() {
   const [status, setStatus] = useState("Awaiting file");
-  const [summary, setSummary] = useState("Upload a sealed document bundle to confirm provenance.");
-  const [checks, setChecks] = useState(verificationChecks);
+  const [summary, setSummary] = useState("Upload a sealed Veritas package to confirm authenticity.");
+  const [checks, setChecks] = useState(initialChecks);
 
   const verificationState = useMemo(() => {
-    if (status === "Sealed") {
-      return {
-        tone: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
-        label: "Sealed",
-      };
+    if (status === "Verified") {
+      return { tone: "border-emerald-200 bg-emerald-50 text-emerald-800", label: "Verified" };
     }
-
-    if (status === "CRITICAL TAMPER ALERT") {
-      return {
-        tone: "border-red-500/20 bg-red-500/10 text-red-200",
-        label: "CRITICAL TAMPER ALERT",
-      };
+    if (status === "Failed") {
+      return { tone: "border-red-200 bg-red-50 text-red-800", label: "Verification failed" };
     }
-
-    if (status === "Review") {
-      return {
-        tone: "border-amber-500/20 bg-amber-500/10 text-amber-200",
-        label: "Review",
-      };
+    if (status === "Invalid") {
+      return { tone: "border-amber-200 bg-amber-50 text-amber-800", label: "Invalid file" };
     }
-
-    return {
-      tone: "border-slate-500/20 bg-slate-500/10 text-slate-200",
-      label: "Awaiting file",
-    };
+    return { tone: "border-slate-200 bg-slate-50 text-slate-700", label: "Awaiting file" };
   }, [status]);
 
   async function handleFile(event: ChangeEvent<HTMLInputElement>) {
@@ -59,80 +44,76 @@ export default function VerifyPage() {
       const result = await response.json();
 
       if (result.ok && result.status === "sealed") {
-        setStatus("Sealed");
-        setSummary("This bundle has a valid hash and Ed25519 signature. The document has not been tampered with after sealing.");
+        setStatus("Verified");
+        setSummary("This package has a valid signature and matching content hash. The document has not been altered after sealing.");
         setChecks([
           { label: "Document status", value: "Sealed" },
-          { label: "Review queue", value: "Pass" },
-          { label: "Offline tamper check", value: "Passed" },
-          { label: "Integrity confidence", value: "High" },
+          { label: "Signature", value: "Valid" },
+          { label: "Integrity", value: "Matched" },
+          { label: "Confidence", value: "High" },
         ]);
         return;
       }
 
-      setStatus("CRITICAL TAMPER ALERT");
-      setSummary(result.result?.reason || "The document bundle failed validation and was altered after sealing.");
+      setStatus("Failed");
+      setSummary(result.result?.reason || "This package could not be validated. The content may have been changed after sealing.");
       setChecks([
-        { label: "Document status", value: "Tampered" },
-        { label: "Review queue", value: "Fail" },
-        { label: "Offline tamper check", value: "Failed" },
-        { label: "Integrity confidence", value: "Low" },
+        { label: "Document status", value: "Altered" },
+        { label: "Signature", value: "Invalid" },
+        { label: "Integrity", value: "Mismatch" },
+        { label: "Confidence", value: "Low" },
       ]);
     } catch {
-      setStatus("Review");
-      setSummary("The file was not a valid Veritas bundle. Please upload a signed .veritas JSON export.");
+      setStatus("Invalid");
+      setSummary("This file is not a valid Veritas package. Please upload a signed .veritas JSON export.");
+      setChecks(initialChecks);
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 px-6 py-12 text-slate-100">
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-white">Veritas</Link>
-          <div className="flex gap-3">
-            <Link href="/app/dashboard" className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white">Return to workspace</Link>
+    <main className="min-h-screen bg-white text-slate-900">
+      <section className="mx-auto max-w-6xl px-6 pb-8 pt-16">
+        <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-700">Public verification</p>
+        <h1 className="mt-4 max-w-2xl text-4xl font-black tracking-tight text-slate-900 md:text-5xl">
+          Confirm a document is authentic
+        </h1>
+        <p className="mt-4 max-w-xl text-lg leading-8 text-slate-600">
+          Upload a sealed Veritas package to validate its signature and integrity. Results are immediate.
+        </p>
+      </section>
+
+      <section className="mx-auto grid max-w-6xl gap-8 px-6 pb-24 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="rounded-[22px] border border-dashed border-cyan-300 bg-cyan-50/40 p-12 text-center">
+            <p className="text-lg font-semibold text-slate-900">Drop your package here</p>
+            <p className="mt-2 text-sm text-slate-500">Signed .veritas JSON export</p>
+            <label className="mt-6 inline-flex cursor-pointer rounded-full bg-slate-900 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800">
+              Select file
+              <input type="file" className="hidden" accept=".json,.veritas" onChange={handleFile} />
+            </label>
           </div>
-        </header>
-
-        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="rounded-[30px] border border-white/10 bg-slate-900/70 p-8">
-            <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">Public verifier</p>
-            <h1 className="mt-4 text-4xl font-black text-white">Check document authenticity.</h1>
-            <p className="mt-4 max-w-xl text-base leading-7 text-slate-300">
-              Upload a signed Veritas bundle to validate the SHA-256 hash and Ed25519 signature. The result is instant and unambiguous.
-            </p>
-
-            <div className="mt-8 rounded-[24px] border border-dashed border-cyan-400/35 bg-slate-950/50 p-10 text-center">
-              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-2xl">↥</div>
-              <p className="text-lg font-semibold text-white">Drop your verification bundle here</p>
-              <p className="mt-2 text-sm text-slate-400">Signed .veritas JSON export</p>
-              <label className="mt-6 inline-flex cursor-pointer rounded-full bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950">
-                Select file
-                <input type="file" className="hidden" onChange={handleFile} />
-              </label>
-            </div>
-          </section>
-
-          <aside className="rounded-[30px] border border-white/10 bg-slate-900/70 p-6">
-            <p className="text-xs uppercase tracking-[0.22em] text-violet-200">Verification result</p>
-            <div className={`mt-4 rounded-2xl border p-4 ${verificationState.tone}`}>
-              <div className="text-sm uppercase tracking-[0.2em]">Status</div>
-              <div className="mt-3 text-3xl font-black text-white">{verificationState.label}</div>
-            </div>
-
-            <p className="mt-4 text-sm leading-7 text-slate-300">{summary}</p>
-
-            <div className="mt-6 space-y-3">
-              {checks.map((check) => (
-                <div key={check.label} className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3">
-                  <span className="text-sm text-slate-300">{check.label}</span>
-                  <span className="text-sm font-semibold text-white">{check.value}</span>
-                </div>
-              ))}
-            </div>
-          </aside>
         </div>
-      </div>
-    </div>
+
+        <aside className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Result</p>
+          <div className={`mt-4 rounded-2xl border p-4 ${verificationState.tone}`}>
+            <div className="text-xs font-semibold uppercase tracking-[0.16em]">Status</div>
+            <div className="mt-2 text-2xl font-black">{verificationState.label}</div>
+          </div>
+          <p className="mt-4 text-sm leading-7 text-slate-600">{summary}</p>
+          <div className="mt-6 space-y-3">
+            {checks.map((check) => (
+              <div key={check.label} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <span className="text-sm text-slate-600">{check.label}</span>
+                <span className="text-sm font-semibold text-slate-900">{check.value}</span>
+              </div>
+            ))}
+          </div>
+          <Link href="/" className="mt-6 inline-block text-sm font-medium text-cyan-700 hover:text-cyan-800">
+            ← Back to home
+          </Link>
+        </aside>
+      </section>
+    </main>
   );
 }
