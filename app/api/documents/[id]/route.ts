@@ -43,7 +43,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const body = await request.json();
-    const nextReferences = Array.isArray(body.references) ? body.references : currentDocument.references;
+    const nextReferences = Array.isArray(body.references) ? body.references : currentDocument.references ?? [];
     const document = await prisma.document.update({
       where: { id },
       data: {
@@ -54,6 +54,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         references: nextReferences,
       },
     });
+
+    if (!document) {
+      return NextResponse.json({ error: "Document not found" }, { status: 404 });
+    }
 
     if (body.content !== undefined || body.title !== undefined || Array.isArray(body.references)) {
       const revisionCreated = createDocumentRevision(id, document.title, document.content, nextReferences);

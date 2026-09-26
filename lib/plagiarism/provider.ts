@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { buildWindowHashes, createMatchRecord, normalizeText, tokenize, type PlagiarismCheckResult, type PlagiarismMatch } from "./chunker";
 
 export type IndexedSubmission = {

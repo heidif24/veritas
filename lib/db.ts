@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
+import { buildWindowHashes } from "@/lib/plagiarism/chunker";
 
 const dbDir = path.join(process.cwd(), "data");
 fs.mkdirSync(dbDir, { recursive: true });
@@ -12,7 +13,7 @@ db.pragma("journal_mode = WAL");
 function ensureColumn(tableName: string, columnName: string, definition: string) {
   const columns = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
   if (!columns.some((column) => column.name === columnName)) {
-    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition};`);
+    db.exec(`ALTER TABLE ${tableName} ADD COLUMN "${columnName}" ${definition};`);
   }
 }
 
@@ -148,9 +149,35 @@ db.exec(`
     FOREIGN KEY (actor_id) REFERENCES users(id),
     FOREIGN KEY (document_id) REFERENCES documents(id)
   );
+
+  CREATE TABLE IF NOT EXISTS document_revisions (
+    id TEXT PRIMARY KEY,
+    document_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    "references" TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (document_id) REFERENCES documents(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS plagiarism_checks (
+    id TEXT PRIMARY KEY,
+    document_id TEXT NOT NULL,
+    organization_id TEXT NOT NULL,
+    overall_score REAL NOT NULL DEFAULT 0,
+    matched_segments TEXT NOT NULL DEFAULT '[]',
+    checked_words INTEGER NOT NULL DEFAULT 0,
+    provider TEXT NOT NULL DEFAULT 'institutional-submission-index',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (document_id) REFERENCES documents(id),
+    FOREIGN KEY (organization_id) REFERENCES organizations(id)
+  );
 `);
 
 ensureColumn("organizations", "domain", "TEXT");
+ensureColumn("documents", "references", "TEXT NOT NULL DEFAULT '[]'");
+ensureColumn("documents", "sealed_signature", "TEXT");
+ensureColumn("documents", "telemetry_json", "TEXT DEFAULT '{}'");
 
 export type Role = "ADMIN" | "INSTRUCTOR" | "STUDENT" | "PUBLISHER";
 
@@ -159,6 +186,7 @@ export type OrganizationRow = {
   name: string;
   slug: string;
   domain: string | null;
+  organization_type?: string | null;
   created_at: string;
 };
 
@@ -190,6 +218,7 @@ export type DocumentRow = {
   organization_id: string | null;
   sealed_hash: string | null;
   integrity_status: string;
+  references?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -239,7 +268,7 @@ export function createUser(input: { name: string; email: string; passwordHash: s
   return created;
 }
 
-export function createOrganization(name: string, slug: string, domain?: string | null): OrganizationRow {
+export function createOrganization(name: string, slug: string, domain?: string | null, _organizationType?: string | null): OrganizationRow {
   const id = cryptoRandomId();
   db.prepare("INSERT INTO organizations (id, name, slug, domain) VALUES (?, ?, ?, ?)").run(id, name, slug, domain ?? null);
   const created = getOrganizationBySlug(slug);
@@ -300,8 +329,8 @@ export function createDocument(input: { title: string; content: string; status: 
   const id = cryptoRandomId();
   const now = new Date().toISOString();
   db.prepare(
-    "INSERT INTO documents (id, title, content, status, document_type, owner_id, organization_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-  ).run(id, input.title, input.content, input.status, input.documentType, input.ownerId, input.organizationId ?? null, now, now);
+    "INSERT INTO documents (id, title, content, status, document_type, owner_id, organization_id, \"references\", created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  ).run(id, input.title, input.content, input.status, input.documentType, input.ownerId, input.organizationId ?? null, JSON.stringify([]), now, now);
   const created = getDocumentById(id);
   if (!created) {
     throw new Error("Failed to create document");
@@ -309,7 +338,42 @@ export function createDocument(input: { title: string; content: string; status: 
   return created;
 }
 
-export function updateDocument(id: string, updates: Partial<{ title: string; content: string; status: string; documentType: string; sealedHash: string; integrityStatus: string }>) {
+export function createDocumentRevision(documentId: string, title: string, content: string, references: unknown[] = []) {
+  const id = cryptoRandomId();
+  db.prepare(
+    "INSERT INTO document_revisions (id, document_id, title, content, \"references\") VALUES (?, ?, ?, ?, ?)",
+  ).run(id, documentId, title, content, JSON.stringify(references ?? []));
+  return { id, documentId, title, content, references };
+}
+
+export function createPlagiarismCheck(input: { documentId: string; organizationId: string; overallScore: number; matchedSegments: unknown[]; checkedWords: number; provider: string }) {
+  const id = cryptoRandomId();
+  db.prepare(
+    "INSERT INTO plagiarism_checks (id, document_id, organization_id, overall_score, matched_segments, checked_words, provider) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  ).run(
+    id,
+    input.documentId,
+    input.organizationId,
+    input.overallScore,
+    JSON.stringify(input.matchedSegments ?? []),
+    input.checkedWords,
+    input.provider,
+  );
+  return { id, ...input };
+}
+
+export function listSubmittedDocumentsByHashes(organizationId: string, hashes: string[]) {
+  const rows = db.prepare("SELECT id, title, content FROM documents WHERE organization_id = ? AND status = 'submitted' ORDER BY updated_at DESC").all(organizationId) as Array<{ id: string; title: string; content: string }>;
+  if (!hashes.length) return rows;
+
+  const hashSet = new Set(hashes);
+  return rows.filter((row) => {
+    const rowHashes = new Set(buildWindowHashes(row.content, 5));
+    return [...hashSet].some((hash) => rowHashes.has(hash));
+  });
+}
+
+export function updateDocument(id: string, updates: Partial<{ title: string; content: string; status: string; documentType: string; sealedHash: string; integrityStatus: string; references: unknown[] }>) {
   const fields: string[] = [];
   const values: unknown[] = [];
 
@@ -336,6 +400,10 @@ export function updateDocument(id: string, updates: Partial<{ title: string; con
   if (updates.integrityStatus !== undefined) {
     fields.push("integrity_status = ?");
     values.push(updates.integrityStatus);
+  }
+  if (updates.references !== undefined) {
+    fields.push("\"references\" = ?");
+    values.push(JSON.stringify(updates.references ?? []));
   }
 
   fields.push("updated_at = ?");
@@ -394,6 +462,7 @@ function normalizeDocument(row: DocumentRow | undefined) {
     documentType: row.document_type,
     sealedHash: row.sealed_hash,
     integrityStatus: row.integrity_status,
+    references: Array.isArray(JSON.parse(row.references ?? "[]")) ? JSON.parse(row.references ?? "[]") : [],
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -493,6 +562,9 @@ export const prisma = {
   organization: {
     async count() {
       return countRows("organizations").total;
+    },
+    async findMany() {
+      return db.prepare("SELECT * FROM organizations ORDER BY created_at DESC").all() as OrganizationRow[];
     },
   },
 };
