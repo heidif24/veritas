@@ -1,72 +1,60 @@
 import Link from "next/link";
-
-const capabilities = [
-  {
-    title: "One place for policy and people",
-    detail: "Onboard departments, set roles, and keep institutional standards consistent across programs.",
-  },
-  {
-    title: "Review that respects academic judgment",
-    detail: "Faculty see clear provenance and originality signals without replacing their expertise.",
-  },
-  {
-    title: "Exports that travel with trust",
-    detail: "Sealed submissions stay verifiable for external examiners, publishers, and archives.",
-  },
-];
+import { SiteHeader } from "@/app/components/site-header";
+import { SiteFooter } from "@/app/components/site-footer";
 
 export default function UniversitiesPage() {
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      <section className="mx-auto max-w-6xl px-6 pb-12 pt-16">
-        <div className="max-w-2xl">
-          <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-700">For universities</p>
-          <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-900 md:text-5xl">
-            Academic integrity that scales with your institution.
+    <div className="min-h-screen bg-white text-slate-900">
+      <SiteHeader />
+      <main>
+        <section className="mx-auto max-w-6xl px-6 pb-12 pt-16">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-700">For universities</p>
+          <h1 className="mt-4 max-w-2xl text-4xl font-black tracking-tight md:text-5xl">
+            Campus integrity with free student writing once you are onboarded
           </h1>
-          <p className="mt-5 text-lg leading-8 text-slate-600">
-            Veritas helps campuses manage writing, review, and verification with clarity — from first draft to final sealed submission.
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+            Custom institutional agreement. Faculty create assignments, invite students by email, run timed writing or objective checks, and review evidence packages. Students with your domain email write without paying.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/onboarding" className="rounded-full bg-slate-900 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800">
-              Start onboarding
+            <Link href="/onboarding?intent=institution" className="rounded-full bg-slate-900 px-6 py-3 text-sm font-bold text-white hover:bg-slate-800">
+              Discuss institutional pricing
             </Link>
-            <Link href="/pricing" className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-              View pricing
+            <Link href="/instructor/assignments/new" className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              Preview faculty tools
             </Link>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-20">
-        <div className="grid gap-6 md:grid-cols-3">
-          {capabilities.map((item) => (
-            <div key={item.title} className="rounded-[24px] border border-slate-200 bg-white p-7 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-900">{item.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{item.detail}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="border-t border-slate-200 bg-slate-50/80">
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          <h2 className="text-2xl font-black text-slate-900">How institutions use Veritas</h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              "Onboard faculty and set campus policy",
-              "Route student work into review queues",
-              "Support fair originality assessment",
-              "Issue sealed, verifiable exports",
-            ].map((step, i) => (
-              <div key={step} className="rounded-2xl border border-slate-200 bg-white p-5">
-                <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-800">{i + 1}</div>
-                <p className="text-sm leading-6 text-slate-700">{step}</p>
+        <section className="mx-auto max-w-6xl px-6 pb-16">
+          <h2 className="text-xl font-black">LMS connectivity</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+            Veritas implements <strong>LTI Advantage 1.3</strong> endpoints for login, launch, and JWKS. Canvas, Moodle, and Blackboard can launch into the student workspace once your IT team configures client ID, deployment, and platform auth URLs.
+          </p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            {["Canvas", "Moodle", "Blackboard"].map((lms) => (
+              <div key={lms} className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-center text-sm font-bold text-slate-800">
+                {lms}
               </div>
             ))}
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+
+        <section className="border-t border-slate-200 bg-slate-50/80">
+          <div className="mx-auto grid max-w-6xl gap-6 px-6 py-16 md:grid-cols-3">
+            {[
+              ["Faculty", "Create essay, timed writing, or objective assignments. Invite by email. Review evidence and decide."],
+              ["Students", "Free unlimited writing with institutional email. Submit, seal, appeal."],
+              ["Integrity office", "Case queue, appeals desk, corpus, and audit trails."],
+            ].map(([t, d]) => (
+              <div key={t} className="rounded-[24px] border border-slate-200 bg-white p-7 shadow-sm">
+                <h3 className="text-lg font-bold">{t}</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{d}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+      <SiteFooter />
+    </div>
   );
 }
