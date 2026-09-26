@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma, getDb } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { createDocumentSeal } from "@/lib/crypto";
 
@@ -20,27 +20,35 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const ops = Array.isArray(body.ops) ? body.ops : [];
+    const telemetry = body.telemetry ?? {};
+
     const payload = {
       title: document.title,
       content: document.content,
       ownerId: document.ownerId,
       organizationId: document.organizationId,
       status: document.status,
-      ops: Array.isArray(body.ops) ? body.ops : [],
-      telemetry: body.telemetry ?? {},
+      ops,
+      telemetry,
       assignmentId: body.assignmentId ?? id,
     };
 
     const seal = createDocumentSeal(payload);
+    const db = getDb();
+    db.prepare(
+      `UPDATE documents SET sealed_hash = ?, integrity_status = 'verified', status = 'submitted', telemetry_json = ?, updated_at = ? WHERE id = ?`,
+    ).run(seal.hash, JSON.stringify({ ...telemetry, ops }), new Date().toISOString(), id);
 
-    const updated = await prisma.document.update({
-      where: { id },
-      data: {
-        sealedHash: seal.hash,
-        integrityStatus: "verified",
-        status: "submitted",
-      },
-    });
+    try {
+      db.prepare(
+        `INSERT INTO document_revisions (id, document_id, title, content, "references") VALUES (?, ?, ?, ?, ?)`,
+      ).run(crypto.randomUUID().replace(/-/g, "").slice(0, 16), id, document.title, document.content, "[]");
+    } catch {
+      /* non-fatal */
+    }
+
+    const updated = await prisma.document.findUnique({ where: { id } });
 
     return NextResponse.json({
       document: updated,
