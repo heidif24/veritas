@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VeritasLogo } from "./veritas-logo";
 
 const footerGroups = [
   {
@@ -33,12 +34,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-6 py-14">
         <div className="grid gap-10 border-b border-slate-200 pb-10 md:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr]">
           <div>
-            <Link href="/" className="flex items-center gap-3 text-lg font-semibold tracking-wide text-slate-900">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 via-blue-600 to-violet-600 text-sm font-black text-white shadow-lg shadow-cyan-500/25">
-                V
-              </span>
-              Veritas
-            </Link>
+            <VeritasLogo href="/" size="md" />
             <p className="mt-4 max-w-sm text-sm leading-7 text-slate-600">
               The trusted platform for verified academic and professional writing.
             </p>
