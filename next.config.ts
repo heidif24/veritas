@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // better-sqlite3 is a native addon; keep it external so Vercel/serverless can load it
+  serverExternalPackages: ["better-sqlite3"],
   headers: async () => [
     {
       source: "/:path*",
