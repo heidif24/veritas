@@ -1,43 +1,46 @@
+"use client";
+
 import Link from "next/link";
 import { VeritasLogo } from "./veritas-logo";
-
-const footerGroups = [
-  {
-    heading: "Product",
-    links: [
-      { label: "Platform", href: "/platform" },
-      { label: "Verify", href: "/verify" },
-      { label: "Pricing", href: "/pricing" },
-    ],
-  },
-  {
-    heading: "Solutions",
-    links: [
-      { label: "Universities", href: "/universities" },
-      { label: "Faculty", href: "/instructor/courses" },
-      { label: "Publishers", href: "/publisher/pitches" },
-    ],
-  },
-  {
-    heading: "Company",
-    links: [
-      { label: "Onboarding", href: "/onboarding" },
-      { label: "Privacy", href: "/privacy" },
-      { label: "Terms", href: "/terms" },
-    ],
-  },
-];
+import { useLocale } from "./locale-provider";
 
 export function SiteFooter() {
+  const { t } = useLocale();
+
+  const footerGroups = [
+    {
+      heading: t("footer.product"),
+      links: [
+        { label: t("footer.platform"), href: "/platform" },
+        { label: t("nav.verify"), href: "/verify" },
+        { label: t("nav.pricing"), href: "/pricing" },
+      ],
+    },
+    {
+      heading: t("footer.solutions"),
+      links: [
+        { label: t("nav.universities"), href: "/universities" },
+        { label: t("footer.faculty"), href: "/instructor/courses" },
+        { label: t("nav.publishers"), href: "/publisher/pitches" },
+      ],
+    },
+    {
+      heading: t("footer.company"),
+      links: [
+        { label: t("footer.onboarding"), href: "/onboarding" },
+        { label: t("footer.privacy"), href: "/privacy" },
+        { label: t("footer.terms"), href: "/terms" },
+      ],
+    },
+  ];
+
   return (
     <footer className="border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-7xl px-6 py-14">
         <div className="grid gap-10 border-b border-slate-200 pb-10 md:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr]">
           <div>
             <VeritasLogo href="/" size="md" />
-            <p className="mt-4 max-w-sm text-sm leading-7 text-slate-600">
-              The trusted platform for verified academic and professional writing.
-            </p>
+            <p className="mt-4 max-w-sm text-sm leading-7 text-slate-600">{t("footer.tagline")}</p>
           </div>
 
           {footerGroups.map((group) => (
@@ -57,11 +60,17 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-8 flex flex-col gap-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 Veritas. All rights reserved.</p>
+          <p>{t("footer.rights")}</p>
           <div className="flex gap-5">
-            <Link href="/privacy" className="hover:text-slate-900">Privacy</Link>
-            <Link href="/terms" className="hover:text-slate-900">Terms</Link>
-            <Link href="/verify" className="hover:text-slate-900">Verify</Link>
+            <Link href="/privacy" className="hover:text-slate-900">
+              {t("footer.privacy")}
+            </Link>
+            <Link href="/terms" className="hover:text-slate-900">
+              {t("footer.terms")}
+            </Link>
+            <Link href="/verify" className="hover:text-slate-900">
+              {t("nav.verify")}
+            </Link>
           </div>
         </div>
       </div>
