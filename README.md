@@ -37,6 +37,11 @@ Create a .env.local file with the following values:
 ```bash
 DATABASE_URL="file:./data/veritas.db"
 NODE_ENV="development"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+# STRIPE_SECRET_KEY=
+# PAYPAL_CLIENT_ID=
+# PAYPAL_CLIENT_SECRET=
+# PAYPAL_MODE=sandbox
 ```
 
 ## Production build and tests
@@ -47,43 +52,51 @@ npm run build
 npm run start
 ```
 
-## Deployment options
+## Pricing (market)
 
-### Docker
+| Plan | Price | Focus |
+|------|-------|--------|
+| Individual | $15/month | Process monitoring + cryptographic seals |
+| Publisher | $40/month | Process + seal + editorial queues |
+| Institution | Custom | Campus LTI, proctoring, free student writing |
 
-```bash
-docker build -t veritas .
-docker run -p 3000:3000 veritas
-```
+Students at onboarded universities: unlimited free writing.
 
-### Vercel / Node host
+## Payments
 
-- Set the environment variables above
-- Deploy this repository as a Next.js app
-- Ensure the application can write to the local SQLite file or switch to a managed Postgres instance for production multi-tenant use
+Checkout at `/api/payments/checkout` for **Stripe (card)** and **PayPal**.
 
-## Important product flows
+Set `STRIPE_SECRET_KEY`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` from env.
+Without keys, pricing returns a demo success URL so flows can be tested.
 
-- Student writes and saves work inside the editor
-- Document can be sealed via the seal endpoint to produce a signed .veritas JSON bundle
-- External verifiers upload the sealed bundle to /verify to confirm the hash + signature
-- Instructors review submissions and compare them against corpus and assignment thresholds
+Stripe webhook: `POST /api/payments/webhook`  
+PayPal capture: `POST /api/payments/paypal/capture`
 
-## Project structure
+## Product priority
 
-- app/ — routes and pages for student, instructor, admin, and verifier views
-- app/api/ — server routes for auth, documents, verification, and admin data
-- lib/ — data access, auth helpers, and Veritas scoring + seal logic
-- data/ — local SQLite database
-- scripts/ — seeding and helper scripts
+**Primary:** process monitoring + cryptographic sealing  
+**Additional:** AI, plagiarism, proctoring, Canvas/Moodle LTI, fairness
 
-## Roadmap notes
+## Auth (demo)
 
-This version implements the operational core required for a pilot environment:
+| Role | Email | Password |
+|------|-------|----------|
+| Super admin | admin@veritas.io | admin123 |
+| Instructor | instructor@veritas.io | instructor123 |
+| Student | student@veritas.io | student123 |
 
-- real login and registration flow
-- seeded University of Jos data
-- document sealing and bundle verification
-- health scoring and originality checks
-- instructor/admin route infrastructure
-- deployable Next.js app with Docker support
+Protected routes: `/app/*`, `/instructor/*`, `/admin/*`, `/student/*`.
+
+## Firebase path
+
+Current: Next.js + SQLite + cookie sessions. Attach Firebase Auth later via Admin `verifyIdToken` and migrate data to Firestore/Postgres.
+
+## Go-live checklist
+
+- [ ] `npm run build` succeeds
+- [ ] Seed demo users
+- [ ] Set `NEXT_PUBLIC_APP_URL` to production domain
+- [ ] Add Stripe + PayPal production keys
+- [ ] Configure Stripe webhook
+- [ ] Admin can log in and open `/admin/*`
+- [ ] Seal + verify flow works on `/verify`
