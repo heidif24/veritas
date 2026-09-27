@@ -12,7 +12,8 @@ export function SiteFooter() {
       heading: t("footer.product"),
       links: [
         { label: t("footer.platform"), href: "/platform" },
-        { label: "Detect AI & plagiarism", href: "/platform" },
+        { label: "Process · AI · Plagiarism", href: "/platform" },
+        { label: "Proctoring & LMS", href: "/universities" },
         { label: t("nav.verify"), href: "/verify" },
         { label: t("nav.pricing"), href: "/pricing" },
       ],
