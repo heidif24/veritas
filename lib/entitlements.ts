@@ -23,7 +23,7 @@ export function resolveEntitlement(email: string, role: string): {
   }
 
   if (role === "PUBLISHER") {
-    return { plan: "publisher", unlimited: false, reason: "Publisher plan — $750/month." };
+    return { plan: "publisher", unlimited: false, reason: "Publisher plan — $40/month." };
   }
   if (role === "ADMIN" || role === "INSTRUCTOR") {
     return { plan: "institution_custom", unlimited: true, reason: "Institutional custom agreement." };
