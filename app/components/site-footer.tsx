@@ -39,7 +39,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-6 py-14">
         <div className="grid gap-10 border-b border-slate-200 pb-10 md:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr]">
           <div>
-            <VeritasLogo href="/" size="md" />
+            <VeritasLogo href="/" size="md" showTagline />
             <p className="mt-4 max-w-sm text-sm leading-7 text-slate-600">{t("footer.tagline")}</p>
           </div>
 
