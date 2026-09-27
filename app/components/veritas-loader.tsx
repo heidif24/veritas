@@ -3,33 +3,41 @@
 import { useId } from "react";
 
 type VeritasLoaderProps = {
-  /** Full-screen overlay (page boot) vs inline (save button area) */
   fullScreen?: boolean;
   label?: string;
   className?: string;
+  /** Compact mark for inline save states */
+  size?: "sm" | "md" | "lg";
+};
+
+const sizeMap = {
+  sm: { w: 48, h: 54 },
+  md: { w: 72, h: 81 },
+  lg: { w: 96, h: 108 },
 };
 
 /**
- * Signature boot animation: shield fades in, then the verification check
- * draws itself across the crest like a seal being signed.
+ * Signature animation: shield fades/scales in at center, then the verification
+ * check draws itself across the crest like a seal being signed.
  */
 export function VeritasLoader({
   fullScreen = true,
-  label = "Verifying…",
+  label = "Verifying",
   className = "",
+  size = "lg",
 }: VeritasLoaderProps) {
   const uid = useId().replace(/:/g, "");
+  const dim = sizeMap[size];
 
   const mark = (
-    <div className={`flex flex-col items-center gap-5 ${className}`}>
+    <div className={`flex flex-col items-center gap-4 ${className}`}>
       <div className="relative">
-        {/* Soft ambient glow */}
-        <div className="pointer-events-none absolute inset-0 scale-150 rounded-full bg-cyan-400/20 blur-2xl" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/25 blur-2xl" />
 
         <svg
           viewBox="0 0 64 72"
-          width={88}
-          height={99}
+          width={dim.w}
+          height={dim.h}
           aria-hidden
           className="relative drop-shadow-lg"
         >
@@ -56,7 +64,6 @@ export function VeritasLoader({
             </linearGradient>
           </defs>
 
-          {/* Shield — fade + slight scale in */}
           <g className="veritas-shield-enter">
             <path
               d="M32 4c10 4 22 6 26 8v22c0 16-10 28-26 34C16 62 6 50 6 34V12c4-2 16-4 26-8z"
@@ -80,7 +87,6 @@ export function VeritasLoader({
             <path d="M32 24.5l4.2 11.2-4.2 11.8-4.2-11.8L32 24.5z" fill="#0e7490" opacity="0.28" />
           </g>
 
-          {/* Verification stroke — draws on after shield appears */}
           <path
             className="veritas-check-draw"
             d="M15 36.5c4.5 1.5 8.5 5.5 11 10 6.5-11 14-16.5 24-18.5"
@@ -91,7 +97,7 @@ export function VeritasLoader({
             strokeLinejoin="round"
           />
           <path
-            className="veritas-check-draw-hi"
+            className="veritas-check-draw"
             d="M15 36.5c4.5 1.5 8.5 5.5 11 10 6.5-11 14-16.5 24-18.5"
             fill="none"
             stroke="#ecfeff"
@@ -102,40 +108,14 @@ export function VeritasLoader({
         </svg>
       </div>
 
-      <div className="text-center">
-        <p className="text-sm font-semibold tracking-[0.18em] text-slate-800 uppercase">{label}</p>
-        <p className="mt-1 text-xs font-medium tracking-[0.28em] text-slate-400 uppercase">
-          Secure · Authentic · Verified
-        </p>
-      </div>
-
-      <style jsx>{`
-        .veritas-shield-enter {
-          transform-origin: 32px 36px;
-          animation: veritasShieldIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-        .veritas-check-draw,
-        .veritas-check-draw-hi {
-          stroke-dasharray: 64;
-          stroke-dashoffset: 64;
-          animation: veritasCheckDraw 0.85s cubic-bezier(0.4, 0, 0.2, 1) 0.45s forwards;
-        }
-        @keyframes veritasShieldIn {
-          from {
-            opacity: 0;
-            transform: scale(0.82);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        @keyframes veritasCheckDraw {
-          to {
-            stroke-dashoffset: 0;
-          }
-        }
-      `}</style>
+      {fullScreen || label ? (
+        <div className="text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-800">{label}</p>
+          <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+            Secure · Authentic · Verified
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 
@@ -143,7 +123,7 @@ export function VeritasLoader({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-white/92 backdrop-blur-md"
       role="status"
       aria-live="polite"
       aria-label={label}
