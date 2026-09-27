@@ -73,6 +73,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       },
     });
 
+    if (!document) {
+      return withSecurityHeaders(NextResponse.json({ error: "Document not found" }, { status: 404 }));
+    }
+
     if (body.content !== undefined || body.title !== undefined || Array.isArray(body.references)) {
       createDocumentRevision(id, document.title, document.content, nextReferences);
     }
