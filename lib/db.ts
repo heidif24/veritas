@@ -166,7 +166,7 @@ export function getDb(): Database.Database {
     document_id TEXT NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
-    \"references\" TEXT NOT NULL DEFAULT '[]',
+    "references" TEXT NOT NULL DEFAULT '[]',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (document_id) REFERENCES documents(id)
   );
@@ -517,7 +517,18 @@ export const prisma = {
     },
   },
   document: {
-    async findMany({ where }: { where?: { organizationId?: string | null; ownerId?: string } } = {}) {
+    async count() {
+      return countRows("documents").total;
+    },
+    async findMany({
+      where,
+      orderBy,
+      include,
+    }: {
+      where?: { organizationId?: string | null; ownerId?: string };
+      orderBy?: { updatedAt?: "desc" | "asc" };
+      include?: { owner?: boolean };
+    } = {}) {
       let rows: DocumentRow[] = [];
       if (where && typeof where.ownerId === "string") {
         rows = getDb().prepare("SELECT * FROM documents WHERE owner_id = ? ORDER BY updated_at DESC").all(where.ownerId) as DocumentRow[];
@@ -526,14 +537,81 @@ export const prisma = {
       } else {
         rows = getDb().prepare("SELECT * FROM documents ORDER BY updated_at DESC").all() as DocumentRow[];
       }
-      return rows.map((r) => normalizeDocument(r)).filter(Boolean);
+
+      if (orderBy?.updatedAt === "asc") {
+        rows = [...rows].reverse();
+      }
+
+      return rows.map((r) => {
+        const doc = normalizeDocument(r);
+        if (!doc) return null;
+        if (include?.owner) {
+          return { ...doc, owner: normalizeUser(getUserById(r.owner_id)) };
+        }
+        return doc;
+      }).filter(Boolean);
     },
-    async findUnique({ where }: { where?: { id?: string } } = {}) {
+    async findUnique({
+      where,
+      include,
+    }: {
+      where?: { id?: string };
+      include?: { owner?: boolean };
+    } = {}) {
       if (!where?.id) return null;
-      return normalizeDocument(getDocumentById(where.id));
+      const row = getDocumentById(where.id);
+      const doc = normalizeDocument(row);
+      if (!doc) return null;
+      if (include?.owner && row) {
+        return { ...doc, owner: normalizeUser(getUserById(row.owner_id)) };
+      }
+      return doc;
+    },
+    async create({
+      data,
+    }: {
+      data: {
+        title: string;
+        content: string;
+        status?: string;
+        documentType?: string;
+        ownerId: string;
+        organizationId?: string | null;
+      };
+    }) {
+      const created = createDocument({
+        title: data.title,
+        content: data.content,
+        status: data.status ?? "draft",
+        documentType: data.documentType ?? "essay",
+        ownerId: data.ownerId,
+        organizationId: data.organizationId ?? null,
+      });
+      return normalizeDocument(created);
+    },
+    async update({
+      where,
+      data,
+    }: {
+      where: { id: string };
+      data: Partial<{
+        title: string;
+        content: string;
+        status: string;
+        documentType: string;
+        sealedHash: string;
+        integrityStatus: string;
+        references: unknown[];
+      }>;
+    }) {
+      const updated = updateDocument(where.id, data);
+      return normalizeDocument(updated);
     },
   },
   organization: {
+    async count() {
+      return countRows("organizations").total;
+    },
     async findMany() {
       return getDb().prepare("SELECT * FROM organizations ORDER BY created_at DESC").all() as OrganizationRow[];
     },
