@@ -2,218 +2,253 @@
 
 import Link from "next/link";
 
-function Gauge({ percent, label, color }: { percent: number; label: string; color: string }) {
-  const r = 54;
-  const c = 2 * Math.PI * r;
-  const offset = c - (percent / 100) * c * 0.75;
+const features = [
+  ["01", "Process monitoring", "Keystrokes, pastes, focus loss, timing and revision structure — a living composition trail behind every draft."],
+  ["02", "Cryptographic seal", "SHA-256 + Ed25519 sealed .veritas packages. Anyone can verify integrity after handoff."],
+  ["03", "AI segment analysis", "Segment-level signals so review is specific, never a single opaque label."],
+  ["04", "Similarity", "Matches against institutional corpus and prior submissions, sources beside the text."],
+  ["05", "Proctored sessions", "Visibility, fullscreen and focus events. Honest browser evidence, not false lockdown claims."],
+  ["06", "LMS & campus", "LTI 1.3 for Canvas and Moodle, institutional domains, review queues and analytics."],
+];
+
+const steps = [
+  ["Assign", "Faculty set writing or objective tasks in Veritas or through their LMS."],
+  ["Write", "Students draft while the composition trail records quietly in the background."],
+  ["Review", "Process, AI assistance and similarity sit together — flags invite conversation."],
+  ["Seal", "Export a signed .veritas package that anyone can verify, anywhere."],
+];
+
+const plans = [
+  ["Individual", "$15", "/month", "Process monitoring and cryptographic seals for independent writers.", "/register"],
+  ["Publisher", "$40", "/month", "Everything in Individual, plus editorial queues for submissions.", "/pricing"],
+  ["Institution", "Custom", "", "Campus LTI, proctoring, and free unlimited writing for students.", "/universities"],
+];
+
+function SealMark({ className = "" }: { className?: string }) {
   return (
-    <div className="relative mx-auto h-36 w-36">
-      <svg viewBox="0 0 140 140" className="h-full w-full -rotate-[135deg]">
-        <circle cx="70" cy="70" r={r} fill="none" stroke="#e2e8f0" strokeWidth="12" strokeDasharray={`${c * 0.75} ${c}`} strokeLinecap="round" />
-        <circle cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="12" strokeDasharray={`${c * 0.75} ${c}`} strokeDashoffset={offset} strokeLinecap="round" />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-black text-slate-900">{percent}%</span>
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</span>
-      </div>
-    </div>
+    <svg viewBox="0 0 200 200" className={className} aria-hidden>
+      <defs>
+        <path id="ring" d="M100,100 m-72,0 a72,72 0 1,1 144,0 a72,72 0 1,1 -144,0" />
+      </defs>
+      <circle cx="100" cy="100" r="92" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.35" />
+      <circle cx="100" cy="100" r="78" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.2" />
+      <g className="spin-slow" style={{ transformOrigin: "100px 100px" }}>
+        <text fontSize="11" letterSpacing="4" fill="currentColor" fontFamily="var(--font-mono), monospace">
+          <textPath href="#ring">VERITAS · SEALED · ED25519 · SHA-256 · VERIFIED ·</textPath>
+        </text>
+      </g>
+      <text
+        x="100"
+        y="116"
+        textAnchor="middle"
+        fontSize="48"
+        fill="currentColor"
+        fontFamily="var(--font-display), Georgia, serif"
+        fontStyle="italic"
+      >
+        V
+      </text>
+    </svg>
   );
 }
 
 export default function Home() {
   return (
-    <main className="min-h-screen text-slate-900">
-      {/* Hero — premium, clean, inspired by sealed-document design */}
-      <section className="relative overflow-hidden border-b border-slate-100">
-        {/* Soft purple / blue gradient blobs */}
-        <div className="pointer-events-none absolute -right-32 top-0 h-[520px] w-[520px] rounded-full bg-gradient-to-br from-violet-200/50 via-sky-100/40 to-transparent blur-3xl" />
-        <div className="pointer-events-none absolute -left-24 bottom-0 h-[380px] w-[380px] rounded-full bg-gradient-to-tr from-cyan-100/40 via-blue-50/30 to-transparent blur-3xl" />
+    <main className="min-h-screen bg-background text-foreground">
+      {/* Hero */}
+      <section className="paper-grain relative overflow-hidden border-b border-border">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 pb-16 pt-14 sm:px-6 sm:py-24 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:py-28">
+          <div className="rise text-center lg:text-left">
+            <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 font-mono text-[0.65rem] uppercase tracking-wide text-muted-foreground sm:mb-6 sm:text-xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+              Academic authorship verification
+            </p>
+            <h1 className="font-[family-name:var(--font-display)] text-5xl leading-[1.08] tracking-tight sm:text-6xl md:text-7xl">
+              Proof of <em className="text-primary not-italic">authorship</em>,
+              <br />
+              sealed in ink.
+            </h1>
+            <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:mt-8 sm:text-lg lg:mx-0">
+              Veritas records how writing is made, scores authorship in real time, and seals every
+              submission with a signature anyone can verify.
+            </p>
+            <div className="mx-auto mt-8 flex max-w-sm flex-col gap-3 sm:mt-10 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center lg:mx-0 lg:justify-start">
+              <Link
+                href="/verify"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:opacity-95"
+              >
+                Verify a document
+                <span aria-hidden>→</span>
+              </Link>
+              <Link
+                href="/register"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-border bg-card px-7 text-sm font-semibold text-foreground transition hover:bg-secondary"
+              >
+                Start writing free
+              </Link>
+            </div>
+          </div>
 
-        <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-16 md:pb-24 md:pt-20">
-          <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-            {/* Left: copy + CTAs */}
-            <div className="max-w-xl">
-              <h1 className="font-[family-name:var(--font-display)] text-5xl leading-[1.05] tracking-tight text-slate-900 sm:text-6xl md:text-[3.75rem]">
-                Authorship you<br className="hidden sm:block" /> can prove
-              </h1>
-              <p className="mt-6 text-lg leading-8 text-slate-600">
-                Veritas seals academic writing with verifiable integrity.
-                Prove authorship. Build trust. Uphold excellence.
-              </p>
-              <div className="mt-9 flex flex-wrap items-center gap-3">
-                <Link
-                  href="/register"
-                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800"
-                >
-                  Get started
-                  <span aria-hidden>→</span>
-                </Link>
-                <Link
-                  href="/verify"
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-7 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-                >
-                  <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          {/* Sealed document visual */}
+          <div className="rise relative mx-auto w-[88%] max-w-[24rem] sm:w-full sm:max-w-[28rem]" style={{ animationDelay: "0.15s" }}>
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-8 shadow-2xl shadow-foreground/10">
+              <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-border/80 bg-background/90 px-3 py-1.5 font-mono text-[0.65rem] uppercase text-primary shadow-sm backdrop-blur-sm">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                Integrity verified
+              </div>
+              <div className="mt-10 mb-6 flex justify-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
+                  <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                    />
                   </svg>
-                  Verify document
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                <div className="h-2.5 w-full rounded-full bg-secondary" />
+                <div className="h-2.5 w-[92%] rounded-full bg-secondary" />
+                <div className="h-2.5 w-[85%] rounded-full bg-secondary" />
+                <div className="h-2.5 w-[70%] rounded-full bg-secondary" />
+                <div className="mt-4 h-2.5 w-full rounded-full bg-secondary" />
+                <div className="h-2.5 w-[88%] rounded-full bg-secondary" />
+                <div className="h-2.5 w-[60%] rounded-full bg-secondary" />
+              </div>
+              <div className="mt-8 flex items-end justify-between">
+                <div className="font-[family-name:var(--font-display)] text-2xl italic text-muted-foreground">
+                  A. Rivera
+                </div>
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary ring-1 ring-primary/20">
+                  <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Sealed
+                </div>
+              </div>
+            </div>
+            <SealMark className="absolute -bottom-6 -right-3 h-24 w-24 rounded-full bg-background p-1 text-gold sm:-bottom-8 sm:-right-4 sm:h-28 sm:w-28" />
+          </div>
+        </div>
+      </section>
+
+      {/* Platform features */}
+      <section id="platform" className="mx-auto max-w-7xl px-6 py-20 md:py-28">
+        <div className="mb-12 flex flex-wrap items-end justify-between gap-6 md:mb-16">
+          <h2 className="max-w-2xl font-[family-name:var(--font-display)] text-4xl leading-tight md:text-5xl lg:text-6xl">
+            The whole platform, <em className="text-primary">in one record.</em>
+          </h2>
+          <p className="max-w-sm text-muted-foreground">
+            Process capture and sealing come first. Everything else supports a fair, evidence-based review.
+          </p>
+        </div>
+        <div className="grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-2 lg:grid-cols-3">
+          {features.map(([n, t, d]) => (
+            <div key={n} className="group bg-card p-8 transition-colors hover:bg-secondary md:p-10">
+              <span className="font-mono text-xs text-gold">{n}</span>
+              <h3 className="mt-5 font-[family-name:var(--font-display)] text-2xl md:text-3xl">{t}</h3>
+              <p className="mt-3 leading-relaxed text-muted-foreground">{d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how" className="border-t border-border bg-secondary/40">
+        <div className="mx-auto max-w-7xl px-6 py-20 md:py-28">
+          <h2 className="mb-12 font-[family-name:var(--font-display)] text-4xl md:mb-16 md:text-5xl lg:text-6xl">
+            From assignment to <em className="text-primary">verified.</em>
+          </h2>
+          <ol className="grid gap-10 md:grid-cols-4">
+            {steps.map(([t, d], i) => (
+              <li key={t} className="border-t-2 border-foreground pt-6">
+                <span className="font-[family-name:var(--font-display)] text-5xl italic text-gold md:text-6xl">
+                  {i + 1}
+                </span>
+                <h3 className="mt-4 text-xl font-semibold">{t}</h3>
+                <p className="mt-2 leading-relaxed text-muted-foreground">{d}</p>
+              </li>
+            ))}
+          </ol>
+          <blockquote className="mx-auto mt-20 max-w-3xl text-center font-[family-name:var(--font-display)] text-2xl italic leading-snug md:mt-24 md:text-3xl lg:text-4xl">
+            “Flags are evidence for review, not verdicts. Students can read every factor, talk to
+            instructors, and appeal.”
+          </blockquote>
+        </div>
+      </section>
+
+      {/* Pricing teaser */}
+      <section id="pricing" className="border-t border-border">
+        <div className="mx-auto max-w-7xl px-6 py-20 md:py-28">
+          <h2 className="mb-4 font-[family-name:var(--font-display)] text-4xl md:text-5xl lg:text-6xl">
+            Simple pricing.
+          </h2>
+          <p className="mb-12 text-muted-foreground md:mb-14">
+            Students at onboarded universities write free, without limits.
+          </p>
+          <div className="grid gap-6 md:grid-cols-3">
+            {plans.map(([n, p, per, d, href], i) => (
+              <div
+                key={n}
+                className={`flex flex-col rounded-2xl border p-8 md:p-10 ${
+                  i === 1
+                    ? "border-primary bg-primary text-primary-foreground shadow-2xl shadow-primary/25"
+                    : "border-border bg-card"
+                }`}
+              >
+                <h3 className="font-mono text-xs uppercase tracking-widest opacity-70">{n}</h3>
+                <div className="mt-6 font-[family-name:var(--font-display)] text-5xl md:text-6xl">
+                  {p}
+                  <span className="text-lg opacity-60">{per}</span>
+                </div>
+                <p className="mt-4 flex-1 leading-relaxed opacity-80">{d}</p>
+                <Link
+                  href={href as string}
+                  className={`mt-10 rounded-full px-6 py-3 text-center text-sm font-medium transition hover:opacity-90 ${
+                    i === 1 ? "bg-gold text-accent-foreground" : "bg-foreground text-background"
+                  }`}
+                >
+                  {p === "Custom" ? "Talk to us" : "Get started"}
                 </Link>
               </div>
-            </div>
-
-            {/* Right: sealed document card */}
-            <div className="relative flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-sm">
-                {/* Decorative rings */}
-                <div className="pointer-events-none absolute -inset-8 rounded-full bg-gradient-to-br from-violet-200/30 via-sky-100/20 to-transparent blur-2xl" />
-                <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full border border-violet-200/60" />
-                <div className="pointer-events-none absolute -bottom-4 -left-4 h-16 w-16 rounded-full border border-sky-200/50" />
-
-                {/* Card */}
-                <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-8 shadow-[0_25px_80px_-15px_rgba(99,102,241,0.18)]">
-                  {/* Shield icon */}
-                  <div className="mb-6 flex justify-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-sky-500 shadow-lg shadow-violet-500/25">
-                      <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Fake document lines */}
-                  <div className="space-y-2.5">
-                    <div className="h-2.5 w-full rounded-full bg-slate-100" />
-                    <div className="h-2.5 w-[92%] rounded-full bg-slate-100" />
-                    <div className="h-2.5 w-[85%] rounded-full bg-slate-100" />
-                    <div className="h-2.5 w-[70%] rounded-full bg-slate-100" />
-                    <div className="mt-4 h-2.5 w-full rounded-full bg-slate-100" />
-                    <div className="h-2.5 w-[88%] rounded-full bg-slate-100" />
-                    <div className="h-2.5 w-[60%] rounded-full bg-slate-100" />
-                  </div>
-
-                  {/* Signature + Sealed badge */}
-                  <div className="mt-8 flex items-end justify-between">
-                    <div className="font-[family-name:var(--font-display)] text-2xl italic text-slate-400">
-                      A. Rivera
-                    </div>
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200/80">
-                      <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      Sealed
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="border-b border-slate-100 bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-14 md:py-16">
-          <p className="text-center text-xs font-bold uppercase tracking-[0.22em] text-cyan-700">The whole platform</p>
-          <h2 className="mx-auto mt-3 max-w-3xl text-center font-[family-name:var(--font-display)] text-3xl text-slate-900 md:text-4xl">
-            Everything a campus needs for authorship integrity
+      {/* Final CTA */}
+      <section className="border-t border-border bg-card">
+        <div className="mx-auto max-w-7xl px-6 py-16 text-center md:py-20">
+          <h2 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl">
+            Ready to trust the process?
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-center text-base text-slate-600">
-            Process first. Seal always. Everything else — AI, plagiarism, proctoring, LMS — strengthens the same integrity story.
+          <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+            Start free, onboard your campus, or verify a sealed package today.
           </p>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { t: "Process monitoring — primary", d: "Keystrokes, pastes, focus loss, timing, and revision structure — a living composition trail behind every draft. This is the core of Veritas." },
-              { t: "Cryptographic seal — primary", d: "SHA-256 + Ed25519 sealed .veritas packages. Lock the process evidence with the document; anyone verifies integrity after handoff." },
-              { t: "AI detection & assistance", d: "Segment-level AI scores and assistance levels so review is specific, not a single opaque label." },
-              { t: "Plagiarism & corpus", d: "Similarity against institutional corpus and prior submissions, with source matches beside the text." },
-              { t: "Proctored assignments", d: "Secure sessions with visibility, fullscreen, and focus events. Honest browser evidence — not false claims of perfect lockdown." },
-              { t: "Canvas, Moodle & LTI", d: "LTI Advantage 1.3 launch into Veritas. Faculty create assignments in their LMS; students write with full integrity capture." },
-              { t: "Objective questions", d: "Timed quizzes and objective checks alongside writing assignments — one assignment model for mixed assessment." },
-              { t: "University multi-tenant", d: "Institutional domains, free student writing when onboarded, faculty review queues, admin analytics, and policy controls." },
-              { t: "Fairness & appeals", d: "Flags are evidence for review, not verdicts. Students can read factors, talk to instructors, and file appeals." },
-            ].map((card) => (
-              <div key={card.t} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-6 shadow-sm">
-                <div className="text-lg font-[family-name:var(--font-display)] font-semibold text-slate-900">{card.t}</div>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{card.d}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-cyan-100">
-        <div className="mx-auto max-w-7xl px-6 py-16 md:py-20">
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            <div className="order-2 lg:order-1">
-              <div className="rounded-[28px] border border-black/5 bg-white p-6 shadow-xl">
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="text-base font-bold text-slate-900">AI Detected</span>
-                </div>
-                <p className="text-sm text-slate-600">Segment-level signals sit beside the process record — never a single opaque score.</p>
-                <div className="mt-2"><Gauge percent={80} label="AI-Generated" color="#ef4444" /></div>
-              </div>
-            </div>
-            <div className="order-1 lg:order-2">
-              <h2 className="font-[family-name:var(--font-display)] text-4xl leading-tight text-slate-900 md:text-5xl">AI segment analysis</h2>
-              <p className="mt-4 text-base leading-7 text-slate-800/80">
-                Supporting process evidence — not the product. See AI-generated vs assisted vs human at segment level.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-slate-900">
-        <div className="mx-auto max-w-7xl px-6 py-16 md:py-20">
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            <div className="rounded-[28px] border border-white/10 bg-slate-800/80 p-6">
-              <div className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Sealed package</div>
-              <div className="mt-4 font-mono text-xs text-slate-300 break-all">sha256:a3f8…c91e · ed25519 verified</div>
-              <div className="mt-4 text-sm text-slate-400">Process trail + content locked together.</div>
-            </div>
-            <div>
-              <h2 className="font-[family-name:var(--font-display)] text-4xl leading-tight text-white md:text-5xl">Seal once. Verify anywhere.</h2>
-              <p className="mt-4 text-base leading-7 text-slate-300">
-                When work is ready, lock a signed package. Content hash and signature travel with the document.
-                Anyone can verify on the public verify page — no account required.
-              </p>
-              <Link href="/verify" className="mt-6 inline-flex rounded-full bg-cyan-400 px-6 py-3 text-sm font-bold text-slate-900 hover:bg-cyan-300">Verify a sealed package →</Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-slate-50">
-        <div className="mx-auto max-w-7xl px-6 py-16 md:py-20">
-          <p className="text-center text-xs font-bold uppercase tracking-[0.22em] text-cyan-700">How it works</p>
-          <h2 className="mt-3 text-center font-[family-name:var(--font-display)] text-4xl text-slate-900 md:text-5xl">From assignment to verified submission</h2>
-          <div className="mx-auto mt-12 max-w-3xl space-y-3">
-            {[
-              { n: "01", t: "Launch or create the assignment", d: "Faculty set writing or objective tasks in Veritas or via Canvas/Moodle LTI. Optional proctoring and timers." },
-              { n: "02", t: "Students write with process capture", d: "Composition trail, AI/plagiarism signals, and proctor events record in the background while they draft." },
-              { n: "03", t: "Review shared evidence", d: "Instructors see process, AI assistance, similarity, and session events together — flags invite conversation, not automatic guilt." },
-              { n: "04", t: "Seal & safeguard", d: "Export a signed .veritas package. Hash and signature hold after handoff; anyone can verify on the public page." },
-            ].map((s) => (
-              <div key={s.n} className="rounded-2xl border border-slate-200 bg-white px-5 py-5 shadow-sm md:px-6">
-                <div className="flex items-start gap-4">
-                  <span className="font-[family-name:var(--font-display)] text-2xl text-cyan-600">{s.n}</span>
-                  <div>
-                    <h3 className="font-[family-name:var(--font-display)] text-xl text-slate-900">{s.t}</h3>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">{s.d}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="border-t border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-14 text-center">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl text-slate-900 md:text-4xl">Ready to trust the process?</h2>
-          <p className="mx-auto mt-3 max-w-xl text-slate-600">Start free, onboard your campus, or verify a sealed package today.</p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/register" className="rounded-full bg-slate-900 px-7 py-3.5 text-sm font-bold text-white hover:bg-slate-800">Start free</Link>
-            <Link href="/pricing" className="rounded-full border border-slate-200 bg-white px-7 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">View pricing</Link>
-            <Link href="/login" className="rounded-full border border-slate-200 bg-white px-7 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Log in</Link>
+            <Link
+              href="/register"
+              className="rounded-full bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground hover:opacity-95"
+            >
+              Start free
+            </Link>
+            <Link
+              href="/pricing"
+              className="rounded-full border border-border bg-background px-7 py-3.5 text-sm font-semibold hover:bg-secondary"
+            >
+              View pricing
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-full border border-border bg-background px-7 py-3.5 text-sm font-semibold hover:bg-secondary"
+            >
+              Log in
+            </Link>
           </div>
         </div>
       </section>
