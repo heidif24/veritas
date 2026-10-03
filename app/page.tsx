@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useLocale } from "./components/locale-provider";
-import { LogoMark } from "./components/veritas-logo";
 
 function Gauge({ percent, label, color }: { percent: number; label: string; color: string }) {
   const r = 54;
@@ -23,8 +21,6 @@ function Gauge({ percent, label, color }: { percent: number; label: string; colo
 }
 
 export default function Home() {
-  const { t } = useLocale();
-
   return (
     <main className="min-h-screen text-slate-900">
       {/* Hero — premium, clean, inspired by sealed-document design */}
