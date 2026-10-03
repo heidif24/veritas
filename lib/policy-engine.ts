@@ -1,5 +1,6 @@
 /**
  * Assignment / institutional integrity policy evaluation.
+ * Extended with optional device / continuity constraints.
  */
 
 export type IntegrityPolicy = {
@@ -10,6 +11,10 @@ export type IntegrityPolicy = {
   minWordCount: number;
   allowSubmitWhenReview: boolean;
   genre?: "essay" | "lab" | "reflection" | "exam" | "general";
+  /** Assignment-scoped device policy */
+  maxDistinctDevices?: number;
+  maxDistinctIps?: number;
+  requireSingleDevice?: boolean;
 };
 
 export type PolicyInput = {
@@ -19,6 +24,9 @@ export type PolicyInput = {
   aiRiskScore: number;
   sealed: boolean;
   structuralLabel?: string;
+  distinctDevices?: number;
+  distinctIps?: number;
+  continuityLabel?: string;
 };
 
 export type PolicyResult = {
@@ -36,6 +44,9 @@ export const DEFAULT_POLICY: IntegrityPolicy = {
   minWordCount: 40,
   allowSubmitWhenReview: false,
   genre: "general",
+  maxDistinctDevices: undefined,
+  maxDistinctIps: undefined,
+  requireSingleDevice: false,
 };
 
 export function evaluatePolicy(input: PolicyInput, policy: Partial<IntegrityPolicy> = {}): PolicyResult {
@@ -68,6 +79,24 @@ export function evaluatePolicy(input: PolicyInput, policy: Partial<IntegrityPoli
     if (action === "allow") action = p.allowSubmitWhenReview ? "warn" : "block";
   }
 
+  // Assignment-scoped device policy
+  if (p.requireSingleDevice && (input.distinctDevices ?? 1) > 1) {
+    reasons.push("This assignment requires a single device; multiple devices were detected.");
+    if (action !== "block") action = "warn";
+  }
+  if (p.maxDistinctDevices != null && (input.distinctDevices ?? 1) > p.maxDistinctDevices) {
+    reasons.push(`More than ${p.maxDistinctDevices} distinct device(s) used during this assignment window.`);
+    if (action !== "block") action = "warn";
+  }
+  if (p.maxDistinctIps != null && (input.distinctIps ?? 1) > p.maxDistinctIps) {
+    reasons.push(`More than ${p.maxDistinctIps} distinct network(s) / IP(s) detected.`);
+    if (action !== "block") action = "warn";
+  }
+  if (input.continuityLabel === "burst-after-gap" || input.continuityLabel === "fragmented") {
+    reasons.push(`Writing continuity is ${input.continuityLabel} — review recommended.`);
+    if (action === "allow") action = "warn";
+  }
+
   if (!reasons.length) reasons.push("All policy checks passed.");
 
   return {
@@ -85,7 +114,15 @@ export function policyForGenre(genre: IntegrityPolicy["genre"]): IntegrityPolicy
     case "reflection":
       return { ...DEFAULT_POLICY, maxSimilarityPercent: 12, maxPasteRatio: 0.2, genre: "reflection" };
     case "exam":
-      return { ...DEFAULT_POLICY, maxSimilarityPercent: 10, maxPasteRatio: 0.1, maxAiRiskScore: 50, genre: "exam" };
+      return {
+        ...DEFAULT_POLICY,
+        maxSimilarityPercent: 10,
+        maxPasteRatio: 0.1,
+        maxAiRiskScore: 50,
+        requireSingleDevice: true,
+        maxDistinctDevices: 1,
+        genre: "exam",
+      };
     case "essay":
       return { ...DEFAULT_POLICY, maxSimilarityPercent: 18, genre: "essay" };
     default:
