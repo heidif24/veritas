@@ -25,14 +25,14 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Veritas — Authorship you can prove",
+  title: "Veritas — Prove how it was built",
   description:
-    "Veritas seals academic writing with verifiable integrity. Process evidence, cryptographic seals, and fair review for universities, publishers, and authors.",
+    "Stop guessing if AI wrote it. Veritas records a cryptographic process trail and seals academic writing with Ed25519 + SHA-256 so authorship can be verified — not guessed.",
   applicationName: "Veritas",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Veritas",
   },
   icons: {
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: "#050505",
   width: "device-width",
   initialScale: 1,
 };
@@ -53,7 +53,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-white text-slate-900">
+      <body className="min-h-full bg-[#050505] text-zinc-100">
         <LocaleProvider>
           <PwaRegister />
           <BootSplash />
