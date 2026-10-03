@@ -1,10 +1,13 @@
 /**
  * Explainable integrity evidence package — ensemble-backed.
+ * Extended with continuity and privacy-preserving paste-origin signals.
  */
 
 import type { CompositionOperation } from "@/lib/composition-health";
 import { scoreAuthorshipEnsemble } from "@/lib/authorship-ensemble";
 import type { IntegrityPolicy } from "@/lib/policy-engine";
+import { scoreContinuity } from "@/lib/continuity-score";
+import { classifyPasteOrigins } from "@/lib/paste-origin";
 
 export type IntegrityReport = ReturnType<typeof buildIntegrityReport>;
 
@@ -14,6 +17,7 @@ export function buildIntegrityReport(input: {
   text: string;
   ops: CompositionOperation[];
   focusLosses?: number;
+  focusLossTimestamps?: number[];
   baselineText?: string | null;
   sealed?: boolean;
   sealedHash?: string | null;
@@ -22,6 +26,8 @@ export function buildIntegrityReport(input: {
   matches?: Array<{ snippet: string; sourceTitle?: string; similarityPercentage: number; matchedSourceUrl?: string; cited?: boolean }>;
   policy?: Partial<IntegrityPolicy>;
   genre?: IntegrityPolicy["genre"];
+  distinctDevices?: number;
+  distinctIps?: number;
 }) {
   const ensemble = scoreAuthorshipEnsemble({
     text: input.text,
@@ -34,6 +40,9 @@ export function buildIntegrityReport(input: {
     policyOverrides: input.policy,
   });
 
+  const continuity = scoreContinuity(input.ops);
+  const pasteOrigin = classifyPasteOrigins(input.ops, input.focusLossTimestamps ?? []);
+
   const similarityScore = input.similarityScore ?? 0;
   const similarityThreshold = input.similarityThreshold ?? 20;
 
@@ -41,6 +50,14 @@ export function buildIntegrityReport(input: {
   if (ensemble.blendedRisk >= 0.7 || ensemble.policy.action === "block") overall = "critical";
   else if (ensemble.blendedRisk >= 0.45) overall = "elevated";
   else if (ensemble.blendedRisk >= 0.25 || ensemble.policy.action === "warn") overall = "review";
+
+  // Continuity / device soft signals can nudge into review
+  if (overall === "clear" && (continuity.label === "burst-after-gap" || continuity.label === "fragmented")) {
+    overall = "review";
+  }
+  if (overall === "clear" && pasteOrigin.externalBulkEvents >= 2) {
+    overall = "review";
+  }
 
   const headlines = {
     clear: "Evidence is consistent with organic in-platform composition.",
@@ -66,6 +83,8 @@ export function buildIntegrityReport(input: {
     composition: ensemble.composition,
     session: ensemble.session,
     style: ensemble.style,
+    continuity,
+    pasteOrigin,
     factors: ensemble.factors,
     plainLanguageWhy: ensemble.plainLanguageWhy,
     adversarialHints: ensemble.adversarialHints,
@@ -87,6 +106,16 @@ export function buildIntegrityReport(input: {
         severity: ensemble.session.structuralLabel === "suspicious" ? "critical" : ensemble.session.structuralLabel === "bulk-insert" ? "warn" : "info",
       },
       {
+        label: "Continuity",
+        detail: continuity.notes[0] ?? "Continuous drafting",
+        severity: continuity.label === "fragmented" || continuity.label === "burst-after-gap" ? "warn" : "info",
+      },
+      {
+        label: "Paste origin",
+        detail: pasteOrigin.notes[0] ?? "No paste activity",
+        severity: pasteOrigin.externalBulkEvents >= 2 ? "warn" : "info",
+      },
+      {
         label: "Similarity",
         detail: `Overall similarity ${similarityScore}% (policy limit ${similarityThreshold}%).`,
         severity: similarityScore >= similarityThreshold ? "critical" : similarityScore > similarityThreshold * 0.5 ? "warn" : "info",
@@ -106,6 +135,8 @@ export function buildIntegrityReport(input: {
     ],
     methodology: [
       "Ensemble of behavioural, structural, text, style, custody, and policy layers.",
+      "Continuity scores long gaps and post-gap writing bursts.",
+      "Paste origin is classified by size and timing only — clipboard content is never read.",
       "Calibrated confidence bands widen when event streams are sparse.",
       "Session risk and document risk are scored separately.",
       "Citation-aware similarity down-weights quoted material when detected.",
