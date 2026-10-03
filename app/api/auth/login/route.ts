@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { clientIp, isValidEmail, pruneRateBuckets, rateLimit, sanitizePlainText, withSecurityHeaders } from "@/lib/security";
-import { recordAudit } from "@/lib/audit";
+import { createExclusiveSession, extractDeviceInfo } from "@/lib/session-security";
 
 export const runtime = "nodejs";
 
@@ -36,16 +36,18 @@ export async function POST(request: Request) {
 
   const sessionToken = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 12);
+  const device = extractDeviceInfo(request);
 
-  await prisma.session.create({
-    data: { token: sessionToken, userId: user.id, expiresAt },
+  // Single active session: previous logins on other devices are invalidated.
+  // IP + device fingerprint are stored for the assignment integrity trail.
+  createExclusiveSession({
+    userId: user.id,
+    token: sessionToken,
+    expiresAt,
+    ip: device.ip,
+    userAgent: device.userAgent,
+    deviceFingerprint: device.deviceFingerprint,
   });
-
-  try {
-    recordAudit({ action: "login", actorId: user.id, metadata: { ip } });
-  } catch {
-    /* */
-  }
 
   const response = NextResponse.json({
     user: { id: user.id, name: user.name, email: user.email, role: user.role },
