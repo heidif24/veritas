@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CryptographicSealSpinner } from "./components/CryptographicSealSpinner";
 
 const pillars = [
   {
@@ -36,7 +37,6 @@ const steps = [
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#050505] text-zinc-100 selection:bg-emerald-500/30 selection:text-emerald-50">
-      {/* Ambient glow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -left-40 top-0 h-[500px] w-[500px] rounded-full bg-emerald-500/[0.07] blur-[120px]" />
         <div className="absolute right-0 top-40 h-[420px] w-[420px] rounded-full bg-sky-500/[0.06] blur-[120px]" />
@@ -79,9 +79,15 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Seal / terminal visual */}
-          <div className="mx-auto mt-16 max-w-2xl">
-            <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a] shadow-2xl shadow-black/50">
+          {/* Living seal + package terminal */}
+          <div className="mx-auto mt-16 flex max-w-3xl flex-col items-center gap-10 sm:gap-12">
+            <CryptographicSealSpinner
+              state="success"
+              size="lg"
+              hashPreview="sha256:a3f8…c91e"
+            />
+
+            <div className="w-full max-w-2xl overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a] shadow-2xl shadow-black/50">
               <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
                 <span className="h-2.5 w-2.5 rounded-full bg-zinc-700" />
                 <span className="h-2.5 w-2.5 rounded-full bg-zinc-700" />
@@ -99,8 +105,7 @@ export default function Home() {
                   <span className="text-sky-300">SHA-256</span>
                 </p>
                 <p className="break-all text-zinc-500">
-                  <span className="text-zinc-600">digest</span>{" "}
-                  a3f8c91e…7b2d
+                  <span className="text-zinc-600">digest</span> a3f8c91e…7b2d
                 </p>
                 <p className="text-zinc-400">
                   <span className="text-zinc-600">process_events</span>{" "}
