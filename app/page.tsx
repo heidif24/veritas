@@ -27,71 +27,85 @@ export default function Home() {
 
   return (
     <main className="min-h-screen text-slate-900">
+      {/* Hero — premium, clean, inspired by sealed-document design */}
       <section className="relative overflow-hidden border-b border-slate-100">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(14,165,233,0.14),_transparent_55%)]" />
-        <div className="relative mx-auto max-w-7xl px-6 pb-12 pt-12 md:pb-16 md:pt-16">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-cyan-200 bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-800 shadow-sm">
-              <span>Process monitoring</span><span className="text-cyan-300">·</span>
-              <span>Cryptographic seal</span><span className="text-cyan-300">·</span>
-              <span>AI & plagiarism</span><span className="text-cyan-300">·</span>
-              <span>Proctor · LMS</span>
-            </div>
-            <h1 className="mt-5 font-[family-name:var(--font-display)] text-4xl leading-[1.1] tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
-              Trust the process. Safeguard the result.
-            </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-              Process monitoring and cryptographic sealing are the core of Veritas — a living composition trail
-              locked into a portable, verifiable package. AI detection, plagiarism, proctored assignments,
-              Canvas & Moodle LTI, and fairness tools strengthen that foundation for universities and publishers.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/register" className="rounded-full bg-slate-900 px-7 py-3.5 text-sm font-bold text-white shadow-lg transition hover:bg-slate-800">Start free</Link>
-              <Link href="/universities" className="rounded-full border border-slate-200 bg-white px-7 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">For universities</Link>
-              <Link href="/verify" className="rounded-full border border-slate-200 bg-white px-7 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">Verify a sealed package</Link>
-            </div>
-          </div>
+        {/* Soft purple / blue gradient blobs */}
+        <div className="pointer-events-none absolute -right-32 top-0 h-[520px] w-[520px] rounded-full bg-gradient-to-br from-violet-200/50 via-sky-100/40 to-transparent blur-3xl" />
+        <div className="pointer-events-none absolute -left-24 bottom-0 h-[380px] w-[380px] rounded-full bg-gradient-to-tr from-cyan-100/40 via-blue-50/30 to-transparent blur-3xl" />
 
-          <div className="mx-auto mt-12 max-w-4xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.1)]">
-            <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3">
-              {["Process record", "Seal ready", "AI signals", "Plagiarism", "Proctor events"].map((chip) => (
-                <span key={chip} className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-slate-200">{chip}</span>
-              ))}
-            </div>
-            <div className="grid gap-6 p-6 md:grid-cols-[1.1fr_0.9fr] md:p-8">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Composition timeline</p>
-                <div className="mt-4 space-y-3">
-                  {[
-                    { t: "Sources & citations", m: "3 references linked", c: "bg-cyan-500" },
-                    { t: "Draft revisions", m: "12 sessions", c: "bg-sky-500" },
-                    { t: "Similarity pass", m: "Low overlap", c: "bg-violet-500" },
-                    { t: "Proctor clean", m: "No tab switches", c: "bg-violet-500" },
-                    { t: "Ready to seal", m: "Hash locked", c: "bg-emerald-500" },
-                  ].map((row, i) => (
-                    <div key={row.t} className="flex items-center gap-3">
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white ${row.c}`}>{i + 1}</div>
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold text-slate-900">{row.t}</div>
-                        <div className="text-xs text-slate-500">{row.m}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-16 md:pb-24 md:pt-20">
+          <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+            {/* Left: copy + CTAs */}
+            <div className="max-w-xl">
+              <h1 className="font-[family-name:var(--font-display)] text-5xl leading-[1.05] tracking-tight text-slate-900 sm:text-6xl md:text-[3.75rem]">
+                Authorship you<br className="hidden sm:block" /> can prove
+              </h1>
+              <p className="mt-6 text-lg leading-8 text-slate-600">
+                Veritas seals academic writing with verifiable integrity.
+                Prove authorship. Build trust. Uphold excellence.
+              </p>
+              <div className="mt-9 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800"
+                >
+                  Get started
+                  <span aria-hidden>→</span>
+                </Link>
+                <Link
+                  href="/verify"
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-7 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                >
+                  <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Verify document
+                </Link>
               </div>
-              <div className="rounded-2xl bg-gradient-to-b from-slate-50 to-cyan-50/50 p-5 ring-1 ring-slate-100">
-                <div className="mb-2 flex items-center gap-2">
-                  <LogoMark size={32} />
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Authorship report</div>
-                    <div className="text-sm font-bold text-slate-900">Process intact</div>
+            </div>
+
+            {/* Right: sealed document card */}
+            <div className="relative flex justify-center lg:justify-end">
+              <div className="relative w-full max-w-sm">
+                {/* Decorative rings */}
+                <div className="pointer-events-none absolute -inset-8 rounded-full bg-gradient-to-br from-violet-200/30 via-sky-100/20 to-transparent blur-2xl" />
+                <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full border border-violet-200/60" />
+                <div className="pointer-events-none absolute -bottom-4 -left-4 h-16 w-16 rounded-full border border-sky-200/50" />
+
+                {/* Card */}
+                <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-8 shadow-[0_25px_80px_-15px_rgba(99,102,241,0.18)]">
+                  {/* Shield icon */}
+                  <div className="mb-6 flex justify-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-sky-500 shadow-lg shadow-violet-500/25">
+                      <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
                   </div>
-                </div>
-                <Gauge percent={94} label="Human process" color="#0ea5e9" />
-                <div className="mt-2 grid grid-cols-3 gap-2 text-center text-[10px] font-semibold">
-                  <div className="rounded-lg bg-white py-2 ring-1 ring-slate-100"><div className="text-cyan-600">94%</div><div className="text-slate-500">Process</div></div>
-                  <div className="rounded-lg bg-white py-2 ring-1 ring-slate-100"><div className="text-violet-600">4%</div><div className="text-slate-500">Similar</div></div>
-                  <div className="rounded-lg bg-white py-2 ring-1 ring-slate-100"><div className="text-violet-600">2%</div><div className="text-slate-500">AI cue</div></div>
+
+                  {/* Fake document lines */}
+                  <div className="space-y-2.5">
+                    <div className="h-2.5 w-full rounded-full bg-slate-100" />
+                    <div className="h-2.5 w-[92%] rounded-full bg-slate-100" />
+                    <div className="h-2.5 w-[85%] rounded-full bg-slate-100" />
+                    <div className="h-2.5 w-[70%] rounded-full bg-slate-100" />
+                    <div className="mt-4 h-2.5 w-full rounded-full bg-slate-100" />
+                    <div className="h-2.5 w-[88%] rounded-full bg-slate-100" />
+                    <div className="h-2.5 w-[60%] rounded-full bg-slate-100" />
+                  </div>
+
+                  {/* Signature + Sealed badge */}
+                  <div className="mt-8 flex items-end justify-between">
+                    <div className="font-[family-name:var(--font-display)] text-2xl italic text-slate-400">
+                      A. Rivera
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200/80">
+                      <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Sealed
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
