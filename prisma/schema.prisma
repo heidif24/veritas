@@ -38,12 +38,16 @@ model User {
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id                String   @id @default(cuid())
+  token             String   @unique
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt         DateTime
+  ipAddress         String?
+  userAgent         String?
+  deviceFingerprint String?
+  lastActiveAt      DateTime?
+  createdAt         DateTime @default(now())
 }
 
 model Document {
