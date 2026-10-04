@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { VeritasLogo, VeritasMark } from "./veritas-logo";
 
-export type AdminRole = "super" | "institutional" | "publisher";
+export type AdminRole = "super" | "institutional" | "publisher" | "instructor";
 
 type PortalShellProps = {
   title: string;
@@ -33,6 +33,12 @@ const roleConfig: Record<
     badge: "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-100 ring-amber-400/30",
     accent: "from-amber-400 via-orange-500 to-rose-500",
     glow: "shadow-amber-500/20",
+  },
+  instructor: {
+    label: "Instructor",
+    badge: "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-100 ring-emerald-400/30",
+    accent: "from-emerald-400 via-teal-500 to-cyan-500",
+    glow: "shadow-emerald-500/20",
   },
 };
 

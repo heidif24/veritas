@@ -593,6 +593,21 @@ export const prisma = {
     async count() {
       return countRows("documents").total;
     },
+    async create({ data }: { data: { title: string; content: string; status?: string; documentType?: string; ownerId: string; organizationId?: string | null } }) {
+      const row = createDocument({
+        title: data.title,
+        content: data.content,
+        status: data.status ?? "draft",
+        documentType: data.documentType ?? "essay",
+        ownerId: data.ownerId,
+        organizationId: data.organizationId ?? null,
+      });
+      return normalizeDocument(row);
+    },
+    async update({ where, data }: { where: { id: string }; data: Partial<{ title: string; content: string; status: string; documentType: string; sealedHash: string; integrityStatus: string; references: unknown[] }> }) {
+      const row = updateDocument(where.id, data);
+      return normalizeDocument(row);
+    },
     async findMany({
       where,
       orderBy,
@@ -644,6 +659,9 @@ export const prisma = {
   organization: {
     async count() {
       return countRows("organizations").total;
+    },
+    async findMany() {
+      return getDb().prepare("SELECT * FROM organizations ORDER BY created_at DESC").all() as OrganizationRow[];
     },
   },
 };

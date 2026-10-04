@@ -3,17 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": ">=20.x"
   },
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "tsx --test lib/**/*.test.ts",
     "db:push": "prisma db push",
-    "db:seed": "node scripts/seed.mjs",
-    "postinstall": "prisma generate"
+    "db:seed": "node scripts/seed.mjs"
   },
   "dependencies": {
     "@prisma/client": "7.10.0",
