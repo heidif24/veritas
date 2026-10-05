@@ -1,11 +1,15 @@
 import { EXTRA_EN, EXTRA_ES } from "./i18n-extra";
 import { AUDIENCE_EN, AUDIENCE_ES } from "./i18n-audience";
+import { FULL_FR } from "./i18n-fr";
+import { FULL_DE } from "./i18n-de";
+import { FULL_IT } from "./i18n-it";
 
 export type Locale =
   | "en"
   | "es"
   | "fr"
   | "de"
+  | "it"
   | "pt"
   | "ar"
   | "zh"
@@ -18,6 +22,7 @@ export const LOCALES: Array<{ code: Locale; label: string; native: string; dir?:
   { code: "es", label: "Spanish", native: "Español" },
   { code: "fr", label: "French", native: "Français" },
   { code: "de", label: "German", native: "Deutsch" },
+  { code: "it", label: "Italian", native: "Italiano" },
   { code: "pt", label: "Portuguese", native: "Português" },
   { code: "ar", label: "Arabic", native: "العربية", dir: "rtl" },
   { code: "zh", label: "Chinese", native: "中文" },
@@ -37,7 +42,6 @@ const enBase: Dict = {
   "nav.verify": "Verify",
   "nav.signin": "Sign in",
   "nav.getstarted": "Get started",
-
   "home.badge": "Process · Integrity · Seal",
   "home.hero": "Trust the process. Safeguard the result.",
   "home.sub":
@@ -72,7 +76,6 @@ const enBase: Dict = {
     "Join institutions and teams that use Veritas for composition evidence, integrity review, and sealed export — not detection theater.",
   "home.cta.account": "Create account",
   "home.cta.pricing": "View pricing",
-
   "footer.tagline":
     "Process evidence, integrity checks, and sealed results — for academic and professional writing.",
   "footer.product": "Product",
@@ -84,7 +87,6 @@ const enBase: Dict = {
   "footer.privacy": "Privacy",
   "footer.terms": "Terms",
   "footer.rights": "© 2026 Veritas. All rights reserved.",
-
   "pricing.title": "Pricing that matches how integrity work is funded",
   "pricing.subtitle": "Students at onboarded institutions write free. Everyone else gets a clear plan.",
   "pricing.individual": "Individual",
@@ -104,72 +106,10 @@ function partial(overrides: Dict): Dict {
 
 const dictionaries: Record<Locale, Dict> = {
   en,
-  es: partial({
-    ...EXTRA_ES,
-    ...AUDIENCE_ES,
-    "nav.product": "Producto",
-    "nav.universities": "Universidades",
-    "nav.authors": "Autores",
-    "nav.publishers": "Editoriales",
-    "nav.pricing": "Precios",
-    "nav.verify": "Verificar",
-    "nav.signin": "Iniciar sesión",
-    "nav.getstarted": "Empezar",
-    "home.badge": "Proceso · Integridad · Sello",
-    "home.hero": "Confía en el proceso. Protege el resultado.",
-    "home.sub":
-      "Veritas registra cómo se escribe el trabajo, revisa plagio y señales de IA, y sella el resultado para que revisores confíen en el proceso y el documento final.",
-    "home.cta.start": "Empezar a escribir",
-    "home.cta.verify": "Verificar un paquete sellado",
-    "home.v1.title": "El proceso es la capa que faltaba",
-    "home.v1.body":
-      "Las puntuaciones solas dejan duda. Veritas guarda un registro vivo de composición — cómo se construyó el borrador.",
-    "home.v2.title": "Controles de integridad útiles para revisar",
-    "home.v2.body": "Plagio y señales de IA junto al rastro de composición. Evidencia para conversar, no una etiqueta opaca.",
-    "home.v3.title": "Sella y protege el resultado",
-    "home.v3.body": "Exporta un paquete firmado. El sello viaja con el documento tras la entrega.",
-    "home.who.title": "Una plataforma. Roles claros.",
-    "home.cta.title": "¿Listo para confiar en el proceso?",
-    "home.cta.account": "Crear cuenta",
-    "home.cta.pricing": "Ver precios",
-    "footer.tagline": "Evidencia de proceso, integridad y resultados sellados — para escritura académica y profesional.",
-    "footer.rights": "© 2026 Veritas. Todos los derechos reservados.",
-    "pricing.title": "Precios alineados con cómo se financia la integridad académica",
-    "pricing.subtitle": "Los estudiantes de instituciones integradas escriben gratis.",
-    "pricing.contact": "Contactar ventas",
-    "pricing.start": "Empezar a escribir",
-  }),
-  fr: partial({
-    "nav.product": "Produit",
-    "nav.universities": "Universités",
-    "nav.authors": "Auteurs",
-    "nav.publishers": "Éditeurs",
-    "nav.pricing": "Tarifs",
-    "nav.verify": "Vérifier",
-    "nav.signin": "Connexion",
-    "nav.getstarted": "Commencer",
-    "home.badge": "Processus · Intégrité · Sceau",
-    "home.hero": "Faites confiance au processus. Protégez le résultat.",
-    "home.cta.start": "Commencer à écrire",
-    "home.cta.verify": "Vérifier un paquet scellé",
-    "home.cta.title": "Prêt à faire confiance au processus ?",
-    "login.title": "Connexion à Veritas",
-    "login.submit": "Connexion",
-  }),
-  de: partial({
-    "nav.product": "Produkt",
-    "nav.universities": "Universitäten",
-    "nav.authors": "Autoren",
-    "nav.publishers": "Verlage",
-    "nav.pricing": "Preise",
-    "nav.verify": "Prüfen",
-    "nav.signin": "Anmelden",
-    "nav.getstarted": "Loslegen",
-    "home.badge": "Prozess · Integrität · Siegel",
-    "home.hero": "Vertrauen Sie dem Prozess. Sichern Sie das Ergebnis.",
-    "login.title": "Bei Veritas anmelden",
-    "login.submit": "Anmelden",
-  }),
+  es: partial({ ...EXTRA_ES, ...AUDIENCE_ES }),
+  fr: partial(FULL_FR),
+  de: partial(FULL_DE),
+  it: partial(FULL_IT),
   pt: partial({
     "nav.product": "Produto",
     "nav.universities": "Universidades",
