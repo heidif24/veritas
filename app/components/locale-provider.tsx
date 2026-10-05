@@ -35,16 +35,14 @@ function applyDocumentLocale(code: Locale) {
 }
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  // Start from cookie synchronously on client so first paint matches preference
-  const [locale, setLocaleState] = useState<Locale>(() => {
-    if (typeof window === "undefined") return "en";
-    return readCookieLocale();
-  });
+  const [locale, setLocaleState] = useState<Locale>("en");
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const initial = readCookieLocale();
     setLocaleState(initial);
     applyDocumentLocale(initial);
+    setHydrated(true);
 
     function onExternal(e: Event) {
       const detail = (e as CustomEvent<Locale>).detail;
@@ -60,14 +58,17 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const setLocale = useCallback((code: Locale) => {
     if (!LOCALES.some((l) => l.code === code)) return;
     setLocaleState(code);
-    document.cookie = `veritas_locale=${code};path=/;max-age=31536000;samesite=lax`;
+    try {
+      document.cookie = `veritas_locale=${code};path=/;max-age=31536000;samesite=lax`;
+      localStorage.setItem("veritas_locale", code);
+    } catch {
+      /* ignore storage errors */
+    }
     applyDocumentLocale(code);
-    // Notify any other listeners (and keep state in sync across the tree)
     window.dispatchEvent(new CustomEvent("veritas:locale", { detail: code }));
   }, []);
 
   const t = useCallback((key: string) => translate(locale, key), [locale]);
-
   const dir = LOCALES.find((l) => l.code === locale)?.dir || "ltr";
 
   const value = useMemo(
@@ -75,14 +76,20 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     [locale, setLocale, t, dir],
   );
 
-  // Always provide context so LanguageSwitcher / useLocale work on first paint
-  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
+  // Always provide context. key={locale} remounts the tree so every page
+  // that captured strings in useState / module scope still refreshes.
+  return (
+    <LocaleContext.Provider value={value}>
+      <div key={hydrated ? locale : "boot"} className="contents">
+        {children}
+      </div>
+    </LocaleContext.Provider>
+  );
 }
 
 export function useLocale() {
   const ctx = useContext(LocaleContext);
   if (!ctx) {
-    // Safe fallback for any component rendered outside the provider
     return {
       locale: "en" as Locale,
       setLocale: () => {},
