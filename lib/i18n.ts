@@ -1,4 +1,5 @@
 import { EXTRA_EN, EXTRA_ES } from "./i18n-extra";
+import { AUDIENCE_EN, AUDIENCE_ES } from "./i18n-audience";
 
 export type Locale =
   | "en"
@@ -37,7 +38,6 @@ const enBase: Dict = {
   "nav.signin": "Sign in",
   "nav.getstarted": "Get started",
 
-  // Pragmatic multi-pillar positioning
   "home.badge": "Process · Integrity · Seal",
   "home.hero": "Trust the process. Safeguard the result.",
   "home.sub":
@@ -96,7 +96,7 @@ const enBase: Dict = {
     "Students with an institutional email at an onboarded university get free unlimited access automatically.",
 };
 
-const en: Dict = { ...enBase, ...EXTRA_EN };
+const en: Dict = { ...enBase, ...EXTRA_EN, ...AUDIENCE_EN };
 
 function partial(overrides: Dict): Dict {
   return { ...en, ...overrides };
@@ -106,6 +106,7 @@ const dictionaries: Record<Locale, Dict> = {
   en,
   es: partial({
     ...EXTRA_ES,
+    ...AUDIENCE_ES,
     "nav.product": "Producto",
     "nav.universities": "Universidades",
     "nav.authors": "Autores",
