@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { VeritasMark } from "@/app/components/veritas-logo";
+import { useLocale } from "@/app/components/locale-provider";
 
 type AssignmentKind = "essay" | "timed_essay" | "objective";
 
@@ -15,6 +16,7 @@ type ObjectiveItem = {
 
 export default function NewAssignmentPage() {
   const router = useRouter();
+  const { t } = useLocale();
   const [title, setTitle] = useState("");
   const [courseId, setCourseId] = useState("");
   const [kind, setKind] = useState<AssignmentKind>("essay");
@@ -96,22 +98,25 @@ export default function NewAssignmentPage() {
           <div className="flex items-center gap-3">
             <VeritasMark />
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Faculty</p>
-              <h1 className="text-lg font-semibold">Create assignment</h1>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">{t("faculty.badge")}</p>
+              <h1 className="text-lg font-semibold">{t("assignment.title")}</h1>
             </div>
           </div>
-          <Link href="/instructor/courses" className="text-xs font-semibold text-slate-600 hover:underline">← Courses</Link>
+          <Link href="/instructor/courses" className="text-xs font-semibold text-slate-600 hover:underline">
+            ← {t("faculty.title")}
+          </Link>
         </div>
       </header>
 
       <form onSubmit={submit} className="mx-auto max-w-3xl space-y-6 px-6 py-8">
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-600 mb-4">{t("assignment.sub")}</p>
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
-            Title
+            {t("assignment.name")}
             <input required value={title} onChange={(e) => setTitle(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold" placeholder="e.g. Week 6 reflective essay" />
           </label>
           <label className="mt-4 block text-xs font-bold uppercase tracking-wider text-slate-500">
-            Course ID
+            {t("assignment.course")}
             <input value={courseId} onChange={(e) => setCourseId(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" placeholder="Optional — auto-created if empty" />
           </label>
           <label className="mt-4 block text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -161,9 +166,9 @@ export default function NewAssignmentPage() {
         <section className="grid gap-6 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Schedule & attempts</p>
-            <label className="mt-3 block text-xs font-semibold text-slate-600">Due date<input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
+            <label className="mt-3 block text-xs font-semibold text-slate-600">{t("assignment.due")}<input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
             <label className="mt-3 block text-xs font-semibold text-slate-600">Max attempts<input type="number" min={1} max={10} value={maxAttempts} onChange={(e) => setMaxAttempts(Number(e.target.value))} className="mt-1 w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
-            <label className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600"><input type="checkbox" checked={requireSeal} onChange={(e) => setRequireSeal(e.target.checked)} />Require cryptographic seal before submit</label>
+            <label className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600"><input type="checkbox" checked={requireSeal} onChange={(e) => setRequireSeal(e.target.checked)} />{t("assignment.proctored")}</label>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Integrity policy</p>
@@ -189,7 +194,12 @@ export default function NewAssignmentPage() {
         </section>
 
         <div className="flex items-center gap-3">
-          <button type="submit" disabled={saving} className="rounded-full bg-violet-600 px-6 py-3 text-sm font-bold text-white hover:bg-violet-500 disabled:opacity-60">{saving ? "Creating…" : "Create & notify students"}</button>
+          <button type="submit" disabled={saving} className="rounded-full bg-violet-600 px-6 py-3 text-sm font-bold text-white hover:bg-violet-500 disabled:opacity-60">
+            {saving ? "…" : t("assignment.save")}
+          </button>
+          <Link href="/instructor/courses" className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700">
+            {t("assignment.cancel")}
+          </Link>
           {message ? <span className="text-sm text-slate-600">{message}</span> : null}
         </div>
       </form>
