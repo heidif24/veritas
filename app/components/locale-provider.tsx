@@ -27,25 +27,30 @@ function readCookieLocale(): Locale {
   return LOCALES.some((l) => l.code === code) ? code : "en";
 }
 
+function applyDocumentLocale(code: Locale) {
+  if (typeof document === "undefined") return;
+  const meta = LOCALES.find((l) => l.code === code);
+  document.documentElement.lang = code;
+  document.documentElement.dir = meta?.dir || "ltr";
+}
+
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
-  const [ready, setReady] = useState(false);
+  // Start from cookie synchronously on client so first paint matches preference
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    if (typeof window === "undefined") return "en";
+    return readCookieLocale();
+  });
 
   useEffect(() => {
     const initial = readCookieLocale();
     setLocaleState(initial);
-    const meta = LOCALES.find((l) => l.code === initial);
-    document.documentElement.lang = initial;
-    document.documentElement.dir = meta?.dir || "ltr";
-    setReady(true);
+    applyDocumentLocale(initial);
 
     function onExternal(e: Event) {
       const detail = (e as CustomEvent<Locale>).detail;
       if (detail && LOCALES.some((l) => l.code === detail)) {
         setLocaleState(detail);
-        const m = LOCALES.find((l) => l.code === detail);
-        document.documentElement.lang = detail;
-        document.documentElement.dir = m?.dir || "ltr";
+        applyDocumentLocale(detail);
       }
     }
     window.addEventListener("veritas:locale", onExternal as EventListener);
@@ -56,9 +61,8 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     if (!LOCALES.some((l) => l.code === code)) return;
     setLocaleState(code);
     document.cookie = `veritas_locale=${code};path=/;max-age=31536000;samesite=lax`;
-    const meta = LOCALES.find((l) => l.code === code);
-    document.documentElement.lang = code;
-    document.documentElement.dir = meta?.dir || "ltr";
+    applyDocumentLocale(code);
+    // Notify any other listeners (and keep state in sync across the tree)
     window.dispatchEvent(new CustomEvent("veritas:locale", { detail: code }));
   }, []);
 
@@ -71,11 +75,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     [locale, setLocale, t, dir],
   );
 
-  // Avoid flash of wrong language after cookie read
-  if (!ready) {
-    return <div className="min-h-screen opacity-0">{children}</div>;
-  }
-
+  // Always provide context so LanguageSwitcher / useLocale work on first paint
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
 

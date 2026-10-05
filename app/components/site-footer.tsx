@@ -12,8 +12,8 @@ export function SiteFooter() {
       heading: t("footer.product"),
       links: [
         { label: t("footer.platform"), href: "/platform" },
-        { label: "Process · AI · Plagiarism", href: "/platform" },
-        { label: "Proctoring & LMS", href: "/universities" },
+        { label: t("nav.product"), href: "/platform" },
+        { label: t("nav.universities"), href: "/universities" },
         { label: t("nav.verify"), href: "/verify" },
         { label: t("nav.pricing"), href: "/pricing" },
       ],
@@ -21,17 +21,17 @@ export function SiteFooter() {
     {
       heading: t("footer.solutions"),
       links: [
-        { label: "Education & schools", href: "/universities" },
+        { label: t("nav.universities"), href: "/universities" },
         { label: t("footer.faculty"), href: "/instructor/courses" },
-        { label: "Enterprise & publishers", href: "/publishers" },
+        { label: t("nav.publishers"), href: "/publishers" },
         { label: t("nav.authors"), href: "/authors" },
       ],
     },
     {
-      heading: "Resources",
+      heading: t("footer.company"),
       links: [
         { label: t("footer.onboarding"), href: "/onboarding" },
-        { label: "Public verification", href: "/verify" },
+        { label: t("nav.verify"), href: "/verify" },
         { label: t("footer.privacy"), href: "/privacy" },
         { label: t("footer.terms"), href: "/terms" },
       ],
