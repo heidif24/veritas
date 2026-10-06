@@ -52,7 +52,7 @@ function RulerTicks({
               {label}
             </span>
           ) : null}
-        </div>
+        </div>,
       );
     } else {
       ticks.push(
@@ -65,13 +65,18 @@ function RulerTicks({
               {label}
             </span>
           ) : null}
-        </div>
+        </div>,
       );
     }
   }
   return <>{ticks}</>;
 }
 
+/**
+ * Uncontrolled contentEditable surface.
+ * Parent state is updated on input, but the DOM is only seeded / updated
+ * when the user is NOT focused — this prevents caret reset and reversed typing.
+ */
 export function DocumentCanvas({
   content,
   onChange,
@@ -86,22 +91,52 @@ export function DocumentCanvas({
   totalPages = 1,
 }: Props) {
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const footerRef = useRef<HTMLDivElement | null>(null);
+  const lastEmitted = useRef<string>(content);
   const [showGuides, setShowGuides] = useState(true);
   const isLight = theme === "light";
 
+  // Seed body once, and only re-apply external content when editor is not focused
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== content) {
-      if (document.activeElement !== editorRef.current) {
-        editorRef.current.innerHTML = content;
-      }
+    const el = editorRef.current;
+    if (!el) return;
+    if (document.activeElement === el) return;
+    if (content === lastEmitted.current && el.innerHTML === content) return;
+    if (el.innerHTML !== content) {
+      el.innerHTML = content || "<p><br/></p>";
+      lastEmitted.current = content;
     }
   }, [content]);
+
+  // Header / footer: same pattern (uncontrolled while focused)
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    if (document.activeElement === el) return;
+    const next = header || "\u00A0";
+    if (el.innerText !== header && el.innerText !== next) {
+      el.innerText = header || "\u00A0";
+    }
+  }, [header]);
+
+  useEffect(() => {
+    const el = footerRef.current;
+    if (!el) return;
+    if (document.activeElement === el) return;
+    const display = footer || `Page ${pageNumber}`;
+    if (el.innerText !== display) {
+      el.innerText = display;
+    }
+  }, [footer, pageNumber]);
 
   return (
     <div className={`relative overflow-auto ${isLight ? "bg-slate-200/80" : "bg-slate-900"}`}>
       <div
         className={`sticky top-0 z-20 flex items-center justify-between gap-3 border-b px-3 py-1.5 text-[11px] ${
-          isLight ? "border-slate-200 bg-white/90 text-slate-600 backdrop-blur" : "border-white/10 bg-slate-900 text-slate-400"
+          isLight
+            ? "border-slate-200 bg-white/90 text-slate-600 backdrop-blur"
+            : "border-white/10 bg-slate-900 text-slate-400"
         }`}
       >
         <div className="flex items-center gap-3">
@@ -181,20 +216,30 @@ export function DocumentCanvas({
               }}
             >
               <div
+                ref={headerRef}
                 contentEditable
                 suppressContentEditableWarning
                 onInput={(e) => onHeaderChange?.((e.target as HTMLDivElement).innerText)}
                 className="min-h-[1.25em] rounded px-1 outline-none focus:bg-cyan-50/50"
-              >
-                {header || "\u00A0"}
-              </div>
+              />
             </div>
 
+            {/*
+              Uncontrolled body: no dangerouslySetInnerHTML.
+              Content is applied only via the effect above when not focused.
+            */}
             <div
               ref={editorRef}
               contentEditable
               suppressContentEditableWarning
-              onInput={(e) => onChange((e.target as HTMLDivElement).innerHTML)}
+              role="textbox"
+              aria-multiline="true"
+              aria-label="Document body"
+              onInput={(e) => {
+                const html = (e.target as HTMLDivElement).innerHTML;
+                lastEmitted.current = html;
+                onChange(html);
+              }}
               onPaste={onPaste}
               onBlur={onBlur}
               className="outline-none"
@@ -207,8 +252,10 @@ export function DocumentCanvas({
                 fontFamily: 'Georgia, "Times New Roman", serif',
                 fontSize: "12pt",
                 lineHeight: 1.6,
+                direction: "ltr",
+                unicodeBidi: "plaintext",
+                textAlign: "left",
               }}
-              dangerouslySetInnerHTML={{ __html: content }}
             />
 
             <div
@@ -222,13 +269,12 @@ export function DocumentCanvas({
               }}
             >
               <div
+                ref={footerRef}
                 contentEditable
                 suppressContentEditableWarning
                 onInput={(e) => onFooterChange?.((e.target as HTMLDivElement).innerText)}
                 className="min-h-[1.25em] rounded px-1 outline-none focus:bg-cyan-50/50"
-              >
-                {footer || `Page ${pageNumber}`}
-              </div>
+              />
             </div>
           </div>
         </div>
