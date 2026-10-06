@@ -414,7 +414,8 @@ export default function EditorPage() {
                   value={fontSize}
                   onChange={(e) => {
                     setFontSize(e.target.value);
-                    exec("fontSize", String(Math.min(7, Math.max(1, Math.round(Number(e.target.value) / 4))));
+                    const size = Math.min(7, Math.max(1, Math.round(Number(e.target.value) / 4)));
+                    exec("fontSize", String(size));
                   }}
                   className="h-7 w-14 rounded border border-slate-300 bg-white px-1 text-xs"
                 >
@@ -544,7 +545,6 @@ export default function EditorPage() {
               </button>
             </div>
 
-            {/* Live health */}
             <div className="space-y-2 border-b border-slate-100 px-3 py-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-slate-700">Authorship health</span>
@@ -560,30 +560,29 @@ export default function EditorPage() {
                   Paste <span className="font-semibold">{(health.pastedRatio * 100).toFixed(0)}%</span>
                 </div>
                 {liveTransparency?.continuity ? (
-                  <div className="rounded-lg bg-slate-50 px-2 py-1.5 col-span-2">
+                  <div className="col-span-2 rounded-lg bg-slate-50 px-2 py-1.5">
                     Continuity · <span className="font-semibold">{liveTransparency.continuity}</span>
                   </div>
                 ) : null}
                 {liveTransparency?.sessionStructure ? (
-                  <div className="rounded-lg bg-slate-50 px-2 py-1.5 col-span-2">
+                  <div className="col-span-2 rounded-lg bg-slate-50 px-2 py-1.5">
                     Session · <span className="font-semibold">{liveTransparency.sessionStructure}</span>
                   </div>
                 ) : null}
                 {typeof liveTransparency?.externalBulkPastes === "number" &&
                 liveTransparency.externalBulkPastes > 0 ? (
-                  <div className="rounded-lg bg-amber-50 px-2 py-1.5 col-span-2 text-amber-800">
+                  <div className="col-span-2 rounded-lg bg-amber-50 px-2 py-1.5 text-amber-800">
                     External-bulk · {liveTransparency.externalBulkPastes}
                   </div>
                 ) : null}
                 {baselineNote ? (
-                  <div className="rounded-lg bg-cyan-50 px-2 py-1.5 col-span-2 text-cyan-800" title={baselineNote}>
+                  <div className="col-span-2 rounded-lg bg-cyan-50 px-2 py-1.5 text-cyan-800" title={baselineNote}>
                     Baseline compared
                   </div>
                 ) : null}
               </div>
             </div>
 
-            {/* Recent activity feed */}
             <div className="flex-1 overflow-y-auto px-3 py-3">
               <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                 Recent activity
@@ -612,7 +611,6 @@ export default function EditorPage() {
               )}
             </div>
 
-            {/* Originality / plagiarism */}
             <div className="border-t border-slate-200 p-3">
               <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                 Originality
@@ -622,7 +620,6 @@ export default function EditorPage() {
               </div>
             </div>
 
-            {/* Document stats */}
             <div className="border-t border-slate-200 px-3 py-2 text-[11px] text-slate-600">
               <div className="flex justify-between">
                 <span>Words</span>
