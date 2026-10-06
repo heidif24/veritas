@@ -30,8 +30,13 @@ function asHtml(content: string) {
   if (/<[a-z][\s\S]*>/i.test(content)) return content;
   return content
     .split(/\n+/)
-    .map((p) => `<p>${p.replace(/</g, "<").replace(/>/g, ">")}</p>`)
+    .map((p) => `<p>${p.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">")}</p>`)
     .join("");
+}
+
+function firstNote(value: unknown): string {
+  if (Array.isArray(value) && value.length > 0) return String(value[0] ?? "");
+  return "";
 }
 
 export default function FacultyReviewStudio() {
@@ -50,9 +55,9 @@ export default function FacultyReviewStudio() {
   const [score, setScore] = useState<number | "">("");
   const [maxScore, setMaxScore] = useState(100);
   const [rubricNotes, setRubricNotes] = useState("");
-  const [decision, setDecision] = useState<"pending" | "accepted" | "revision" | "referred" | "revision_requested">(
-    "pending",
-  );
+  const [decision, setDecision] = useState<
+    "pending" | "accepted" | "revision" | "referred" | "revision_requested"
+  >("pending");
   const [message, setMessage] = useState("");
   const [panel, setPanel] = useState<"integrity" | "comments" | "grade">("integrity");
   const [report, setReport] = useState<Record<string, unknown> | null>(null);
@@ -77,7 +82,8 @@ export default function FacultyReviewStudio() {
           if (!cancelled) {
             setTitle(String(doc.title || "Submission"));
             setHtml(asHtml(String(doc.content || "")));
-            setStudentName(String(doc.owner?.name || doc.ownerName || "Student"));
+            const owner = doc.owner as { name?: string } | undefined;
+            setStudentName(String(owner?.name || doc.ownerName || "Student"));
           }
         }
 
@@ -156,7 +162,9 @@ export default function FacultyReviewStudio() {
       organicRatio,
       pastedRatio,
       aiRiskScore,
-      aiRiskLabel: String(composition.aiRiskLabel || (aiRiskScore < 25 ? "Low" : aiRiskScore < 50 ? "Moderate" : "High")),
+      aiRiskLabel: String(
+        composition.aiRiskLabel || (aiRiskScore < 25 ? "Low" : aiRiskScore < 50 ? "Moderate" : "High"),
+      ),
       focusLosses: Number(composition.focusLosses ?? session.focusLosses ?? 0),
       wordCount: words,
       sealStatus: summary.sealed ? "Sealed" : "Not sealed",
@@ -164,11 +172,15 @@ export default function FacultyReviewStudio() {
       similarity: Number(similarity.score ?? 0),
       similarityThreshold: Number(similarity.threshold ?? 20),
       externalBulkPastes: Number(pasteOrigin.externalBulkEvents ?? 0),
-      continuity: String(continuity.label || continuity.notes?.[0] || "—"),
-      sessionStructure: String(session.structuralLabel || session.notes?.[0] || "—"),
+      continuity: String(continuity.label || firstNote(continuity.notes) || "—"),
+      sessionStructure: String(session.structuralLabel || firstNote(session.notes) || "—"),
       timeline: (Array.isArray(report?.timeline) ? report?.timeline : []) as TimelineItem[],
-      plainLanguageWhy: Array.isArray(report?.plainLanguageWhy) ? (report?.plainLanguageWhy as string[]) : [],
-      factors: Array.isArray(report?.factors) ? (report?.factors as Array<{ label?: string; detail?: string }>) : [],
+      plainLanguageWhy: Array.isArray(report?.plainLanguageWhy)
+        ? (report?.plainLanguageWhy as string[])
+        : [],
+      factors: Array.isArray(report?.factors)
+        ? (report?.factors as Array<{ label?: string; detail?: string }>)
+        : [],
     };
   }, [report, html]);
 
