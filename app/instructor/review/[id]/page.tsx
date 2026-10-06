@@ -12,29 +12,11 @@ type Comment = {
   color: "yellow" | "green" | "pink" | "blue";
 };
 
-type ActivityEvent = {
-  time: string;
-  kind: "type" | "paste" | "delete" | "focus" | "seal";
+type TimelineItem = {
+  label: string;
   detail: string;
-  chars?: number;
+  severity: string;
 };
-
-const DEMO_DOC = `
-<p><strong>Existentialism and Choice</strong></p>
-<p>Choice is not an abstract condition but a lived pattern of decisions, revisions, and returns to unfinished thought. The writer who revises a thesis three times is not merely polishing prose; they are enacting the very freedom Sartre describes.</p>
-<p>In the middle sections, the argument turns toward responsibility. Each draft branch that was abandoned leaves a trace in the composition record — a pause, a delete burst, a return. These traces matter for academic review because they show process, not only product.</p>
-<p>A short quoted note was introduced with a source marker: “Man is condemned to be free” (Sartre, 1946). Surrounding paragraphs were typed in continuous bursts with minimal external paste, consistent with organic drafting.</p>
-<p>Final revisions tightened transitions and sealed the composition for submission. The integrity package captures timing, focus losses, paste ratios, and the cryptographic seal for later verification.</p>
-`;
-
-const DEMO_ACTIVITIES: ActivityEvent[] = [
-  { time: "08:12", kind: "type", detail: "Opening thesis drafted in short bursts", chars: 420 },
-  { time: "08:29", kind: "delete", detail: "Restructured paragraph — 86 characters removed", chars: 86 },
-  { time: "08:41", kind: "focus", detail: "Focus lost (tab switch) · 42s away" },
-  { time: "09:14", kind: "paste", detail: "Source note pasted and marked as citation", chars: 48 },
-  { time: "09:22", kind: "type", detail: "Synthesis paragraphs continued", chars: 610 },
-  { time: "09:57", kind: "seal", detail: "Composition sealed for submission" },
-];
 
 const COLOR_MAP = {
   yellow: "bg-amber-200/80 ring-amber-400",
@@ -43,72 +25,93 @@ const COLOR_MAP = {
   blue: "bg-sky-200/80 ring-sky-400",
 };
 
+function asHtml(content: string) {
+  if (!content) return "<p></p>";
+  if (/<[a-z][\s\S]*>/i.test(content)) return content;
+  return content
+    .split(/\n+/)
+    .map((p) => `<p>${p.replace(/</g, "<").replace(/>/g, ">")}</p>`)
+    .join("");
+}
+
 export default function FacultyReviewStudio() {
   const params = useParams();
   const id = String(params?.id ?? "");
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [title, setTitle] = useState("Submission");
   const [studentName, setStudentName] = useState("Student");
-  const [html, setHtml] = useState(DEMO_DOC);
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      id: "c1",
-      quote: "Choice is not an abstract condition",
-      note: "Strong opening — aligns with rubric criterion A (thesis clarity).",
-      createdAt: new Date().toISOString(),
-      color: "green",
-    },
-  ]);
+  const [html, setHtml] = useState("<p></p>");
+  const [comments, setComments] = useState<Comment[]>([]);
   const [commentDraft, setCommentDraft] = useState("");
   const [selectedQuote, setSelectedQuote] = useState("");
   const [commentColor, setCommentColor] = useState<Comment["color"]>("yellow");
   const [score, setScore] = useState<number | "">("");
-  const [maxScore] = useState(100);
+  const [maxScore, setMaxScore] = useState(100);
   const [rubricNotes, setRubricNotes] = useState("");
-  const [decision, setDecision] = useState<"pending" | "accepted" | "revision" | "referred">("pending");
+  const [decision, setDecision] = useState<"pending" | "accepted" | "revision" | "referred" | "revision_requested">(
+    "pending",
+  );
   const [message, setMessage] = useState("");
   const [panel, setPanel] = useState<"integrity" | "comments" | "grade">("integrity");
+  const [report, setReport] = useState<Record<string, unknown> | null>(null);
   const docRef = useRef<HTMLDivElement | null>(null);
-
-  const integrity = useMemo(
-    () => ({
-      overall: "Human-authored",
-      organicRatio: 0.94,
-      pastedRatio: 0.03,
-      aiRiskScore: 12,
-      aiRiskLabel: "Low",
-      focusLosses: 3,
-      activeMinutes: 86,
-      wordCount: 512,
-      sealStatus: "Sealed",
-      similarity: 8,
-      similarityThreshold: 20,
-      externalBulkPastes: 0,
-      continuity: "Steady",
-      sessionStructure: "Multi-session with coherent return",
-    }),
-    [],
-  );
 
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
+      setError("");
       try {
-        const res = await fetch(`/api/reports/${encodeURIComponent(id)}`);
-        if (res.ok) {
-          const data = await res.json();
-          const r = data.report || data;
+        const [docRes, reportRes, caseRes] = await Promise.all([
+          fetch(`/api/documents/${encodeURIComponent(id)}`),
+          fetch(`/api/reports/${encodeURIComponent(id)}`),
+          fetch(`/api/cases?documentId=${encodeURIComponent(id)}`),
+        ]);
+
+        if (docRes.ok) {
+          const docData = await docRes.json();
+          const doc = docData.document ?? docData;
           if (!cancelled) {
-            setTitle(String(r.title || r.documentTitle || "Submission"));
-            setStudentName(String(r.studentName || r.author || "Student"));
-            if (r.contentHtml || r.content) setHtml(String(r.contentHtml || r.content));
+            setTitle(String(doc.title || "Submission"));
+            setHtml(asHtml(String(doc.content || "")));
+            setStudentName(String(doc.owner?.name || doc.ownerName || "Student"));
           }
         }
+
+        if (reportRes.ok) {
+          const repData = await reportRes.json();
+          const r = repData.report ?? repData;
+          if (!cancelled) {
+            setReport(r);
+            if (r.title) setTitle(String(r.title));
+          }
+        }
+
+        if (caseRes.ok) {
+          const caseData = await caseRes.json();
+          const c = caseData.case;
+          if (c && !cancelled) {
+            if (c.score != null) setScore(Number(c.score));
+            if (c.max_score != null) setMaxScore(Number(c.max_score));
+            if (c.notes) setRubricNotes(String(c.notes));
+            if (c.decision) setDecision(c.decision);
+            try {
+              const parsed = JSON.parse(c.comments_json || "[]");
+              if (Array.isArray(parsed)) setComments(parsed);
+            } catch {
+              /* ignore */
+            }
+          }
+        }
+
+        if (!docRes.ok && !reportRes.ok) {
+          if (!cancelled) setError("Could not load this submission. Check that the document id is valid.");
+        }
       } catch {
-        /* demo fallback */
+        if (!cancelled) setError("Failed to load review data.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -117,6 +120,57 @@ export default function FacultyReviewStudio() {
       cancelled = true;
     };
   }, [id]);
+
+  const integrity = useMemo(() => {
+    const composition = (report?.composition || {}) as Record<string, unknown>;
+    const summary = (report?.summary || {}) as Record<string, unknown>;
+    const similarity = (report?.similarity || {}) as Record<string, unknown>;
+    const continuity = (report?.continuity || {}) as Record<string, unknown>;
+    const pasteOrigin = (report?.pasteOrigin || {}) as Record<string, unknown>;
+    const session = (report?.session || {}) as Record<string, unknown>;
+    const plain = String(html).replace(/<[^>]+>/g, " ").trim();
+    const words = plain ? plain.split(/\s+/).length : 0;
+
+    const organicRatio =
+      typeof composition.organicRatio === "number"
+        ? composition.organicRatio
+        : typeof composition.organic === "number"
+          ? composition.organic
+          : 0.9;
+    const pastedRatio =
+      typeof composition.pastedRatio === "number"
+        ? composition.pastedRatio
+        : typeof composition.pasteRatio === "number"
+          ? composition.pasteRatio
+          : 0.05;
+    const aiRiskScore =
+      typeof composition.aiRiskScore === "number"
+        ? composition.aiRiskScore
+        : typeof summary.sessionRisk === "number"
+          ? summary.sessionRisk
+          : 15;
+
+    return {
+      overall: String(summary.overall || summary.headline || "Review"),
+      headline: String(summary.headline || ""),
+      organicRatio,
+      pastedRatio,
+      aiRiskScore,
+      aiRiskLabel: String(composition.aiRiskLabel || (aiRiskScore < 25 ? "Low" : aiRiskScore < 50 ? "Moderate" : "High")),
+      focusLosses: Number(composition.focusLosses ?? session.focusLosses ?? 0),
+      wordCount: words,
+      sealStatus: summary.sealed ? "Sealed" : "Not sealed",
+      sealedHash: summary.sealedHash ? String(summary.sealedHash) : "",
+      similarity: Number(similarity.score ?? 0),
+      similarityThreshold: Number(similarity.threshold ?? 20),
+      externalBulkPastes: Number(pasteOrigin.externalBulkEvents ?? 0),
+      continuity: String(continuity.label || continuity.notes?.[0] || "—"),
+      sessionStructure: String(session.structuralLabel || session.notes?.[0] || "—"),
+      timeline: (Array.isArray(report?.timeline) ? report?.timeline : []) as TimelineItem[],
+      plainLanguageWhy: Array.isArray(report?.plainLanguageWhy) ? (report?.plainLanguageWhy as string[]) : [],
+      factors: Array.isArray(report?.factors) ? (report?.factors as Array<{ label?: string; detail?: string }>) : [],
+    };
+  }, [report, html]);
 
   const captureSelection = useCallback(() => {
     const sel = window.getSelection();
@@ -139,8 +193,8 @@ export default function FacultyReviewStudio() {
     setComments((prev) => [c, ...prev]);
     setCommentDraft("");
     setSelectedQuote("");
-    setMessage("Comment added");
-    setTimeout(() => setMessage(""), 2000);
+    setMessage("Comment added — save grade to persist");
+    setTimeout(() => setMessage(""), 2500);
   }
 
   function removeComment(cid: string) {
@@ -150,36 +204,39 @@ export default function FacultyReviewStudio() {
   async function saveGrade() {
     setMessage("Saving…");
     try {
-      await fetch(`/api/cases`, {
+      const res = await fetch(`/api/cases`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           documentId: id,
-          decision,
+          decision: decision === "revision" ? "revision_requested" : decision,
           notes: rubricNotes,
           score: score === "" ? null : Number(score),
           maxScore,
           comments,
         }),
       });
-      setMessage("Grade & decision saved");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) setMessage(data.error || "Could not save");
+      else setMessage("Grade, comments & decision saved");
     } catch {
-      setMessage("Saved locally (demo)");
+      setMessage("Save failed — check connection");
     }
-    setTimeout(() => setMessage(""), 2500);
+    setTimeout(() => setMessage(""), 3000);
   }
 
   function downloadSubmissionPackage() {
     const payload = {
-      submissionId: id,
+      documentId: id,
       title,
       studentName,
       score: score === "" ? null : Number(score),
       maxScore,
       decision,
       comments,
+      rubricNotes,
       integrity,
-      activities: DEMO_ACTIVITIES,
+      report,
       exportedAt: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -201,7 +258,6 @@ export default function FacultyReviewStudio() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-slate-100 text-slate-900">
-      {/* Top bar */}
       <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">
@@ -213,7 +269,7 @@ export default function FacultyReviewStudio() {
           </div>
           <h1 className="truncate text-base font-bold text-slate-900">{title}</h1>
           <p className="text-xs text-slate-500">
-            {studentName} · Submission {id}
+            {studentName} · {id.slice(0, 12)}
             {score !== "" ? ` · Score ${score}/${maxScore}` : ""}
           </p>
         </div>
@@ -233,17 +289,17 @@ export default function FacultyReviewStudio() {
           >
             Save grade
           </button>
-          <Link
-            href="/instructor/assignment/a-102"
-            className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
-          >
-            Back to queue
+          <Link href="/instructor" className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white">
+            Dashboard
           </Link>
         </div>
       </header>
 
+      {error ? (
+        <div className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-xs text-rose-700">{error}</div>
+      ) : null}
+
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* Document reader */}
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-4 py-1.5 text-[11px] text-slate-600">
             <span className="font-semibold text-slate-800">Document</span>
@@ -264,13 +320,13 @@ export default function FacultyReviewStudio() {
                 dangerouslySetInnerHTML={{ __html: html }}
               />
               <div className="border-t border-dashed border-slate-100 px-12 py-3 text-center text-xs text-slate-400">
-                Page 1 · Sealed submission
+                {integrity.sealStatus}
+                {integrity.sealedHash ? ` · ${integrity.sealedHash.slice(0, 12)}…` : ""}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right panels */}
         <aside className="flex w-[380px] shrink-0 flex-col border-l border-slate-200 bg-white">
           <div className="flex shrink-0 border-b border-slate-200">
             {(
@@ -300,9 +356,12 @@ export default function FacultyReviewStudio() {
               <div className="space-y-4">
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Verdict</div>
-                  <div className="mt-1 text-xl font-black text-slate-900">{integrity.overall}</div>
-                  <div className="mt-1 text-xs text-slate-600">
-                    Risk {integrity.aiRiskLabel} ({integrity.aiRiskScore}%) · Seal {integrity.sealStatus}
+                  <div className="mt-1 text-xl font-black capitalize text-slate-900">{integrity.overall}</div>
+                  {integrity.headline ? (
+                    <p className="mt-1 text-xs leading-5 text-slate-600">{integrity.headline}</p>
+                  ) : null}
+                  <div className="mt-2 text-xs text-slate-600">
+                    Risk {integrity.aiRiskLabel} ({integrity.aiRiskScore}%) · {integrity.sealStatus}
                   </div>
                 </div>
 
@@ -312,58 +371,64 @@ export default function FacultyReviewStudio() {
                     ["Direct pastes", `${Math.round(integrity.pastedRatio * 100)}%`],
                     ["Similarity", `${integrity.similarity}% / ${integrity.similarityThreshold}%`],
                     ["Focus losses", String(integrity.focusLosses)],
-                    ["Active writing", `${integrity.activeMinutes} min`],
                     ["External bulk", String(integrity.externalBulkPastes)],
                     ["Continuity", integrity.continuity],
                     ["Session", integrity.sessionStructure],
+                    ["Words", String(integrity.wordCount)],
                   ].map(([label, value]) => (
                     <div key={label} className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
                       <div className="text-[10px] uppercase tracking-wide text-slate-500">{label}</div>
-                      <div className="mt-0.5 font-semibold text-slate-900">{value}</div>
+                      <div className="mt-0.5 font-semibold capitalize text-slate-900">{value}</div>
                     </div>
                   ))}
                 </div>
 
-                <div>
-                  <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Composition timeline
-                  </div>
-                  <ul className="space-y-2">
-                    {DEMO_ACTIVITIES.map((ev) => (
-                      <li
-                        key={ev.time + ev.detail}
-                        className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs"
-                      >
-                        <span className="w-10 shrink-0 font-mono text-slate-500">{ev.time}</span>
-                        <div className="min-w-0">
-                          <span
-                            className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase ${
-                              ev.kind === "paste"
-                                ? "bg-amber-100 text-amber-800"
-                                : ev.kind === "delete"
+                {integrity.timeline.length > 0 ? (
+                  <div>
+                    <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Evidence timeline
+                    </div>
+                    <ul className="space-y-2">
+                      {integrity.timeline.map((ev, i) => (
+                        <li
+                          key={i}
+                          className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-semibold text-slate-800">{ev.label}</span>
+                            <span
+                              className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                                ev.severity === "critical"
                                   ? "bg-rose-100 text-rose-800"
-                                  : ev.kind === "seal"
-                                    ? "bg-violet-100 text-violet-800"
-                                    : ev.kind === "focus"
-                                      ? "bg-slate-200 text-slate-700"
-                                      : "bg-emerald-100 text-emerald-800"
-                            }`}
-                          >
-                            {ev.kind}
-                          </span>
-                          <p className="mt-1 text-slate-700">{ev.detail}</p>
-                          {ev.chars != null ? (
-                            <p className="text-[10px] text-slate-400">{ev.chars} chars</p>
-                          ) : null}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                                  : ev.severity === "warn"
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-slate-200 text-slate-700"
+                              }`}
+                            >
+                              {ev.severity}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-slate-600">{ev.detail}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {integrity.plainLanguageWhy.length > 0 ? (
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                    <div className="mb-1 font-semibold text-slate-800">Why this assessment</div>
+                    <ul className="list-disc space-y-1 pl-4">
+                      {integrity.plainLanguageWhy.map((line, i) => (
+                        <li key={i}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
 
                 <p className="text-[11px] leading-5 text-slate-500">
                   Process evidence supports fair review. Veritas does not auto-issue misconduct findings — the lecturer
-                  decides using full context.
+                  decides with full context.
                 </p>
               </div>
             ) : null}
@@ -371,9 +436,7 @@ export default function FacultyReviewStudio() {
             {panel === "comments" ? (
               <div className="space-y-4">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    New comment
-                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">New comment</p>
                   {selectedQuote ? (
                     <blockquote className="mt-2 rounded-lg border-l-2 border-violet-400 bg-white px-3 py-2 text-xs italic text-slate-600">
                       “{selectedQuote}”
@@ -387,9 +450,9 @@ export default function FacultyReviewStudio() {
                         key={c}
                         type="button"
                         onClick={() => setCommentColor(c)}
-                        className={`h-6 w-6 rounded-full ring-2 ring-offset-1 ${
-                          COLOR_MAP[c]
-                        } ${commentColor === c ? "ring-slate-600" : "ring-transparent"}`}
+                        className={`h-6 w-6 rounded-full ring-2 ring-offset-1 ${COLOR_MAP[c]} ${
+                          commentColor === c ? "ring-slate-600" : "ring-transparent"
+                        }`}
                         title={c}
                       />
                     ))}
@@ -436,9 +499,7 @@ export default function FacultyReviewStudio() {
             {panel === "grade" ? (
               <div className="space-y-4">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Score
-                  </label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Score</label>
                   <div className="mt-2 flex items-end gap-2">
                     <input
                       type="number"
@@ -469,7 +530,7 @@ export default function FacultyReviewStudio() {
                     {(
                       [
                         ["accepted", "Accept"],
-                        ["revision", "Request revision"],
+                        ["revision_requested", "Request revision"],
                         ["referred", "Refer to integrity"],
                         ["pending", "Pending"],
                       ] as const
@@ -479,7 +540,7 @@ export default function FacultyReviewStudio() {
                         type="button"
                         onClick={() => setDecision(value)}
                         className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ${
-                          decision === value
+                          decision === value || (decision === "revision" && value === "revision_requested")
                             ? "bg-violet-600 text-white ring-violet-600"
                             : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
                         }`}
@@ -497,7 +558,7 @@ export default function FacultyReviewStudio() {
                   <textarea
                     value={rubricNotes}
                     onChange={(e) => setRubricNotes(e.target.value)}
-                    placeholder="Overall feedback visible to the student…"
+                    placeholder="Overall feedback visible in the case record…"
                     className="mt-2 min-h-[120px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-300"
                   />
                 </div>
@@ -507,12 +568,12 @@ export default function FacultyReviewStudio() {
                   onClick={() => void saveGrade()}
                   className="w-full rounded-xl bg-violet-600 py-2.5 text-sm font-bold text-white hover:bg-violet-500"
                 >
-                  Save grade & decision
+                  Save grade, comments & decision
                 </button>
 
                 <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                   <div className="flex justify-between">
-                    <span>Comments on this paper</span>
+                    <span>Comments</span>
                     <span className="font-semibold">{comments.length}</span>
                   </div>
                   <div className="mt-1 flex justify-between">
