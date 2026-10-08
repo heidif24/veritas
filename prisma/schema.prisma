@@ -12,6 +12,7 @@ enum Role {
   INSTRUCTOR
   STUDENT
   PUBLISHER
+  TUTOR
 }
 
 model Organization {
@@ -51,23 +52,23 @@ model Session {
 }
 
 model Document {
-  id            String      @id @default(cuid())
-  title         String
-  content       String
-  status        String      @default("draft")
-  documentType  String      @default("essay")
-  ownerId       String
-  owner         User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  organizationId String?
-  organization  Organization? @relation(fields: [organizationId], references: [id])
-  sealedHash    String?
+  id              String      @id @default(cuid())
+  title           String
+  content         String
+  status          String      @default("draft")
+  documentType    String      @default("essay")
+  ownerId         String
+  owner           User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  sealedHash      String?
   sealedSignature String?
-  telemetryJson String?
-  referencesJson String      @default("[]")
-  integrityStatus String     @default("verified")
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  auditEvents   AuditEvent[]
+  telemetryJson   String?
+  referencesJson  String      @default("[]")
+  integrityStatus String      @default("verified")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  auditEvents     AuditEvent[]
 }
 
 model AuditEvent {
