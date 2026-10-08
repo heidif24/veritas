@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { PortalShell } from "../../components/portal-shell";
+import { RoleShell, INSTRUCTOR_NAV } from "@/app/components/role-shell";
 
 const assignments = [
   { id: "1", title: "Midterm Essay — Epistemology", course: "PHIL 210", due: "Oct 12, 2026", submitted: 18, total: 32, status: "Open" },
@@ -11,72 +13,49 @@ const assignments = [
 
 export default function AssignmentsListPage() {
   return (
-    <PortalShell
-      role="instructor"
+    <RoleShell
+      roleLabel="Instructor"
       title="Assignments"
-      subtitle="Manage all course assignments, deadlines, and submission status."
-      navItems={[
-        { label: "Overview", href: "/instructor", active: false },
-        { label: "Assignments", href: "/instructor/assignments", active: true },
-        { label: "New assignment", href: "/instructor/assignments/new", active: false },
-        { label: "Courses", href: "/instructor/courses", active: false },
-        { label: "Review", href: "/instructor/review", active: false },
-        { label: "Reports", href: "/instructor/report", active: false },
-      ]}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-400">{assignments.length} assignments</p>
-        <Link
-          href="/instructor/assignments/new"
-          className="inline-flex rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/25"
-        >
+      nav={INSTRUCTOR_NAV}
+      actions={
+        <Link href="/instructor/assignments/new" className="v-btn v-btn-primary">
           + Create assignment
         </Link>
-      </div>
+      }
+    >
+      <p className="mb-6 text-sm text-[var(--muted)]">Manage course assignments, deadlines, and submission status.</p>
 
-      <div className="mt-6 overflow-hidden rounded-[24px] border border-white/10 bg-slate-950/40">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-white/5 text-slate-400">
+      <div className="v-card overflow-x-auto">
+        <table className="v-table">
+          <thead>
             <tr>
-              <th className="px-5 py-4 font-medium">Title</th>
-              <th className="px-5 py-4 font-medium">Course</th>
-              <th className="px-5 py-4 font-medium">Due date</th>
-              <th className="px-5 py-4 font-medium">Submissions</th>
-              <th className="px-5 py-4 font-medium">Status</th>
-              <th className="px-5 py-4 font-medium">Actions</th>
+              <th>Title</th>
+              <th>Course</th>
+              <th>Due date</th>
+              <th>Submissions</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {assignments.map((a) => (
-              <tr key={a.id} className="border-t border-white/10 text-slate-200">
-                <td className="px-5 py-4 font-medium text-white">{a.title}</td>
-                <td className="px-5 py-4">{a.course}</td>
-                <td className="px-5 py-4">{a.due}</td>
-                <td className="px-5 py-4">
+              <tr key={a.id}>
+                <td className="font-semibold text-[var(--ink)]">{a.title}</td>
+                <td>{a.course}</td>
+                <td>{a.due}</td>
+                <td>
                   {a.submitted}/{a.total}
                 </td>
-                <td className="px-5 py-4">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      a.status === "Open"
-                        ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30"
-                        : a.status === "Closing"
-                          ? "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30"
-                          : a.status === "Closed"
-                            ? "bg-slate-500/20 text-slate-300 ring-1 ring-slate-500/30"
-                            : "bg-violet-500/15 text-violet-300 ring-1 ring-violet-500/30"
-                    }`}
-                  >
-                    {a.status}
-                  </span>
+                <td>
+                  <span className={`v-badge ${a.status === "Open" ? "v-badge-emerald" : "v-badge-gold"}`}>{a.status}</span>
                 </td>
-                <td className="px-5 py-4">
+                <td>
                   <div className="flex gap-3">
-                    <Link href="/instructor/review" className="text-xs font-semibold text-cyan-300 hover:underline">
-                      Review
-                    </Link>
-                    <Link href={`/instructor/assignment/${a.id}`} className="text-xs font-semibold text-slate-400 hover:underline">
+                    <Link href={`/instructor/assignment/${a.id}`} className="text-xs font-semibold text-[var(--emerald)] hover:underline">
                       Open
+                    </Link>
+                    <Link href={`/instructor/review/${a.id}`} className="text-xs font-semibold text-[var(--muted)] hover:underline">
+                      Review
                     </Link>
                   </div>
                 </td>
@@ -85,6 +64,6 @@ export default function AssignmentsListPage() {
           </tbody>
         </table>
       </div>
-    </PortalShell>
+    </RoleShell>
   );
 }

@@ -11,7 +11,7 @@ export function SiteHeader() {
   const pathname = usePathname() || "/";
   const isHome = pathname === "/";
 
-  const navItems = [
+  const items = [
     { label: t("nav.product"), href: "/platform" },
     { label: t("nav.universities"), href: "/universities" },
     { label: t("nav.authors"), href: "/authors" },
@@ -20,7 +20,6 @@ export function SiteHeader() {
     { label: t("nav.verify"), href: "/verify" },
   ];
 
-  // Homepage: original dark header (untouched look)
   if (isHome) {
     return (
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl">
@@ -29,7 +28,7 @@ export function SiteHeader() {
             <VeritasLogo href="/" size="md" />
           </div>
           <nav className="hidden flex-1 items-center justify-center gap-0.5 text-sm text-zinc-400 lg:flex">
-            {navItems.map((item) => (
+            {items.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -59,13 +58,12 @@ export function SiteHeader() {
     );
   }
 
-  // Light public header for other marketing pages
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--paper)]/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <VeritasLogo href="/" size="md" />
         <nav className="hidden flex-1 items-center justify-center gap-0.5 text-sm text-[var(--muted)] lg:flex">
-          {navItems(t).map((item) => (
+          {items.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -88,17 +86,3 @@ export function SiteHeader() {
     </header>
   );
 }
-
-function navItems(t: (k: string) => string) {
-  return [
-    { label: t("nav.product"), href: "/platform" },
-    { label: t("nav.universities"), href: "/universities" },
-    { label: t("nav.authors"), href: "/authors" },
-    { label: t("nav.publishers"), href: "/publishers" },
-    { label: t("nav.pricing"), href: "/pricing" },
-    { label: t("nav.verify"), href: "/verify" },
-  ];
-}
-
-// Re-export LanguageSwitcher usage - import at top
-import { LanguageSwitcher } from "./language-switcher";
