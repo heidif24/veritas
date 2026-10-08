@@ -16,6 +16,7 @@ export function SiteHeader() {
     { label: t("nav.universities"), href: "/universities" },
     { label: t("nav.authors"), href: "/authors" },
     { label: t("nav.publishers"), href: "/publishers" },
+    { label: "Writing Tutor", href: "/student/coaching" },
     { label: t("nav.pricing"), href: "/pricing" },
     { label: t("nav.verify"), href: "/verify" },
   ];
@@ -32,7 +33,9 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-lg px-3 py-2 font-medium transition hover:bg-white/5 hover:text-white"
+                className={`rounded-lg px-2.5 py-2 font-medium transition hover:bg-white/5 hover:text-white ${
+                  item.href === "/student/coaching" ? "text-emerald-300" : ""
+                }`}
               >
                 {item.label}
               </Link>
@@ -67,7 +70,9 @@ export function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-lg px-3 py-2 font-medium transition hover:bg-[var(--emerald-soft)] hover:text-[var(--ink)]"
+              className={`rounded-lg px-2.5 py-2 font-medium transition hover:bg-[var(--emerald-soft)] hover:text-[var(--ink)] ${
+                item.href === "/student/coaching" ? "text-[var(--emerald)] font-semibold" : ""
+              }`}
             >
               {item.label}
             </Link>
