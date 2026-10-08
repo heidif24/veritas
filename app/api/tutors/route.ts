@@ -35,7 +35,6 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const user = await currentUser();
 
-  // Allow creating a tutor account in one step if not logged in
   if (!user && body.name && body.email && body.password) {
     const { getUserByEmail, getDb } = await import("@/lib/db");
     if (getUserByEmail(String(body.email).toLowerCase())) {
@@ -46,7 +45,6 @@ export async function POST(request: Request) {
         ),
       );
     }
-    // Create as STUDENT then promote — keeps Role union strict without TUTOR in Prisma enum usage
     const newUser = createUser({
       name: String(body.name).trim(),
       email: String(body.email).toLowerCase().trim(),
@@ -86,8 +84,8 @@ export async function POST(request: Request) {
     return withSecurityHeaders(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
   }
 
-  // Promote to TUTOR if needed
-  if (user.role !== "TUTOR" && user.role !== "ADMIN") {
+  const roleName = String(user.role);
+  if (roleName !== "TUTOR" && roleName !== "ADMIN") {
     const { getDb } = await import("@/lib/db");
     getDb().prepare("UPDATE users SET role = 'TUTOR' WHERE id = ?").run(user.id);
   }
@@ -121,7 +119,6 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  // Admin vetting
   const user = await currentUser();
   if (!user || user.role !== "ADMIN") {
     return withSecurityHeaders(NextResponse.json({ error: "Forbidden" }, { status: 403 }));
