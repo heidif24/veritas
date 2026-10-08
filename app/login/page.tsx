@@ -10,6 +10,7 @@ const DEMO_ACCOUNTS = [
   { role: "Admin", email: "admin@veritas.io", password: "admin123" },
   { role: "Instructor", email: "instructor@veritas.io", password: "instructor123" },
   { role: "Student", email: "student@veritas.io", password: "student123" },
+  { role: "Writing tutor", email: "tutor@veritas.io", password: "tutor123" },
 ];
 
 export default function LoginPage() {
@@ -41,7 +42,11 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/app/dashboard");
+    const role = result.user?.role ?? "STUDENT";
+    if (role === "TUTOR") router.push("/tutor");
+    else if (role === "ADMIN") router.push("/admin");
+    else if (role === "INSTRUCTOR") router.push("/instructor");
+    else router.push("/app/dashboard");
     router.refresh();
   }
 
@@ -60,7 +65,6 @@ export default function LoginPage() {
           <p className="mt-1.5 text-sm text-slate-600">{t("login.sub")}</p>
         </div>
 
-        {/* DEMO credentials panel — clear for meeting demos */}
         <div className="mb-4 rounded-2xl border-2 border-amber-400 bg-amber-50 p-4">
           <div className="mb-2 flex items-center gap-2">
             <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-amber-600" />
@@ -82,7 +86,7 @@ export default function LoginPage() {
             ))}
           </div>
           <p className="mt-2 text-center text-[11px] text-amber-700">
-            Passwords: admin123 · instructor123 · student123
+            Passwords: admin123 · instructor123 · student123 · tutor123
           </p>
         </div>
 
@@ -132,6 +136,10 @@ export default function LoginPage() {
           {t("login.new")}{" "}
           <Link href="/register" className="font-semibold text-cyan-700 hover:text-cyan-800">
             {t("login.create")}
+          </Link>
+          {" · "}
+          <Link href="/tutor/onboarding" className="font-semibold text-violet-700 hover:text-violet-800">
+            Become a writing tutor
           </Link>
         </p>
       </div>

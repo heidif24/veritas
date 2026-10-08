@@ -20,8 +20,11 @@ export function proxy(request: NextRequest) {
     return new NextResponse("Bad Request", { status: 400 });
   }
 
-  const protectedPrefixes = ["/app/", "/instructor/", "/admin/", "/integrity-office", "/student/"];
-  const needsAuth = protectedPrefixes.some((p) => path.startsWith(p));
+  const protectedPrefixes = ["/app/", "/instructor/", "/admin/", "/integrity-office", "/student/", "/tutor"];
+  // Allow public tutor onboarding without session
+  const isPublicTutorOnboarding = path === "/tutor/onboarding" || path.startsWith("/tutor/onboarding/");
+  const needsAuth =
+    !isPublicTutorOnboarding && protectedPrefixes.some((p) => path === p || path.startsWith(p.endsWith("/") ? p : p + "/") || path.startsWith(p));
   if (needsAuth) {
     const session = request.cookies.get("veritas_session")?.value;
     if (!session || session.length < 16) {

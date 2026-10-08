@@ -37,6 +37,23 @@ export default function StudentPage() {
         </div>
       </section>
 
+      {/* Writing tutor CTA */}
+      <section className="mx-auto max-w-6xl px-6 pb-6">
+        <div className="rounded-2xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-cyan-50 p-6">
+          <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Writing support</p>
+          <h2 className="mt-1 text-xl font-black text-slate-900">Are you struggling with writing?</h2>
+          <p className="mt-2 max-w-2xl text-sm text-slate-700">
+            Book a vetted writing tutor for coaching — not ghostwriting. Side comments + Teams/Calendly video while you write. Affordable hourly rates; platform takes a small cut, tutor gets the rest.
+          </p>
+          <Link
+            href="/student/coaching"
+            className="mt-4 inline-flex rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700"
+          >
+            Get writing help / coaching →
+          </Link>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-6xl px-6 pb-8">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map(([label, value]) => (
@@ -68,6 +85,9 @@ export default function StudentPage() {
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link href="/app/dashboard" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
                   {t("student.openDraft")}
+                </Link>
+                <Link href="/student/coaching" className="rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800">
+                  Need coaching?
                 </Link>
                 <button type="button" className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
                   {t("student.submit")}
