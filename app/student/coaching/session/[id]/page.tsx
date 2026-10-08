@@ -89,44 +89,45 @@ export default function CoachingSessionRoomPage() {
 
   async function completeSession() {
     setBusy(true);
-    const res = await fetch(`/api/coaching/sessions/${id}`, {
+    await fetch(`/api/coaching/sessions/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "complete" }),
     });
     setBusy(false);
-    if (res.ok) load();
+    load();
   }
 
-  if (error) {
+  if (error && !session) {
     return (
       <main className="mx-auto max-w-lg px-6 py-20 text-center">
-        <p className="text-red-600">{error}</p>
-        <Link href="/student/coaching" className="mt-4 inline-block text-cyan-700">Back</Link>
+        <p className="text-[var(--danger)]">{error}</p>
+        <Link href="/student/coaching" className="mt-4 inline-block text-[var(--emerald)]">
+          Back
+        </Link>
       </main>
     );
   }
 
   if (!session) {
-    return <main className="px-6 py-20 text-center text-slate-500">Loading coaching room…</main>;
+    return <main className="px-6 py-20 text-center text-[var(--muted)]">Loading coaching room…</main>;
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      {/* Reduced telemetry banner */}
-      <div className="border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-center text-xs font-medium text-emerald-900">
+    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
+      <div className="border-b border-[var(--gold)]/40 bg-[var(--gold-soft)] px-4 py-2 text-center text-xs font-medium text-[#7a6220]">
         Coaching mode — integrity telemetry is reduced. Tutor guides via comments; you write the work.
       </div>
 
-      <header className="border-b border-slate-200 bg-white px-4 py-3">
+      <header className="border-b border-[var(--line)] bg-white px-4 py-3">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] uppercase tracking-wider text-slate-500">Guided session</p>
-            <h1 className="text-lg font-bold">
+            <p className="text-[11px] uppercase tracking-wider text-[var(--muted)]">Guided session</p>
+            <h1 className="font-display text-lg text-[var(--ink)]">
               {session.studentName} · with {session.tutorName}
             </h1>
-            <p className="text-xs text-slate-500">
-              Status: <span className="font-semibold">{session.status}</span>
+            <p className="text-xs text-[var(--muted)]">
+              Status: <span className="font-semibold text-[var(--ink)]">{session.status}</span>
               {session.paymentStatus === "paid" ? " · Payout complete" : ""}
             </p>
           </div>
@@ -136,38 +137,18 @@ export default function CoachingSessionRoomPage() {
                 href={session.teamsJoinUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full bg-[#5059C9] px-4 py-2 text-sm font-bold text-white"
+                className="v-btn bg-[#5059C9] text-white hover:opacity-90"
               >
                 Join Teams call
               </a>
             ) : null}
-            {session.calendlyEventUrl ? (
-              <a
-                href={session.calendlyEventUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold"
-              >
-                Calendly
-              </a>
-            ) : null}
             {session.status !== "in_progress" && session.status !== "completed" ? (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={startSession}
-                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
-              >
+              <button type="button" disabled={busy} onClick={startSession} className="v-btn v-btn-primary disabled:opacity-60">
                 Start session
               </button>
             ) : null}
             {session.status === "in_progress" ? (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={completeSession}
-                className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
-              >
+              <button type="button" disabled={busy} onClick={completeSession} className="v-btn v-btn-primary disabled:opacity-60">
                 End &amp; pay tutor
               </button>
             ) : null}
@@ -175,89 +156,85 @@ export default function CoachingSessionRoomPage() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-0 lg:grid-cols-[1fr_360px]">
-        {/* Student writing surface — tutor does not co-edit; only comments */}
-        <section className="min-h-[70vh] border-r border-slate-200 bg-white p-6">
+      <div className="mx-auto grid max-w-7xl lg:grid-cols-[1fr_340px]">
+        <section className="min-h-[65vh] border-r border-[var(--line)] bg-white p-4 sm:p-6">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-700">
-              {document?.title ?? "Draft (shared view)"}
-            </h2>
-            <span className="text-[11px] text-slate-400">Student writes · tutor guides only</span>
+            <h2 className="text-sm font-bold text-[var(--ink)]">{document?.title ?? "Draft (shared view)"}</h2>
+            <span className="text-[11px] text-[var(--muted)]">Student writes · tutor guides only</span>
           </div>
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className="min-h-[55vh] w-full resize-y rounded-xl border border-slate-200 bg-slate-50 p-4 font-serif text-base leading-7 text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+            className="min-h-[55vh] w-full resize-y rounded-xl border border-[var(--line)] bg-[var(--paper)] p-4 font-serif text-base leading-7 outline-none focus:border-[var(--emerald)] focus:ring-2 focus:ring-[var(--emerald)]/20"
             placeholder="Write here. Your tutor can see this page and leave guidance in the side panel."
           />
-          <p className="mt-2 text-xs text-slate-500">
-            Tip: select a phrase and paste it into “Anchor” when leaving a comment so feedback is tied to a place in the draft.
-          </p>
         </section>
 
-        {/* Side chat / comments */}
-        <aside className="flex min-h-[70vh] flex-col bg-slate-50">
-          <div className="border-b border-slate-200 px-4 py-3">
-            <h2 className="text-sm font-bold text-slate-800">Guidance &amp; chat</h2>
-            <p className="text-[11px] text-slate-500">Comments stay with the session record</p>
+        <aside className="flex min-h-[65vh] flex-col border-l border-[var(--line)] bg-white">
+          <div className="border-b border-[var(--line)] px-4 py-3">
+            <h2 className="text-sm font-bold text-[var(--ink)]">Guidance &amp; chat</h2>
+            <p className="text-[11px] text-[var(--muted)]">Comments stay with the session record</p>
           </div>
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
             {comments.length === 0 ? (
-              <p className="text-sm text-slate-500">No comments yet. Tutor can say “here, try this…”</p>
+              <p className="text-sm text-[var(--muted)]">No comments yet. Tutor can say “here, try this…”</p>
             ) : (
               comments.map((c) => (
                 <div
                   key={c.id}
                   className={`rounded-xl border px-3 py-2 text-sm ${
                     c.authorRole === "TUTOR"
-                      ? "border-violet-200 bg-violet-50"
-                      : "border-slate-200 bg-white"
+                      ? "border-[var(--emerald)]/30 bg-[var(--emerald-soft)]"
+                      : "border-[var(--line)] bg-[var(--paper)]"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-slate-700">{c.authorName}</span>
-                    <span className="text-[10px] uppercase text-slate-400">{c.authorRole}</span>
+                    <span className="text-xs font-bold">{c.authorName}</span>
+                    <span className="text-[10px] uppercase text-[var(--muted)]">{c.authorRole}</span>
                   </div>
                   {c.anchorText ? (
-                    <p className="mt-1 rounded bg-amber-50 px-2 py-1 font-mono text-[11px] text-amber-900">
+                    <p className="mt-1 rounded bg-[var(--gold-soft)] px-2 py-1 font-mono text-[11px]">
                       “{c.anchorText.slice(0, 80)}{c.anchorText.length > 80 ? "…” : "”"}
                     </p>
                   ) : null}
-                  <p className="mt-1 text-slate-800">{c.body}</p>
+                  <p className="mt-1">{c.body}</p>
                 </div>
               ))
             )}
           </div>
-          <div className="border-t border-slate-200 bg-white p-3 space-y-2">
+          <div className="space-y-2 border-t border-[var(--line)] bg-white p-3">
             <input
               value={anchor}
               onChange={(e) => setAnchor(e.target.value)}
               placeholder="Anchor text (optional)"
-              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs outline-none focus:border-violet-400"
+              className="v-input !py-1.5 text-xs"
             />
             <textarea
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Guidance comment…"
               rows={2}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-violet-400"
+              className="v-input"
             />
             <button
               type="button"
               disabled={busy || !commentText.trim()}
               onClick={postComment}
-              className="w-full rounded-full bg-violet-600 py-2 text-sm font-bold text-white disabled:opacity-50"
+              className="v-btn v-btn-primary w-full disabled:opacity-50"
             >
               Send guidance
             </button>
+            {session.status === "in_progress" ? (
+              <button type="button" disabled={busy} onClick={completeSession} className="v-btn v-btn-secondary w-full disabled:opacity-60">
+                End &amp; credit tutor
+              </button>
+            ) : session.status !== "completed" ? (
+              <button type="button" disabled={busy} onClick={startSession} className="v-btn v-btn-secondary w-full disabled:opacity-60">
+                Start session
+              </button>
+            ) : null}
           </div>
         </aside>
-      </div>
-
-      <div className="mx-auto max-w-7xl px-4 py-4 text-center text-xs text-slate-500">
-        Platform fee {(session.platformFeeCents / 100).toFixed(0)} {session.currency} · Tutor earns{" "}
-        {(session.tutorPayoutCents / 100).toFixed(0)} {session.currency} when session is completed.{" "}
-        <Link href="/student/coaching" className="font-semibold text-cyan-700">All sessions</Link>
       </div>
     </main>
   );
