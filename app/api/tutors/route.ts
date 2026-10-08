@@ -5,7 +5,6 @@ import {
   ensureTutoringTables,
   listApprovedTutors,
   upsertTutorProfile,
-  getTutorProfileByUserId,
   normalizeTutorProfile,
   seedDemoTutors,
 } from "@/lib/tutoring";
@@ -38,22 +37,22 @@ export async function POST(request: Request) {
 
   // Allow creating a tutor account in one step if not logged in
   if (!user && body.name && body.email && body.password) {
-    const existing = getUserById; // silence lint
-    void existing;
-    const { getUserByEmail } = await import("@/lib/db");
+    const { getUserByEmail, getDb } = await import("@/lib/db");
     if (getUserByEmail(String(body.email).toLowerCase())) {
       return withSecurityHeaders(
-        NextResponse.json({ error: "Email already registered. Sign in and complete your tutor profile." }, { status: 409 }),
+        NextResponse.json(
+          { error: "Email already registered. Sign in and complete your tutor profile." },
+          { status: 409 },
+        ),
       );
     }
+    // Create as STUDENT then promote — keeps Role union strict without TUTOR in Prisma enum usage
     const newUser = createUser({
       name: String(body.name).trim(),
       email: String(body.email).toLowerCase().trim(),
       passwordHash: await bcrypt.hash(String(body.password), 12),
-      role: "TUTOR" as "STUDENT", // cast: Role extended at runtime
+      role: "STUDENT",
     });
-    // Force role TUTOR in DB
-    const { getDb } = await import("@/lib/db");
     getDb().prepare("UPDATE users SET role = 'TUTOR' WHERE id = ?").run(newUser.id);
 
     const profile = upsertTutorProfile({
@@ -75,7 +74,7 @@ export async function POST(request: Request) {
       NextResponse.json(
         {
           user: { id: newUser.id, name: newUser.name, email: newUser.email, role: "TUTOR" },
-          profile: normalizeTutorProfile(profile!, { ...newUser, role: "TUTOR" as "STUDENT" }),
+          profile: normalizeTutorProfile(profile!, { ...newUser, role: "STUDENT" }),
           message: "Tutor account created. Profile pending vetting.",
         },
         { status: 201 },
@@ -101,9 +100,16 @@ export async function POST(request: Request) {
     languages: Array.isArray(body.languages) ? body.languages.map(String) : undefined,
     hourlyRateCents: body.hourlyRateCents != null ? Number(body.hourlyRateCents) : undefined,
     currency: body.currency ? String(body.currency) : undefined,
-    videoIntroUrl: body.videoIntroUrl !== undefined ? (body.videoIntroUrl ? String(body.videoIntroUrl) : null) : undefined,
-    calendlyUrl: body.calendlyUrl !== undefined ? (body.calendlyUrl ? String(body.calendlyUrl) : null) : undefined,
-    teamsMeetingUrl: body.teamsMeetingUrl !== undefined ? (body.teamsMeetingUrl ? String(body.teamsMeetingUrl) : null) : undefined,
+    videoIntroUrl:
+      body.videoIntroUrl !== undefined ? (body.videoIntroUrl ? String(body.videoIntroUrl) : null) : undefined,
+    calendlyUrl:
+      body.calendlyUrl !== undefined ? (body.calendlyUrl ? String(body.calendlyUrl) : null) : undefined,
+    teamsMeetingUrl:
+      body.teamsMeetingUrl !== undefined
+        ? body.teamsMeetingUrl
+          ? String(body.teamsMeetingUrl)
+          : null
+        : undefined,
     capacityHoursWeek: body.capacityHoursWeek != null ? Number(body.capacityHoursWeek) : undefined,
   });
 
@@ -124,7 +130,9 @@ export async function PATCH(request: Request) {
   const tutorUserId = String(body.userId ?? "");
   const status = String(body.vettingStatus ?? "");
   if (!tutorUserId || !["approved", "rejected", "pending", "verified"].includes(status)) {
-    return withSecurityHeaders(NextResponse.json({ error: "userId and valid vettingStatus required" }, { status: 400 }));
+    return withSecurityHeaders(
+      NextResponse.json({ error: "userId and valid vettingStatus required" }, { status: 400 }),
+    );
   }
   const profile = upsertTutorProfile({ userId: tutorUserId, vettingStatus: status });
   return withSecurityHeaders(
