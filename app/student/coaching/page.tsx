@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { RoleShell, STUDENT_NAV } from "@/app/components/role-shell";
 
 type Tutor = {
   id: string;
@@ -11,26 +12,19 @@ type Tutor = {
   bio: string;
   specialties: string[];
   hourlyRateDisplay: string;
-  hourlyRateCents: number;
-  currency: string;
   videoIntroUrl: string | null;
   calendlyUrl: string | null;
   teamsMeetingUrl: string | null;
-  ratingAvg: number;
-  totalHours: number;
-  capacityHoursWeek: number;
 };
 
 type Session = {
   id: string;
   tutorName: string;
   status: string;
-  scheduledAt: string | null;
   durationMinutes: number;
   tutorPayoutCents: number;
   platformFeeCents: number;
   currency: string;
-  paymentStatus: string;
 };
 
 export default function StudentCoachingPage() {
@@ -40,6 +34,7 @@ export default function StudentCoachingPage() {
   const [booking, setBooking] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     Promise.all([
@@ -50,12 +45,14 @@ export default function StudentCoachingPage() {
         setTutors(t.tutors ?? []);
         setSessions(s.sessions ?? []);
       })
+      .catch(() => setError("Could not load tutors. Try again."))
       .finally(() => setLoading(false));
   }, []);
 
   async function bookTutor(tutorUserId: string) {
     setBooking(tutorUserId);
     setMessage("");
+    setError("");
     const res = await fetch("/api/coaching/sessions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -69,7 +66,7 @@ export default function StudentCoachingPage() {
     const data = await res.json();
     setBooking(null);
     if (!res.ok) {
-      setMessage(data.error || "Booking failed");
+      setError(data.error || "Booking failed");
       return;
     }
     setMessage("Session requested. Open the room when you and your tutor are ready.");
@@ -77,138 +74,128 @@ export default function StudentCoachingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      <section className="mx-auto max-w-6xl px-6 pb-6 pt-12">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-700">Writing tutor</p>
-        <h1 className="mt-2 text-3xl font-black text-slate-900">Need help with your writing?</h1>
-        <p className="mt-2 max-w-2xl text-slate-600">
-          Book a vetted writing tutor for coaching — not ghostwriting. They guide you with side comments
-          while you write, on a video/audio call. You keep ownership of every word.
+    <RoleShell roleLabel="Student" title="Writing tutor" nav={STUDENT_NAV}>
+      <p className="mb-6 max-w-2xl text-[var(--muted)]">
+        Book a vetted writing tutor for coaching — not ghostwriting. They guide with side comments while you write, on video or audio.
+      </p>
+
+      <div className="mb-8 rounded-2xl border border-[var(--emerald)]/30 bg-[var(--emerald-soft)] p-5">
+        <h2 className="font-display text-xl text-[var(--ink)]">Are you struggling with writing?</h2>
+        <p className="mt-1 text-sm text-[var(--muted)]">
+          From ~£18/hr. Platform takes a small cut; the rest goes to your tutor when the session ends.
         </p>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Optional: what are you stuck on? (structure, citations, intro…)"
+          className="v-input mt-3"
+          rows={2}
+        />
+      </div>
 
-        <div className="mt-6 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5">
-          <p className="text-sm font-semibold text-emerald-900">
-            Are you struggling with writing? Do you need help or coaching?
-          </p>
-          <p className="mt-1 text-sm text-emerald-800">
-            Tutors cost a fraction of ghostwriting (from ~£18/hr). The platform takes a small cut; the rest goes to your tutor.
-          </p>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Optional: what are you stuck on? (structure, citations, intro…)"
-            className="mt-3 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400"
-            rows={2}
-          />
+      {message ? (
+        <div className="mb-4 rounded-xl border border-[var(--emerald)]/30 bg-[var(--emerald-soft)] px-4 py-3 text-sm text-[var(--emerald-dark)]">
+          {message}
         </div>
+      ) : null}
+      {error ? (
+        <div className="mb-4 rounded-xl border border-red-200 bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">
+          {error}
+        </div>
+      ) : null}
 
-        {message ? (
-          <div className="mt-4 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-900">{message}</div>
-        ) : null}
-      </section>
-
-      <section className="mx-auto max-w-6xl px-6 pb-10">
-        <h2 className="text-lg font-bold text-slate-900">Available tutors</h2>
-        {loading ? (
-          <p className="mt-4 text-sm text-slate-500">Loading tutors…</p>
-        ) : tutors.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-500">No approved tutors yet. Check back soon.</p>
-        ) : (
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {tutors.map((t) => (
-              <div key={t.userId} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900">{t.name}</h3>
-                    <p className="text-sm text-slate-600">{t.headline}</p>
-                  </div>
-                  <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-bold text-white">
-                    {t.hourlyRateDisplay}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{t.bio}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {t.specialties.map((s) => (
-                    <span key={s} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-700">
-                      {s}
-                    </span>
-                  ))}
-                </div>
-                {t.videoIntroUrl ? (
-                  <div className="mt-3 overflow-hidden rounded-xl border border-slate-100">
-                    <iframe
-                      title={`Intro ${t.name}`}
-                      src={t.videoIntroUrl}
-                      className="aspect-video w-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </div>
-                ) : null}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={booking === t.userId}
-                    onClick={() => bookTutor(t.userId)}
-                    className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
-                  >
-                    {booking === t.userId ? "Booking…" : "Book 1 hour"}
-                  </button>
-                  {t.calendlyUrl ? (
-                    <a
-                      href={t.calendlyUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                      Calendly
-                    </a>
-                  ) : null}
-                  {t.teamsMeetingUrl ? (
-                    <a
-                      href={t.teamsMeetingUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                      Teams link
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="mx-auto max-w-6xl px-6 pb-20">
-        <h2 className="text-lg font-bold text-slate-900">Your coaching sessions</h2>
-        {sessions.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">No sessions yet.</p>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {sessions.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+      <h2 className="font-display text-xl text-[var(--ink)]">Available tutors</h2>
+      {loading ? (
+        <div className="v-empty mt-4">Loading tutors…</div>
+      ) : tutors.length === 0 ? (
+        <div className="v-empty mt-4">No approved tutors yet. Check back soon.</div>
+      ) : (
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          {tutors.map((t) => (
+            <article key={t.userId} className="v-card flex flex-col p-5">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-slate-900">{s.tutorName}</p>
-                  <p className="text-xs text-slate-500">
-                    {s.status} · {s.durationMinutes} min · fee {(s.platformFeeCents / 100).toFixed(0)} {s.currency} platform · payout {(s.tutorPayoutCents / 100).toFixed(0)} {s.currency} to tutor
-                  </p>
+                  <h3 className="font-display text-xl text-[var(--ink)]">{t.name}</h3>
+                  <p className="text-sm text-[var(--muted)]">{t.headline}</p>
                 </div>
-                <Link
-                  href={`/student/coaching/session/${s.id}`}
-                  className="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white"
+                <span className="v-badge v-badge-gold shrink-0">{t.hourlyRateDisplay}</span>
+              </div>
+              <p className="mt-3 flex-1 text-sm leading-relaxed text-[var(--muted)]">{t.bio}</p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {t.specialties.map((s) => (
+                  <span key={s} className="rounded-full border border-[var(--line)] bg-[var(--paper)] px-2.5 py-0.5 text-xs text-[var(--ink)]">
+                    {s}
+                  </span>
+                ))}
+              </div>
+              {t.videoIntroUrl ? (
+                <div className="mt-3 overflow-hidden rounded-xl border border-[var(--line)]">
+                  <iframe title={`Intro ${t.name}`} src={t.videoIntroUrl} className="aspect-video w-full" allowFullScreen />
+                </div>
+              ) : null}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={booking === t.userId}
+                  onClick={() => bookTutor(t.userId)}
+                  className="v-btn v-btn-primary disabled:opacity-60"
                 >
-                  Open room
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-        <Link href="/student" className="mt-6 inline-block text-sm font-semibold text-cyan-700 hover:text-cyan-800">
-          ← Back to student home
-        </Link>
-      </section>
-    </main>
+                  {booking === t.userId ? "Booking…" : "Book 1 hour"}
+                </button>
+                {t.calendlyUrl ? (
+                  <a href={t.calendlyUrl} target="_blank" rel="noreferrer" className="v-btn v-btn-secondary">
+                    Calendly
+                  </a>
+                ) : null}
+                {t.teamsMeetingUrl ? (
+                  <a href={t.teamsMeetingUrl} target="_blank" rel="noreferrer" className="v-btn v-btn-secondary">
+                    Teams
+                  </a>
+                ) : null}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      <h2 className="mt-10 font-display text-xl text-[var(--ink)]">Your sessions</h2>
+      {sessions.length === 0 ? (
+        <div className="v-empty mt-4">No sessions yet.</div>
+      ) : (
+        <div className="mt-4 overflow-x-auto v-card">
+          <table className="v-table">
+            <thead>
+              <tr>
+                <th>Tutor</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Fees</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {sessions.map((s) => (
+                <tr key={s.id}>
+                  <td className="font-semibold">{s.tutorName}</td>
+                  <td>
+                    <span className="v-badge v-badge-emerald">{s.status}</span>
+                  </td>
+                  <td>{s.durationMinutes} min</td>
+                  <td className="text-[var(--muted)]">
+                    Platform {(s.platformFeeCents / 100).toFixed(0)} {s.currency} · Tutor {(s.tutorPayoutCents / 100).toFixed(0)}{" "}
+                    {s.currency}
+                  </td>
+                  <td>
+                    <Link href={`/student/coaching/session/${s.id}`} className="v-btn v-btn-primary !py-1.5 !px-3 text-xs">
+                      Open room
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </RoleShell>
   );
 }

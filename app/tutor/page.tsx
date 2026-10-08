@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { RoleShell, TUTOR_NAV } from "@/app/components/role-shell";
 
 type Session = {
   id: string;
@@ -11,17 +12,18 @@ type Session = {
   tutorPayoutCents: number;
   currency: string;
   paymentStatus: string;
-  scheduledAt: string | null;
 };
 
 export default function TutorDashboardPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/api/coaching/sessions")
       .then((r) => r.json())
       .then((d) => setSessions(d.sessions ?? []))
+      .catch(() => setError("Could not load sessions."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -30,59 +32,90 @@ export default function TutorDashboardPage() {
     .reduce((sum, s) => sum + s.tutorPayoutCents, 0);
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      <section className="mx-auto max-w-5xl px-6 pb-8 pt-12">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-violet-700">Writing tutor</p>
-        <h1 className="mt-2 text-3xl font-black">Tutor dashboard</h1>
-        <p className="mt-2 text-slate-600">
-          Guide students with side comments and video — never write the assignment for them.
-        </p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 p-5">
-            <p className="text-xs uppercase text-slate-500">Sessions</p>
-            <p className="mt-1 text-2xl font-black">{sessions.length}</p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 p-5">
-            <p className="text-xs uppercase text-slate-500">Paid out</p>
-            <p className="mt-1 text-2xl font-black">£{(earned / 100).toFixed(0)}</p>
-          </div>
-          <div className="rounded-2xl border border-violet-200 bg-violet-50 p-5">
-            <p className="text-xs uppercase text-violet-700">Profile</p>
-            <Link href="/tutor/onboarding" className="mt-2 inline-block text-sm font-bold text-violet-800">
-              Edit profile →
+    <RoleShell
+      roleLabel="Writing tutor"
+      title="Tutor dashboard"
+      nav={TUTOR_NAV}
+      actions={
+        <Link href="/tutor/onboarding" className="v-btn v-btn-secondary">
+          Edit profile
+        </Link>
+      }
+    >
+      <p className="mb-6 max-w-2xl text-[var(--muted)]">
+        Guide students with side comments and video — never write the assignment for them.
+      </p>
+
+      <div className="mb-8 grid gap-3 sm:grid-cols-3">
+        <div className="v-card p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Sessions</p>
+          <p className="mt-1 font-display text-3xl text-[var(--ink)]">{sessions.length}</p>
+        </div>
+        <div className="v-card p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Paid out</p>
+          <p className="mt-1 font-display text-3xl text-[var(--ink)]">£{(earned / 100).toFixed(0)}</p>
+        </div>
+        <div className="v-card border-[var(--emerald)]/20 bg-[var(--emerald-soft)] p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--emerald-dark)]">Profile</p>
+          <Link href="/tutor/onboarding" className="mt-2 inline-block text-sm font-semibold text-[var(--emerald)]">
+            Update capacity & rates →
+          </Link>
+        </div>
+      </div>
+
+      {error ? (
+        <div className="mb-4 rounded-xl border border-red-200 bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">{error}</div>
+      ) : null}
+
+      <h2 className="font-display text-xl text-[var(--ink)]">Your sessions</h2>
+      {loading ? (
+        <div className="v-empty mt-4">Loading…</div>
+      ) : sessions.length === 0 ? (
+        <div className="v-empty mt-4">
+          No bookings yet. Complete your profile so students can find you.
+          <div className="mt-3">
+            <Link href="/tutor/onboarding" className="v-btn v-btn-primary">
+              Complete profile
             </Link>
           </div>
         </div>
-      </section>
-
-      <section className="mx-auto max-w-5xl px-6 pb-20">
-        <h2 className="text-lg font-bold">Your sessions</h2>
-        {loading ? (
-          <p className="mt-3 text-sm text-slate-500">Loading…</p>
-        ) : sessions.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">No bookings yet. Complete your profile so students can find you.</p>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {sessions.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3">
-                <div>
-                  <p className="font-semibold">{s.studentName}</p>
-                  <p className="text-xs text-slate-500">
-                    {s.status} · {s.durationMinutes} min · earn {(s.tutorPayoutCents / 100).toFixed(0)} {s.currency}
-                    {s.paymentStatus === "paid" ? " · paid" : ""}
-                  </p>
-                </div>
-                <Link
-                  href={`/student/coaching/session/${s.id}`}
-                  className="rounded-full bg-violet-600 px-4 py-2 text-sm font-bold text-white"
-                >
-                  Open room
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </main>
+      ) : (
+        <div className="mt-4 overflow-x-auto v-card">
+          <table className="v-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Payout</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {sessions.map((s) => (
+                <tr key={s.id}>
+                  <td className="font-semibold">{s.studentName}</td>
+                  <td>
+                    <span className="v-badge v-badge-emerald">{s.status}</span>
+                    {s.paymentStatus === "paid" ? (
+                      <span className="v-badge v-badge-gold ml-1">paid</span>
+                    ) : null}
+                  </td>
+                  <td>{s.durationMinutes} min</td>
+                  <td>
+                    {(s.tutorPayoutCents / 100).toFixed(0)} {s.currency}
+                  </td>
+                  <td>
+                    <Link href={`/student/coaching/session/${s.id}`} className="v-btn v-btn-primary !py-1.5 !px-3 text-xs">
+                      Open room
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </RoleShell>
   );
 }

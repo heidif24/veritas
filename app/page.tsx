@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CryptographicSealSpinner } from "./components/CryptographicSealSpinner";
 import { useLocale } from "./components/locale-provider";
 
+/** HOMEPAGE — preserved appearance (dark canvas, original layout). Do not restyle. */
 export default function Home() {
   const { t } = useLocale();
 
