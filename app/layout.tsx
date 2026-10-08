@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import type { ReactNode } from "react";
 import { BootSplash } from "./components/boot-splash";
+import { DemoBanner } from "./components/demo-banner";
 import { LocaleProvider } from "./components/locale-provider";
 import { PwaRegister } from "./components/pwa-register";
 import { SiteFooter } from "./components/site-footer";
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <LocaleProvider>
           <PwaRegister />
           <BootSplash />
+          <DemoBanner />
           <div className="min-h-screen">
             <SiteHeader />
             <div className="w-full">{children}</div>
