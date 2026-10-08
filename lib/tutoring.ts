@@ -1,4 +1,8 @@
-import { getDb, cryptoRandomId, getUserById, type UserRow } from "@/lib/db";
+import { getDb, getUserById, type UserRow } from "@/lib/db";
+
+function cryptoRandomId() {
+  return `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
 
 /** Ensure tutoring tables exist (idempotent). */
 export function ensureTutoringTables() {
@@ -82,7 +86,7 @@ export function ensureTutoringTables() {
   `);
 }
 
-const PLATFORM_FEE_PERCENT = 20; // platform keeps 20% per hour
+const PLATFORM_FEE_PERCENT = 20;
 
 export type TutorProfileRow = {
   id: string;
@@ -177,14 +181,39 @@ export function normalizeTutorProfile(row: TutorProfileRow | undefined, user?: U
   };
 }
 
+export function normalizeSession(row: CoachingSessionRow | undefined) {
+  if (!row) return null;
+  const student = getUserById(row.student_id);
+  const tutor = getUserById(row.tutor_id);
+  return {
+    id: row.id,
+    studentId: row.student_id,
+    tutorId: row.tutor_id,
+    studentName: student?.name ?? "Student",
+    tutorName: tutor?.name ?? "Tutor",
+    documentId: row.document_id,
+    assignmentTitle: row.assignment_title,
+    status: row.status,
+    scheduledAt: row.scheduled_at,
+    startedAt: row.started_at,
+    endedAt: row.ended_at,
+    durationMinutes: row.duration_minutes,
+    hourlyRateCents: row.hourly_rate_cents,
+    platformFeeCents: row.platform_fee_cents,
+    tutorPayoutCents: row.tutor_payout_cents,
+    currency: row.currency,
+    teamsJoinUrl: row.teams_join_url,
+    calendlyEventUrl: row.calendly_event_url,
+    studentNotes: row.student_notes,
+    tutorNotes: row.tutor_notes,
+    paymentStatus: row.payment_status,
+    createdAt: row.created_at,
+  };
+}
+
 export function getTutorProfileByUserId(userId: string) {
   ensureTutoringTables();
   return getDb().prepare("SELECT * FROM tutor_profiles WHERE user_id = ?").get(userId) as TutorProfileRow | undefined;
-}
-
-export function getTutorProfileById(id: string) {
-  ensureTutoringTables();
-  return getDb().prepare("SELECT * FROM tutor_profiles WHERE id = ?").get(id) as TutorProfileRow | undefined;
 }
 
 export function listApprovedTutors() {
@@ -367,7 +396,6 @@ export function updateCoachingSession(
   ensureTutoringTables();
   const fields: string[] = [];
   const values: unknown[] = [];
-
   const map: Record<string, string> = {
     status: "status",
     scheduledAt: "scheduled_at",
@@ -378,14 +406,12 @@ export function updateCoachingSession(
     tutorNotes: "tutor_notes",
     paymentStatus: "payment_status",
   };
-
   for (const [key, col] of Object.entries(map)) {
     if ((updates as Record<string, unknown>)[key] !== undefined) {
       fields.push(`${col} = ?`);
       values.push((updates as Record<string, unknown>)[key]);
     }
   }
-
   fields.push("updated_at = ?");
   values.push(new Date().toISOString(), id);
   getDb().prepare(`UPDATE coaching_sessions SET ${fields.join(", ")} WHERE id = ?`).run(...values);
@@ -413,7 +439,6 @@ export function completeSessionAndPayout(sessionId: string) {
     )
     .run(payoutId, session.tutor_id, sessionId, session.tutor_payout_cents, session.currency, now);
 
-  // bump tutor stats
   const hours = session.duration_minutes / 60;
   getDb()
     .prepare(`UPDATE tutor_profiles SET total_hours = total_hours + ?, updated_at = ? WHERE user_id = ?`)
@@ -458,37 +483,32 @@ export function listSessionComments(sessionId: string) {
 
 export function seedDemoTutors() {
   ensureTutoringTables();
-  const existing = getDb().prepare("SELECT 1 FROM tutor_profiles LIMIT 1").get();
-  if (existing) return;
+  const { createUser, getUserByEmail } = require("@/lib/db") as typeof import("@/lib/db");
+  const bcrypt = require("bcryptjs") as typeof import("bcryptjs");
 
-  // Demo tutor users are created from seedDemoData / register; create profiles if users exist
-  const tutorEmails = [
-    {
+  let tutor = getUserByEmail("tutor@veritas.io");
+  if (!tutor) {
+    tutor = createUser({
+      name: "Amara Okoro",
       email: "tutor@veritas.io",
+      passwordHash: bcrypt.hashSync("tutor123", 10),
+      role: "STUDENT",
+    });
+    getDb().prepare("UPDATE users SET role = 'TUTOR' WHERE id = ?").run(tutor.id);
+  }
+
+  if (!getTutorProfileByUserId(tutor.id)) {
+    upsertTutorProfile({
+      userId: tutor.id,
       headline: "Academic writing coach · STEM & humanities",
       bio: "Former university writing-centre lead. I help you structure arguments, cite properly, and finish your own work — never write it for you.",
       specialties: ["Essay structure", "Citations", "Thesis statements", "Revision strategy"],
-      rate: 1800,
-      calendly: "https://calendly.com/veritas-tutor-demo",
-      teams: "https://teams.microsoft.com/l/meetup-join/demo-tutor-1",
-      video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    },
-  ];
-
-  for (const t of tutorEmails) {
-    const user = getDb().prepare("SELECT * FROM users WHERE email = ?").get(t.email) as UserRow | undefined;
-    if (!user) continue;
-    upsertTutorProfile({
-      userId: user.id,
-      headline: t.headline,
-      bio: t.bio,
-      specialties: t.specialties,
       languages: ["English"],
-      hourlyRateCents: t.rate,
+      hourlyRateCents: 1800,
       currency: "GBP",
-      videoIntroUrl: t.video,
-      calendlyUrl: t.calendly,
-      teamsMeetingUrl: t.teams,
+      videoIntroUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      calendlyUrl: "https://calendly.com/veritas-tutor-demo",
+      teamsMeetingUrl: "https://teams.microsoft.com/l/meetup-join/demo-tutor-1",
       capacityHoursWeek: 15,
       vettingStatus: "approved",
     });
