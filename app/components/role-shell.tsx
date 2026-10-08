@@ -44,7 +44,10 @@ export function RoleShell({ roleLabel, title, nav, children, actions }: RoleShel
 
         <nav className="sidebar-nav flex flex-1 flex-col gap-0.5 p-2">
           {nav.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            const active =
+              item.href === "/instructor" || item.href === "/admin" || item.href === "/student" || item.href === "/tutor"
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}
@@ -116,8 +119,20 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/billing", label: "Billing", icon: "$" },
   { href: "/admin/security", label: "Security", icon: "S" },
   { href: "/admin/tenant", label: "Tenant", icon: "T" },
+  { href: "/admin/onboarding", label: "Onboarding", icon: "+" },
 ];
 
 export const INSTRUCTOR_NAV: NavItem[] = [
   { href: "/instructor", label: "Dashboard", icon: "D" },
+  { href: "/instructor/assignments", label: "Assignments", icon: "A" },
+  { href: "/instructor/assignments/new", label: "New assignment", icon: "+" },
+  { href: "/instructor/courses", label: "Courses", icon: "C" },
+  { href: "/instructor/narrative", label: "Narrative", icon: "N" },
+];
+
+export const AUTHOR_NAV: NavItem[] = [
+  { href: "/app/dashboard", label: "Documents", icon: "D" },
+  { href: "/app/editor/new", label: "New draft", icon: "+" },
+  { href: "/verify", label: "Verify", icon: "V" },
+  { href: "/student/coaching", label: "Writing tutor", icon: "T" },
 ];

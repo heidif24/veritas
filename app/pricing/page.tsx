@@ -77,24 +77,17 @@ function PricingInner() {
       href: "/onboarding?intent=institution",
       featured: false,
       paid: false as const,
-      features: [
-        t("pricing.if1"),
-        t("pricing.if2"),
-        t("pricing.if3"),
-        t("pricing.if4"),
-        t("pricing.if5"),
-        t("pricing.if6"),
-      ],
+      features: [t("pricing.if1"), t("pricing.if2"), t("pricing.if3"), t("pricing.if4"), t("pricing.if5"), t("pricing.if6")],
     },
   ];
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
+    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
       <section className="mx-auto max-w-6xl px-6 pb-6 pt-12 text-center md:pt-14">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-700">{t("nav.pricing")}</p>
-        <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-black tracking-tight md:text-4xl">{t("pricing.title")}</h1>
-        <p className="mx-auto mt-3 max-w-2xl text-base text-slate-600">{t("pricing.subtitle")}</p>
-        <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-500">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--emerald)]">{t("nav.pricing")}</p>
+        <h1 className="mx-auto mt-3 max-w-3xl font-display text-3xl md:text-4xl">{t("pricing.title")}</h1>
+        <p className="mx-auto mt-3 max-w-2xl text-base text-[var(--muted)]">{t("pricing.subtitle")}</p>
+        <p className="mx-auto mt-2 max-w-2xl text-sm text-[var(--muted)]">
           Process monitoring and cryptographic sealing are included on every paid plan — the core of Veritas.
         </p>
       </section>
@@ -102,26 +95,26 @@ function PricingInner() {
       {(success || cancelled || error) && (
         <section className="mx-auto max-w-6xl px-6 pb-4">
           {success ? (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900">
+            <div className="rounded-2xl border border-[var(--emerald)]/30 bg-[var(--emerald-soft)] px-5 py-4 text-sm text-[var(--emerald-dark)]">
               Payment started successfully{demo ? " (demo mode — add Stripe/PayPal keys for live charges)" : ""}.
               Create or log into your account to use process monitoring and seals.
             </div>
           ) : null}
           {cancelled ? (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-700">
+            <div className="rounded-2xl border border-[var(--line)] bg-white px-5 py-4 text-sm text-[var(--muted)]">
               Checkout cancelled. You can try again anytime.
             </div>
           ) : null}
           {error ? (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-800">{error}</div>
+            <div className="rounded-2xl border border-red-200 bg-[var(--danger-soft)] px-5 py-4 text-sm text-[var(--danger)]">{error}</div>
           ) : null}
         </section>
       )}
 
       <section className="mx-auto max-w-6xl px-6 pb-6">
-        <div className="rounded-2xl border border-cyan-200 bg-gradient-to-r from-cyan-50 to-violet-50 px-5 py-4 text-left sm:text-center">
-          <p className="text-sm font-semibold text-slate-900">{t("pricing.studentBanner")}</p>
-          <p className="mt-1 text-sm text-slate-600">{t("pricing.studentfree")}</p>
+        <div className="rounded-2xl border border-[var(--emerald)]/25 bg-[var(--emerald-soft)] px-5 py-4 text-left sm:text-center">
+          <p className="text-sm font-semibold text-[var(--ink)]">{t("pricing.studentBanner")}</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">{t("pricing.studentfree")}</p>
         </div>
       </section>
 
@@ -130,22 +123,22 @@ function PricingInner() {
           {tiers.map((tier) => (
             <div
               key={tier.name}
-              className={`flex flex-col rounded-2xl border p-6 shadow-sm ${
+              className={`flex flex-col rounded-2xl border p-6 ${
                 tier.featured
-                  ? "border-violet-300 bg-violet-50/40 ring-1 ring-violet-200"
-                  : "border-slate-200 bg-white"
+                  ? "border-[var(--emerald)] bg-[var(--emerald-soft)]/40 shadow-md ring-1 ring-[var(--emerald)]/20"
+                  : "v-card"
               }`}
             >
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{tier.name}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{tier.name}</div>
               <div className="mt-3 flex items-baseline gap-1">
-                <span className="text-3xl font-black tracking-tight text-slate-900">{tier.price}</span>
-                {tier.period ? <span className="text-sm font-medium text-slate-500">{tier.period}</span> : null}
+                <span className="font-display text-3xl text-[var(--ink)]">{tier.price}</span>
+                {tier.period ? <span className="text-sm font-medium text-[var(--muted)]">{tier.period}</span> : null}
               </div>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{tier.blurb}</p>
-              <ul className="mt-5 flex-1 space-y-2.5 text-sm text-slate-700">
+              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{tier.blurb}</p>
+              <ul className="mt-5 flex-1 space-y-2.5 text-sm text-[var(--ink)]">
                 {tier.features.map((f) => (
                   <li key={f} className="flex items-start gap-2.5">
-                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">
+                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--emerald-soft)] text-[10px] font-bold text-[var(--emerald)]">
                       ✓
                     </span>
                     {f}
@@ -159,11 +152,7 @@ function PricingInner() {
                     type="button"
                     disabled={busy !== null}
                     onClick={() => checkout(tier.id, "stripe")}
-                    className={`inline-flex w-full items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold transition disabled:opacity-60 ${
-                      tier.featured
-                        ? "bg-gradient-to-r from-violet-600 to-cyan-600 text-white shadow-md shadow-violet-500/20 hover:opacity-95"
-                        : "bg-slate-900 text-white hover:bg-slate-800"
-                    }`}
+                    className="v-btn v-btn-primary w-full disabled:opacity-60"
                   >
                     {busy === `${tier.id}-stripe` ? "Redirecting…" : "Pay with card (Stripe)"}
                   </button>
@@ -171,22 +160,16 @@ function PricingInner() {
                     type="button"
                     disabled={busy !== null}
                     onClick={() => checkout(tier.id, "paypal")}
-                    className="inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
+                    className="v-btn v-btn-secondary w-full disabled:opacity-60"
                   >
                     {busy === `${tier.id}-paypal` ? "Redirecting…" : "Pay with PayPal"}
                   </button>
-                  <Link
-                    href={tier.href}
-                    className="inline-flex w-full items-center justify-center rounded-full px-5 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800"
-                  >
+                  <Link href={tier.href} className="inline-flex w-full items-center justify-center py-2 text-xs font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
                     Or create account first →
                   </Link>
                 </div>
               ) : (
-                <Link
-                  href={tier.href}
-                  className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-slate-800"
-                >
+                <Link href={tier.href} className="v-btn v-btn-primary mt-6 w-full">
                   {tier.cta}
                 </Link>
               )}
@@ -194,29 +177,25 @@ function PricingInner() {
           ))}
         </div>
 
-        <p className="mt-8 text-center text-xs text-slate-500">
+        <p className="mt-8 text-center text-xs text-[var(--muted)]">
           Card payments via Stripe · PayPal supported · Institution plans invoiced separately.
-          Live keys: set <code className="rounded bg-slate-100 px-1">STRIPE_SECRET_KEY</code> and{" "}
-          <code className="rounded bg-slate-100 px-1">PAYPAL_CLIENT_ID</code> /{" "}
-          <code className="rounded bg-slate-100 px-1">PAYPAL_CLIENT_SECRET</code>.
+          Live keys: set <code className="rounded bg-white px-1 border border-[var(--line)]">STRIPE_SECRET_KEY</code> and{" "}
+          <code className="rounded bg-white px-1 border border-[var(--line)]">PAYPAL_CLIENT_ID</code>.
         </p>
       </section>
 
-      <section className="border-t border-slate-200 bg-slate-50/80">
+      <section className="border-t border-[var(--line)] bg-white">
         <div className="mx-auto grid max-w-6xl gap-8 px-6 py-12 md:grid-cols-2">
           <div>
-            <h2 className="text-lg font-black text-slate-900">{t("pricing.salesTitle")}</h2>
-            <p className="mt-2 text-sm leading-7 text-slate-600">{t("pricing.salesBody")}</p>
-            <Link
-              href="/onboarding?intent=institution"
-              className="mt-4 inline-flex rounded-full bg-slate-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-slate-800"
-            >
+            <h2 className="font-display text-xl text-[var(--ink)]">{t("pricing.salesTitle")}</h2>
+            <p className="mt-2 text-sm leading-7 text-[var(--muted)]">{t("pricing.salesBody")}</p>
+            <Link href="/onboarding?intent=institution" className="v-btn v-btn-primary mt-4">
               {t("pricing.schedule")}
             </Link>
           </div>
           <div>
-            <h2 className="text-lg font-black text-slate-900">{t("pricing.neverTitle")}</h2>
-            <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
+            <h2 className="font-display text-xl text-[var(--ink)]">{t("pricing.neverTitle")}</h2>
+            <ul className="mt-2 space-y-1.5 text-sm text-[var(--muted)]">
               <li>· {t("pricing.never1")}</li>
               <li>· {t("pricing.never2")}</li>
               <li>· {t("pricing.never3")}</li>
@@ -231,7 +210,7 @@ function PricingInner() {
 
 export default function PricingPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-white p-12 text-center text-slate-500">Loading pricing…</main>}>
+    <Suspense fallback={<main className="min-h-screen bg-[var(--paper)] p-12 text-center text-[var(--muted)]">Loading pricing…</main>}>
       <PricingInner />
     </Suspense>
   );
