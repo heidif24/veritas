@@ -110,7 +110,7 @@ export default function CoachingSessionRoomPage() {
   }
 
   if (!session) {
-    return <main className="px-6 py-20 text-center text-[var(--muted)]">Loading coaching room…</main>;
+    return <main className="px-6 py-20 text-center text-[var(--muted)]">Loading coaching room...</main>;
   }
 
   return (
@@ -124,7 +124,7 @@ export default function CoachingSessionRoomPage() {
           <div>
             <p className="text-[11px] uppercase tracking-wider text-[var(--muted)]">Guided session</p>
             <h1 className="font-display text-lg text-[var(--ink)]">
-              {session.studentName} · with {session.tutorName}
+              {session.studentName} with {session.tutorName}
             </h1>
             <p className="text-xs text-[var(--muted)]">
               Status: <span className="font-semibold text-[var(--ink)]">{session.status}</span>
@@ -143,13 +143,23 @@ export default function CoachingSessionRoomPage() {
               </a>
             ) : null}
             {session.status !== "in_progress" && session.status !== "completed" ? (
-              <button type="button" disabled={busy} onClick={startSession} className="v-btn v-btn-primary disabled:opacity-60">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={startSession}
+                className="v-btn v-btn-primary disabled:opacity-60"
+              >
                 Start session
               </button>
             ) : null}
             {session.status === "in_progress" ? (
-              <button type="button" disabled={busy} onClick={completeSession} className="v-btn v-btn-primary disabled:opacity-60">
-                End &amp; pay tutor
+              <button
+                type="button"
+                disabled={busy}
+                onClick={completeSession}
+                className="v-btn v-btn-primary disabled:opacity-60"
+              >
+                End and pay tutor
               </button>
             ) : null}
           </div>
@@ -172,12 +182,12 @@ export default function CoachingSessionRoomPage() {
 
         <aside className="flex min-h-[65vh] flex-col border-l border-[var(--line)] bg-white">
           <div className="border-b border-[var(--line)] px-4 py-3">
-            <h2 className="text-sm font-bold text-[var(--ink)]">Guidance &amp; chat</h2>
+            <h2 className="text-sm font-bold text-[var(--ink)]">Guidance and chat</h2>
             <p className="text-[11px] text-[var(--muted)]">Comments stay with the session record</p>
           </div>
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
             {comments.length === 0 ? (
-              <p className="text-sm text-[var(--muted)]">No comments yet. Tutor can say “here, try this…”</p>
+              <p className="text-sm text-[var(--muted)]">No comments yet. Tutor can guide with side notes.</p>
             ) : (
               comments.map((c) => (
                 <div
@@ -194,7 +204,10 @@ export default function CoachingSessionRoomPage() {
                   </div>
                   {c.anchorText ? (
                     <p className="mt-1 rounded bg-[var(--gold-soft)] px-2 py-1 font-mono text-[11px]">
-                      “{c.anchorText.slice(0, 80)}{c.anchorText.length > 80 ? "…” : "”"}
+                      &ldquo;
+                      {c.anchorText.slice(0, 80)}
+                      {c.anchorText.length > 80 ? "..." : ""}
+                      &rdquo;
                     </p>
                   ) : null}
                   <p className="mt-1">{c.body}</p>
@@ -212,7 +225,7 @@ export default function CoachingSessionRoomPage() {
             <textarea
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Guidance comment…"
+              placeholder="Guidance comment..."
               rows={2}
               className="v-input"
             />
@@ -225,11 +238,21 @@ export default function CoachingSessionRoomPage() {
               Send guidance
             </button>
             {session.status === "in_progress" ? (
-              <button type="button" disabled={busy} onClick={completeSession} className="v-btn v-btn-secondary w-full disabled:opacity-60">
-                End &amp; credit tutor
+              <button
+                type="button"
+                disabled={busy}
+                onClick={completeSession}
+                className="v-btn v-btn-secondary w-full disabled:opacity-60"
+              >
+                End and credit tutor
               </button>
             ) : session.status !== "completed" ? (
-              <button type="button" disabled={busy} onClick={startSession} className="v-btn v-btn-secondary w-full disabled:opacity-60">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={startSession}
+                className="v-btn v-btn-secondary w-full disabled:opacity-60"
+              >
                 Start session
               </button>
             ) : null}
