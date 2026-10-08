@@ -8,21 +8,24 @@ import { PwaRegister } from "./components/pwa-register";
 import { PublicChrome } from "./components/public-chrome";
 import "./globals.css";
 
+// Variable fonts: do not pass a weight array (avoids Next 16.3.x internal CSS module resolution bugs on Vercel)
 const workSans = Work_Sans({
   variable: "--font-work-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const instrumentSerif = Instrument_Serif({
   variable: "--font-instrument-serif",
   subsets: ["latin"],
   weight: "400",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
