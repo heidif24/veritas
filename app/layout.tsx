@@ -1,17 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Geist_Mono, Instrument_Serif, Work_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 import { BootSplash } from "./components/boot-splash";
 import { DemoBanner } from "./components/demo-banner";
 import { LocaleProvider } from "./components/locale-provider";
 import { PwaRegister } from "./components/pwa-register";
-import { SiteFooter } from "./components/site-footer";
-import { SiteHeader } from "./components/site-header";
+import { PublicChrome } from "./components/public-chrome";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const workSans = Work_Sans({
+  variable: "--font-work-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 const instrumentSerif = Instrument_Serif({
-  variable: "--font-display",
+  variable: "--font-instrument-serif",
   subsets: ["latin"],
   weight: "400",
 });
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050505",
+  themeColor: "#101815",
   width: "device-width",
   initialScale: 1,
 };
@@ -52,18 +52,14 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
+      className={`${workSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-[#050505] text-zinc-100">
+      <body className="min-h-full bg-[var(--paper)] text-[var(--ink)] font-sans">
         <LocaleProvider>
           <PwaRegister />
           <BootSplash />
           <DemoBanner />
-          <div className="min-h-screen">
-            <SiteHeader />
-            <div className="w-full">{children}</div>
-            <SiteFooter />
-          </div>
+          <PublicChrome>{children}</PublicChrome>
         </LocaleProvider>
       </body>
     </html>

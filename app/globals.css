@@ -1,44 +1,54 @@
 @import "tailwindcss";
 
+/* ── Veritas design tokens (ink & emerald) ── */
 :root {
-  --background: oklch(0.975 0.012 85);
-  --foreground: oklch(0.22 0.03 165);
-  --card: oklch(0.99 0.008 85);
-  --card-foreground: oklch(0.22 0.03 165);
-  --primary: oklch(0.36 0.075 165);
-  --primary-foreground: oklch(0.975 0.012 85);
-  --secondary: oklch(0.94 0.018 85);
-  --secondary-foreground: oklch(0.22 0.03 165);
-  --muted: oklch(0.94 0.018 85);
-  --muted-foreground: oklch(0.48 0.025 160);
-  --accent: oklch(0.74 0.12 82);
-  --accent-foreground: oklch(0.22 0.03 165);
-  --border: oklch(0.88 0.02 85);
-  --gold: oklch(0.74 0.12 82);
-  --ink: oklch(0.2 0.035 168);
-  --panel: rgba(255, 255, 255, 0.88);
-  --line: oklch(0.88 0.02 85);
+  --ink: #101815;
+  --paper: #F5F7F5;
+  --emerald: #167451;
+  --emerald-dark: #0f543a;
+  --emerald-soft: #e8f5ef;
+  --gold: #C5A34B;
+  --gold-soft: #f7f1e3;
+  --muted: #5c6b63;
+  --line: #d8e0da;
+  --card: #ffffff;
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --primary: var(--emerald);
+  --primary-foreground: #ffffff;
+  --secondary: var(--emerald-soft);
+  --secondary-foreground: var(--ink);
+  --muted-foreground: var(--muted);
+  --accent: var(--gold);
+  --accent-foreground: var(--ink);
+  --border: var(--line);
+  --panel: rgba(255, 255, 255, 0.92);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
+  --color-card-foreground: var(--ink);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--emerald-soft);
+  --color-muted-foreground: var(--muted);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-border: var(--border);
   --color-gold: var(--gold);
   --color-ink: var(--ink);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-display);
+  --color-emerald: var(--emerald);
+  --color-paper: var(--paper);
+  --font-sans: var(--font-work-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-instrument-serif), Georgia, serif;
 }
 
 html {
@@ -47,263 +57,248 @@ html {
 
 body {
   min-height: 100vh;
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-work-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-::selection {
-  background: color-mix(in oklab, var(--primary) 28%, transparent);
+/* Homepage keeps its own dark canvas via local classes — do not force paper on .home-root */
+.home-root {
+  background: #07090d;
+  color: #f4f4f5;
 }
 
-/* Paper grain texture */
+h1, h2, h3, .font-display {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--emerald) 28%, transparent);
+}
+
+/* Shared UI primitives */
+.v-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(16, 24, 21, 0.04);
+}
+
+.v-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.625rem 1.25rem;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.v-btn-primary {
+  background: var(--emerald);
+  color: #fff;
+}
+.v-btn-primary:hover {
+  background: var(--emerald-dark);
+}
+
+.v-btn-secondary {
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.v-btn-secondary:hover {
+  background: var(--emerald-soft);
+}
+
+.v-btn-ghost {
+  background: transparent;
+  color: var(--muted);
+}
+.v-btn-ghost:hover {
+  background: var(--emerald-soft);
+  color: var(--ink);
+}
+
+.v-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  color: var(--ink);
+  outline: none;
+}
+.v-input:focus {
+  border-color: var(--emerald);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--emerald) 18%, transparent);
+}
+
+.v-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.v-badge-emerald {
+  background: var(--emerald-soft);
+  color: var(--emerald-dark);
+}
+.v-badge-gold {
+  background: var(--gold-soft);
+  color: #7a6220;
+}
+
+.v-empty {
+  border: 1px dashed var(--line);
+  border-radius: 1rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--paper) 80%, #fff);
+}
+
+.v-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.v-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.v-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.v-table tr:hover td {
+  background: var(--emerald-soft);
+}
+
+/* Sidebar shell */
+.role-shell {
+  display: flex;
+  min-height: calc(100vh - 2.5rem);
+  background: var(--paper);
+}
+.role-sidebar {
+  width: 15.5rem;
+  flex-shrink: 0;
+  background: var(--ink);
+  color: #e8efe9;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.2s ease;
+}
+.role-sidebar.collapsed {
+  width: 4.25rem;
+}
+.role-sidebar a {
+  color: inherit;
+  text-decoration: none;
+}
+.role-main {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+  .role-shell {
+    flex-direction: column;
+  }
+  .role-sidebar {
+    width: 100% !important;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+  }
+  .role-sidebar .sidebar-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    width: 100%;
+  }
+}
+
+/* Kept loaders / effects from prior design for shared components */
 .paper-grain {
   background-image: radial-gradient(
-    color-mix(in oklab, var(--foreground) 6%, transparent) 1px,
+    color-mix(in srgb, var(--ink) 5%, transparent) 1px,
     transparent 1px
   );
   background-size: 22px 22px;
 }
 
 @keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
 }
+.rise { animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 
-.rise {
-  animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+.spin-slow { animation: spin-slow 40s linear infinite; }
 
-@keyframes spin-slow {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.spin-slow {
-  animation: spin-slow 40s linear infinite;
-}
-
-/* —— Veritas signature loader (kept for existing components) —— */
 .veritas-shield-enter {
   transform-origin: 32px 36px;
   animation: veritasShieldIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-
 .veritas-check-draw {
   stroke-dasharray: 72;
   stroke-dashoffset: 72;
   animation: veritasCheckDraw 0.9s cubic-bezier(0.4, 0, 0.2, 1) 0.4s forwards;
 }
-
 @keyframes veritasShieldIn {
-  from {
-    opacity: 0;
-    transform: scale(0.78);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.78); }
+  to { opacity: 1; transform: scale(1); }
 }
-
-@keyframes veritasCheckDraw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
+@keyframes veritasCheckDraw { to { stroke-dashoffset: 0; } }
 
 .grid-surface {
-  background-image: linear-gradient(rgba(148, 163, 184, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(16, 24, 21, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 24, 21, 0.05) 1px, transparent 1px);
   background-size: 26px 26px;
 }
 
 .glass-panel {
-  background: rgba(15, 23, 42, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(16, 24, 21, 0.72);
+  border: 1px solid rgba(245, 247, 245, 0.12);
   backdrop-filter: blur(16px);
 }
 
 .soft-ring {
-  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.1), 0 30px 80px rgba(15, 23, 42, 0.45);
+  box-shadow: 0 0 0 1px rgba(16, 24, 21, 0.06), 0 24px 60px rgba(16, 24, 21, 0.08);
 }
 
-.progress-bar {
-  position: relative;
-  overflow: hidden;
-}
-
+.progress-bar { position: relative; overflow: hidden; }
 .progress-bar > span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #22d3ee 0%, #38bdf8 35%, #a78bfa 100%);
-}
-
-.library-loader {
-  position: relative;
-  overflow: hidden;
-  border-radius: 26px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.7));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 30px 60px rgba(15, 23, 42, 0.52);
-}
-
-.library-loader__inner {
-  position: relative;
-  height: 300px;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 30% 20%, rgba(34, 211, 238, 0.18), transparent 25%),
-    radial-gradient(circle at 70% 20%, rgba(167, 139, 250, 0.2), transparent 25%),
-    linear-gradient(180deg, rgba(15, 23, 42, 0.7), rgba(2, 6, 23, 0.92));
-}
-
-.library-loader__glow {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
-  transform: translateX(-120%);
-  animation: sheen 3s ease-in-out infinite;
-}
-
-.library-shelf {
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  height: 10px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(251, 191, 36, 0.42), rgba(251, 146, 60, 0.7), rgba(167, 139, 250, 0.5));
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.45);
-}
-
-.library-shelf--back {
-  top: 52%;
-}
-
-.library-shelf--front {
-  top: 66%;
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.48), rgba(96, 165, 250, 0.7), rgba(168, 85, 247, 0.5));
-}
-
-.book {
-  position: absolute;
-  width: 12%;
-  min-width: 42px;
-  border-radius: 12px 12px 10px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-  animation: bookFloat 3s ease-in-out infinite alternate;
-}
-
-.book::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 12%;
-  border-radius: 12px 0 0 10px;
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.book--a { background: linear-gradient(180deg, #7dd3fc, #0ea5e9); }
-.book--b { background: linear-gradient(180deg, #f9a8d4, #ec4899); }
-.book--c { background: linear-gradient(180deg, #fdba74, #f97316); }
-.book--d { background: linear-gradient(180deg, #86efac, #22c55e); }
-.book--e { background: linear-gradient(180deg, #c4b5fd, #8b5cf6); }
-
-.library-loader__stack {
-  position: absolute;
-  right: 12%;
-  bottom: 12%;
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  transform: rotate(-8deg);
-}
-
-.library-loader__stack-item {
-  display: block;
-  width: 44px;
-  height: 70px;
-  border-radius: 10px 10px 8px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.45);
-}
-
-.library-loader__stack-item--cyan {
-  background: linear-gradient(180deg, #67e8f9, #0891b2);
-}
-
-.library-loader__stack-item--violet {
-  background: linear-gradient(180deg, #c4b5fd, #7c3aed);
-  height: 82px;
-}
-
-.library-loader__stack-item--amber {
-  background: linear-gradient(180deg, #fcd34d, #f59e0b);
-  height: 64px;
-}
-
-.library-loader__status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 18px 18px;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(191, 219, 254, 0.9);
-  border-top: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(2, 6, 23, 0.55);
-}
-
-.library-loader__status-dot {
-  display: inline-flex;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #22d3ee;
-  box-shadow: 0 0 12px rgba(34, 211, 238, 0.8);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes bookFloat {
-  0% {
-    transform: translateY(0) rotate(-3deg);
-    opacity: 0.9;
-  }
-  100% {
-    transform: translateY(-12px) rotate(3deg);
-    opacity: 1;
-  }
-}
-
-@keyframes sheen {
-  0% {
-    transform: translateX(-120%);
-  }
-  40%,
-  100% {
-    transform: translateX(120%);
-  }
+  background: linear-gradient(90deg, #167451 0%, #1a9a68 50%, #C5A34B 100%);
 }
 
 @keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.75;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
 }
