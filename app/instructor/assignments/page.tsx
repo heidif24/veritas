@@ -54,6 +54,9 @@ export default function AssignmentsListPage() {
                     <Link href={`/instructor/assignment/${a.id}`} className="text-xs font-semibold text-[var(--emerald)] hover:underline">
                       Open
                     </Link>
+                    <Link href={`/instructor/assignment/${a.id}/folder`} className="text-xs font-semibold text-[var(--emerald)] hover:underline">
+                      Folder
+                    </Link>
                     <Link href={`/instructor/review/${a.id}`} className="text-xs font-semibold text-[var(--muted)] hover:underline">
                       Review
                     </Link>
