@@ -68,18 +68,17 @@ export function RoleShell({ roleLabel, title, nav, children, actions }: RoleShel
           })}
         </nav>
 
-        <div className="border-t border-white/10 p-2">
+        <div className="border-t border-white/10 p-3">
           <Link
-            href="/"
-            className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white"
+            href="/api/auth/logout"
+            className="block rounded-lg px-2.5 py-2 text-center text-xs font-medium text-white/60 hover:bg-white/10 hover:text-white"
           >
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white/10 text-xs">⌂</span>
-            {!collapsed ? <span>Home</span> : null}
+            {collapsed ? "⎋" : "Sign out"}
           </Link>
         </div>
       </aside>
 
-      <div className="role-main">
+      <div className="role-main min-w-0 flex-1">
         {(title || actions) && (
           <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] bg-[var(--paper)]/95 px-4 py-3 backdrop-blur sm:px-6">
             {title ? (
@@ -119,6 +118,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/billing", label: "Billing", icon: "$" },
   { href: "/admin/security", label: "Security", icon: "S" },
   { href: "/admin/tenant", label: "Tenant", icon: "T" },
+  { href: "/admin/branding", label: "Branding", icon: "✦" },
   { href: "/admin/onboarding", label: "Onboarding", icon: "+" },
 ];
 
