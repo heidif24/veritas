@@ -28,6 +28,14 @@ async function main() {
     organizationId: organization.id,
   });
 
+  const tutor = createUser({
+    email: "tutor@veritas.io",
+    name: "Alex Quinn",
+    passwordHash: await bcrypt.hash("tutor123", 10),
+    role: "TUTOR",
+    organizationId: organization.id,
+  });
+
   const document = createDocument({
     title: "Existentialism and Choice",
     content: "The authentic writer is not defined by the speed of output but by the discipline of revision. A living argument is built under pressure, uncertainty, and the willingness to admit complexity.",
@@ -41,6 +49,7 @@ async function main() {
     admin: admin.email,
     instructor: instructor.email,
     student: student.email,
+    tutor: tutor.email,
     organization: organization.name,
     document: document.id,
   });
