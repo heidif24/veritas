@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Instrument_Serif, Work_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 import { BootSplash } from "./components/boot-splash";
-import { DemoBanner } from "./components/demo-banner";
 import { LocaleProvider } from "./components/locale-provider";
 import { PwaRegister } from "./components/pwa-register";
 import { PublicChrome } from "./components/public-chrome";
@@ -61,7 +60,6 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <LocaleProvider>
           <PwaRegister />
           <BootSplash />
-          <DemoBanner />
           <PublicChrome>{children}</PublicChrome>
         </LocaleProvider>
       </body>
