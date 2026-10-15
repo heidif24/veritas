@@ -38,6 +38,8 @@ export default function StudentResultsPage() {
   const params = useParams();
   const assignmentId = String(params?.id ?? "");
   const [data, setData] = useState<ResultsPayload | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
 
   useEffect(() => {
     try {
@@ -57,38 +59,71 @@ export default function StudentResultsPage() {
     return segs.filter((s) => s.risk === "moderate" || s.risk === "high").slice(0, 12);
   }, [data]);
 
-  function handleDownloadHighlighted() {
-    if (!data) return;
-    // Prefer stored plain text; fall back to concatenating segment snippets if missing
-    let plain = data.plainText || "";
-    if (!plain.trim()) {
-      const bits: string[] = [];
-      for (const m of data.similarity?.matchedSegments || []) {
-        if (m.snippet) bits.push(m.snippet);
+  async function handleDownloadHighlighted() {
+    setDownloadError("");
+    setDownloading(true);
+    try {
+      // Preferred: server builds full document from stored submission + match offsets
+      const res = await fetch(
+        `/api/assignments/${encodeURIComponent(assignmentId)}/highlighted-report`,
+      );
+      if (res.ok) {
+        const blob = await res.blob();
+        const cd = res.headers.get("Content-Disposition") || "";
+        const match = /filename="([^"]+)"/.exec(cd);
+        const filename = match?.[1] || "veritas-highlighted.html";
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        return;
       }
-      for (const s of data.ai?.segments || []) {
-        if (s.text) bits.push(s.text);
+
+      // Fallback: build from session results (works right after submit)
+      if (!data) {
+        setDownloadError("No submission found to highlight yet.");
+        return;
       }
-      plain = bits.join("\n\n") || "No full text was stored for this session. Re-submit from the editor to generate a complete highlighted document.";
+      let plain = data.plainText || "";
+      if (!plain.trim()) {
+        const bits: string[] = [];
+        for (const m of data.similarity?.matchedSegments || []) {
+          if (m.snippet) bits.push(m.snippet);
+        }
+        for (const s of data.ai?.segments || []) {
+          if (s.text) bits.push(s.text);
+        }
+        plain =
+          bits.join("\n\n") ||
+          "Full text was not available for this session. Open the assignment folder after a new submit to download the complete coloured report.";
+      }
+
+      const html = buildHighlightedHtml({
+        title: data.documentTitle || "Submission review",
+        plainText: plain,
+        similarityScore: data.similarity?.overallScore,
+        aiScore: data.ai?.overallScore,
+        aiLabel: data.ai?.label,
+        attemptNumber: data.attemptNumber,
+        maxAttempts: data.attemptInfo?.maxAttempts,
+        similarityMatches: data.similarity?.matchedSegments,
+        aiSegments: data.ai?.segments,
+      });
+
+      const safeName = (data.documentTitle || "veritas-highlighted")
+        .replace(/[^a-z0-9-_]+/gi, "-")
+        .replace(/-+/g, "-")
+        .slice(0, 60);
+      downloadHighlightedHtml(`${safeName}-highlighted.html`, html);
+    } catch {
+      setDownloadError("Download failed. Try again in a moment.");
+    } finally {
+      setDownloading(false);
     }
-
-    const html = buildHighlightedHtml({
-      title: data.documentTitle || "Submission review",
-      plainText: plain,
-      similarityScore: data.similarity?.overallScore,
-      aiScore: data.ai?.overallScore,
-      aiLabel: data.ai?.label,
-      attemptNumber: data.attemptNumber,
-      maxAttempts: data.attemptInfo?.maxAttempts,
-      similarityMatches: data.similarity?.matchedSegments,
-      aiSegments: data.ai?.segments,
-    });
-
-    const safeName = (data.documentTitle || "veritas-highlighted")
-      .replace(/[^a-z0-9-_]+/gi, "-")
-      .replace(/-+/g, "-")
-      .slice(0, 60);
-    downloadHighlightedHtml(`${safeName}-highlighted.html`, html);
   }
 
   return (
@@ -96,12 +131,24 @@ export default function StudentResultsPage() {
       <div className="mx-auto max-w-3xl space-y-6">
         {!data ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
-            No results found for this session. Submit from the editor (with an assignment open) to see scores here.
-            <div className="mt-4">
-              <Link href="/student" className="text-[#167451] font-semibold hover:underline">
-                Back to student home
+            <p>
+              No live session results on this device. If you already submitted, you can still download the
+              colour-highlighted document from the server.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => void handleDownloadHighlighted()}
+                disabled={downloading}
+                className="rounded-xl bg-[#167451] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {downloading ? "Preparing…" : "Download highlighted report"}
+              </button>
+              <Link href="/student" className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700">
+                Student home
               </Link>
             </div>
+            {downloadError ? <p className="mt-3 text-sm text-rose-700">{downloadError}</p> : null}
           </div>
         ) : (
           <>
@@ -133,16 +180,20 @@ export default function StudentResultsPage() {
             <div className="rounded-2xl border border-cyan-200 bg-cyan-50/80 p-4">
               <p className="text-sm font-semibold text-cyan-950">Download colour-highlighted document</p>
               <p className="mt-1 text-xs text-cyan-900/80">
-                Like Turnitin: yellow = similarity matches, orange/red = AI-risk spans. Open the HTML file, review the
-                coloured parts, revise them, then resubmit if you still have attempts.
+                Turnitin-style report: <span className="rounded bg-yellow-200 px-1">yellow</span> = similarity match,{" "}
+                <span className="rounded bg-orange-200 px-1">orange</span> = moderate AI-risk,{" "}
+                <span className="rounded bg-red-200 px-1">red</span> = elevated AI-risk. Open the HTML file, revise the
+                coloured parts, then resubmit if you still have attempts left.
               </p>
               <button
                 type="button"
-                onClick={handleDownloadHighlighted}
-                className="mt-3 rounded-xl bg-[#167451] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0f5c3f]"
+                onClick={() => void handleDownloadHighlighted()}
+                disabled={downloading}
+                className="mt-3 rounded-xl bg-[#167451] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0f5c3f] disabled:opacity-60"
               >
-                Download highlighted report (.html)
+                {downloading ? "Preparing…" : "Download highlighted report (.html)"}
               </button>
+              {downloadError ? <p className="mt-2 text-sm text-rose-700">{downloadError}</p> : null}
             </div>
 
             {data.ai?.summary ? (
