@@ -162,6 +162,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       submissionId,
       attemptNumber: nextAttempt,
       attemptInfo: updatedAttempts,
+      plainText: text,
+      documentTitle: document.title || "Submission",
       similarity: {
         overallScore: similarityScore,
         matchedSegments,
