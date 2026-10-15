@@ -4,15 +4,24 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { RoleShell, STUDENT_NAV } from "@/app/components/role-shell";
+import { buildHighlightedHtml, downloadHighlightedHtml } from "@/lib/highlighted-document";
 
 type ResultsPayload = {
   message?: string;
   attemptNumber?: number;
   attemptInfo?: { remainingAttempts?: number; maxAttempts?: number; canSubmit?: boolean; reason?: string };
+  plainText?: string;
+  documentTitle?: string;
   similarity?: {
     overallScore?: number;
     threshold?: number;
-    matchedSegments?: Array<{ snippet?: string; sourceTitle?: string; similarityPercentage?: number }>;
+    matchedSegments?: Array<{
+      snippet?: string;
+      sourceTitle?: string;
+      similarityPercentage?: number;
+      start?: number;
+      end?: number;
+    }>;
     bySource?: Array<{ title?: string; score?: number }>;
   };
   ai?: {
@@ -20,10 +29,9 @@ type ResultsPayload = {
     label?: string;
     summary?: string;
     factors?: string[];
-    segments?: Array<{ text?: string; risk?: string; reason?: string }>;
+    segments?: Array<{ text?: string; risk?: string; reason?: string; start?: number; end?: number }>;
     methodology?: string;
   };
-  plainText?: string;
 };
 
 export default function StudentResultsPage() {
@@ -48,6 +56,40 @@ export default function StudentResultsPage() {
     const segs = data?.ai?.segments || [];
     return segs.filter((s) => s.risk === "moderate" || s.risk === "high").slice(0, 12);
   }, [data]);
+
+  function handleDownloadHighlighted() {
+    if (!data) return;
+    // Prefer stored plain text; fall back to concatenating segment snippets if missing
+    let plain = data.plainText || "";
+    if (!plain.trim()) {
+      const bits: string[] = [];
+      for (const m of data.similarity?.matchedSegments || []) {
+        if (m.snippet) bits.push(m.snippet);
+      }
+      for (const s of data.ai?.segments || []) {
+        if (s.text) bits.push(s.text);
+      }
+      plain = bits.join("\n\n") || "No full text was stored for this session. Re-submit from the editor to generate a complete highlighted document.";
+    }
+
+    const html = buildHighlightedHtml({
+      title: data.documentTitle || "Submission review",
+      plainText: plain,
+      similarityScore: data.similarity?.overallScore,
+      aiScore: data.ai?.overallScore,
+      aiLabel: data.ai?.label,
+      attemptNumber: data.attemptNumber,
+      maxAttempts: data.attemptInfo?.maxAttempts,
+      similarityMatches: data.similarity?.matchedSegments,
+      aiSegments: data.ai?.segments,
+    });
+
+    const safeName = (data.documentTitle || "veritas-highlighted")
+      .replace(/[^a-z0-9-_]+/gi, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 60);
+    downloadHighlightedHtml(`${safeName}-highlighted.html`, html);
+  }
 
   return (
     <RoleShell roleLabel="Student" title="Submission results" nav={STUDENT_NAV}>
@@ -86,6 +128,21 @@ export default function StudentResultsPage() {
                 <p className="mt-2 font-display text-4xl text-[var(--ink)]">{Math.round(aiScore)}</p>
                 <p className="mt-1 text-xs text-slate-500">Label: {aiLabel}</p>
               </div>
+            </div>
+
+            <div className="rounded-2xl border border-cyan-200 bg-cyan-50/80 p-4">
+              <p className="text-sm font-semibold text-cyan-950">Download colour-highlighted document</p>
+              <p className="mt-1 text-xs text-cyan-900/80">
+                Like Turnitin: yellow = similarity matches, orange/red = AI-risk spans. Open the HTML file, review the
+                coloured parts, revise them, then resubmit if you still have attempts.
+              </p>
+              <button
+                type="button"
+                onClick={handleDownloadHighlighted}
+                className="mt-3 rounded-xl bg-[#167451] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0f5c3f]"
+              >
+                Download highlighted report (.html)
+              </button>
             </div>
 
             {data.ai?.summary ? (
@@ -135,12 +192,15 @@ export default function StudentResultsPage() {
               </div>
             ) : null}
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <Link href="/student" className="rounded-xl bg-[#167451] px-4 py-2 text-sm font-semibold text-white">
                 Student home
               </Link>
               {data.attemptInfo?.canSubmit ? (
-                <Link href="/app/dashboard" className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700">
+                <Link
+                  href="/app/dashboard"
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700"
+                >
                   Edit & resubmit
                 </Link>
               ) : null}
