@@ -6,12 +6,22 @@ import { useRouter } from "next/navigation";
 import { VeritasLogo } from "@/app/components/veritas-logo";
 import { useLocale } from "@/app/components/locale-provider";
 
-const DEMO_ACCOUNTS = [
+/** Workspace quick access — fills credentials and signs in. No demo branding on the public surface. */
+const ROLE_ACCOUNTS = [
   { role: "Admin", email: "admin@veritas.io", password: "admin123" },
-  { role: "Instructor", email: "instructor@veritas.io", password: "instructor123" },
+  { role: "Lecturer", email: "instructor@veritas.io", password: "instructor123" },
   { role: "Student", email: "student@veritas.io", password: "student123" },
+  { role: "Publisher", email: "publisher@veritas.io", password: "publisher123" },
   { role: "Writing tutor", email: "tutor@veritas.io", password: "tutor123" },
 ];
+
+function workspaceForRole(role: string) {
+  if (role === "TUTOR") return "/tutor";
+  if (role === "ADMIN") return "/admin";
+  if (role === "INSTRUCTOR") return "/instructor";
+  if (role === "PUBLISHER") return "/publisher";
+  return "/student";
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,31 +31,38 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function signIn(nextEmail: string, nextPassword: string) {
     setLoading(true);
     setError("");
+    setEmail(nextEmail);
+    setPassword(nextPassword);
 
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: nextEmail, password: nextPassword }),
+      });
 
-    const result = await response.json();
-    setLoading(false);
+      const result = await response.json();
+      if (!response.ok) {
+        setError(result.error || t("login.error"));
+        setLoading(false);
+        return;
+      }
 
-    if (!response.ok) {
-      setError(result.error || t("login.error"));
-      return;
+      const role = result.user?.role ?? "STUDENT";
+      router.push(workspaceForRole(role));
+      router.refresh();
+    } catch {
+      setError(t("login.error"));
+      setLoading(false);
     }
+  }
 
-    const role = result.user?.role ?? "STUDENT";
-    if (role === "TUTOR") router.push("/tutor");
-    else if (role === "ADMIN") router.push("/admin");
-    else if (role === "INSTRUCTOR") router.push("/instructor");
-    else router.push("/student");
-    router.refresh();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await signIn(email, password);
   }
 
   return (
@@ -57,28 +74,29 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-[var(--muted)]">{t("login.sub")}</p>
         </div>
 
-        <div className="mb-5 rounded-2xl border border-[var(--gold)]/40 bg-[var(--gold-soft)] p-4">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#7a6220]">Demo accounts — click to fill</p>
-          <div className="mt-2 space-y-1.5">
-            {DEMO_ACCOUNTS.map((acc) => (
+        <div className="mb-5 rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
+            Sign in by role
+          </p>
+          <p className="mt-1 text-xs text-[var(--muted)]">Choose a workspace to continue.</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {ROLE_ACCOUNTS.map((acc) => (
               <button
                 key={acc.email}
                 type="button"
-                onClick={() => {
-                  setEmail(acc.email);
-                  setPassword(acc.password);
-                  setError("");
-                }}
-                className="flex w-full items-center justify-between rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-left text-sm transition hover:border-[var(--gold)]"
+                disabled={loading}
+                onClick={() => void signIn(acc.email, acc.password)}
+                className="rounded-xl border border-[var(--line)] bg-[var(--paper)] px-3 py-2.5 text-left text-sm transition hover:border-[var(--emerald)] hover:bg-white disabled:opacity-60"
               >
-                <span className="font-semibold text-[var(--ink)]">{acc.role}</span>
-                <span className="font-mono text-xs text-[var(--muted)]">{acc.email}</span>
+                <span className="block font-semibold text-[var(--ink)]">{acc.role}</span>
+                <span className="mt-0.5 block text-[11px] text-[var(--muted)]">Open workspace</span>
               </button>
             ))}
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="v-card space-y-4 p-6">
+          <p className="text-xs font-medium text-[var(--muted)]">Or sign in with your institutional email</p>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-[var(--ink)]">{t("login.email")}</label>
             <input
