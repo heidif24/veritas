@@ -39,7 +39,7 @@ export type Submission = {
 };
 
 export const metrics: Stat[] = [
-  { label: "Institutions & teams", value: "430+", detail: "Campuses and editorial organizations" },
+  { label: "Universities", value: "430+", detail: "Campuses licensing Veritas" },
   { label: "Documents processed", value: "2.4M+", detail: "Drafts, reviews, and sealed exports" },
   { label: "Integrity accuracy", value: "99.97%", detail: "Post-export verification reliability" },
   { label: "Average verification", value: "2.1s", detail: "Time to confirm a sealed package" },
@@ -49,7 +49,7 @@ export const platformCapabilities = [
   { title: "Clear writing provenance", description: "Every submission carries a readable record of how the work was produced." },
   { title: "Originality that fits campus policy", description: "Similarity and authorship signals that support fair review." },
   { title: "Sealed, portable packages", description: "Export signed documents that remain verifiable outside the platform." },
-  { title: "Roles that match real teams", description: "Student, faculty, and institutional workflows in one place." },
+  { title: "Roles that match campus teams", description: "Student, instructor, and institutional workflows in one place." },
 ];
 
 export const features: Feature[] = [
@@ -69,16 +69,19 @@ export const features: Feature[] = [
     accent: "from-emerald-500/30 to-teal-500/30",
   },
   {
-    title: "Shareable trust",
-    description: "Writers and institutions can share verification links with external reviewers and publishers.",
+    title: "Campus customization",
+    description: "Universities brand the experience, set policy, and provision students and instructors under one licence.",
     accent: "from-orange-500/30 to-amber-500/30",
   },
 ];
 
 export const pricingTiers = [
-  { name: "Writer", price: "$19", description: "For independent authors and freelancers", features: ["Authorship certificates", "Sealed exports", "Public verification links"] },
-  { name: "Institutional", price: "$2,400", description: "For departments and campuses", features: ["Assignment workflows", "Faculty review tools", "SSO and compliance controls"] },
-  { name: "Publisher", price: "Custom", description: "For editorial and high-volume teams", features: ["Pitch queues", "Trust badges", "Advanced policy controls"] },
+  {
+    name: "University",
+    price: "Custom",
+    description: "Campus licence — students write free",
+    features: ["Assignment workflows", "Instructor review tools", "Branding & tenant controls", "Moodle-oriented onboarding"],
+  },
 ];
 
 export const courseCards: Course[] = [
@@ -105,10 +108,4 @@ export const verificationChecks = [
   { label: "Content integrity", value: "Matched" },
   { label: "Tamper check", value: "Passed" },
   { label: "Provenance", value: "High confidence" },
-];
-
-export const publisherPitches = [
-  { title: "Allegory of the Edge", writer: "Mira S.", status: "Verified", score: 97 },
-  { title: "The Quiet Infrastructure", writer: "Eli B.", status: "Verified", score: 94 },
-  { title: "Weathering the Long Shift", writer: "Rae K.", status: "Needs review", score: 81 },
 ];
