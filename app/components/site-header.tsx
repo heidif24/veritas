@@ -14,9 +14,6 @@ export function SiteHeader() {
   const items = [
     { label: t("nav.product"), href: "/platform" },
     { label: t("nav.universities"), href: "/universities" },
-    { label: t("nav.authors"), href: "/authors" },
-    { label: t("nav.publishers"), href: "/publishers" },
-    { label: "Writing Tutor", href: "/student/coaching" },
     { label: t("nav.pricing"), href: "/pricing" },
     { label: t("nav.verify"), href: "/verify" },
   ];
@@ -33,9 +30,7 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-lg px-2.5 py-2 font-medium transition hover:bg-white/5 hover:text-white ${
-                  item.href === "/student/coaching" ? "text-emerald-300" : ""
-                }`}
+                className="rounded-lg px-2.5 py-2 font-medium transition hover:bg-white/5 hover:text-white"
               >
                 {item.label}
               </Link>
@@ -50,10 +45,10 @@ export function SiteHeader() {
               {t("nav.signin")}
             </Link>
             <Link
-              href="/register"
+              href="/onboarding?intent=institution"
               className="rounded-lg bg-white px-3 py-2 text-xs font-medium text-zinc-950 transition hover:bg-zinc-200 sm:px-4 sm:text-sm"
             >
-              {t("nav.getstarted")}
+              {t("nav.contactSupport")}
             </Link>
           </div>
         </div>
@@ -70,9 +65,7 @@ export function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
-              className={`rounded-lg px-2.5 py-2 font-medium transition hover:bg-[var(--emerald-soft)] hover:text-[var(--ink)] ${
-                item.href === "/student/coaching" ? "text-[var(--emerald)] font-semibold" : ""
-              }`}
+              className="rounded-lg px-2.5 py-2 font-medium transition hover:bg-[var(--emerald-soft)] hover:text-[var(--ink)]"
             >
               {item.label}
             </Link>
@@ -83,8 +76,8 @@ export function SiteHeader() {
           <Link href="/login" className="v-btn v-btn-ghost !py-2 !text-xs sm:!text-sm">
             {t("nav.signin")}
           </Link>
-          <Link href="/register" className="v-btn v-btn-primary !py-2 !text-xs sm:!text-sm">
-            {t("nav.getstarted")}
+          <Link href="/onboarding?intent=institution" className="v-btn v-btn-primary !py-2 !text-xs sm:!text-sm">
+            {t("nav.contactSupport")}
           </Link>
         </div>
       </div>
