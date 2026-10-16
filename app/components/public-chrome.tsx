@@ -9,11 +9,8 @@ import { SiteHeader } from "./site-header";
 const WORKSPACE_PREFIXES = [
   "/app",
   "/student",
-  "/tutor",
   "/instructor",
   "/admin",
-  "/publisher",
-  "/individual",
 ];
 
 export function PublicChrome({ children }: { children: ReactNode }) {
@@ -27,7 +24,6 @@ export function PublicChrome({ children }: { children: ReactNode }) {
     return <div className="min-h-screen w-full">{children}</div>;
   }
 
-  // Homepage: preserve original dark shell — header/footer as before
   if (isHome) {
     return (
       <div className="home-root min-h-screen">
@@ -38,7 +34,6 @@ export function PublicChrome({ children }: { children: ReactNode }) {
     );
   }
 
-  // Other public pages (login, register, pricing, verify, etc.)
   return (
     <div className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
       <SiteHeader />

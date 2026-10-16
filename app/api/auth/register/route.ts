@@ -23,10 +23,9 @@ export async function POST(request: Request) {
   const name = sanitizePlainText(String(body.name ?? ""), 120);
   const email = sanitizePlainText(String(body.email ?? "").toLowerCase(), 254);
   const password = String(body.password ?? "");
-  let role = String(body.role ?? "STUDENT").toUpperCase();
 
-  if (role === "ADMIN") role = "STUDENT";
-  if (!["INSTRUCTOR", "STUDENT", "PUBLISHER"].includes(role)) role = "STUDENT";
+  // University-only: open registration creates STUDENT accounts only.
+  // Instructors and admins are provisioned by the institution after licensing.
 
   if (!name || !email || !password) {
     return withSecurityHeaders(
@@ -55,7 +54,7 @@ export async function POST(request: Request) {
     name,
     email,
     passwordHash: await bcrypt.hash(password, 12),
-    role: role as "INSTRUCTOR" | "STUDENT" | "PUBLISHER",
+    role: "STUDENT",
   });
 
   return withSecurityHeaders(
