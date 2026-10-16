@@ -13,7 +13,6 @@ export function SiteFooter() {
       links: [
         { label: t("footer.platform"), href: "/platform" },
         { label: t("nav.universities"), href: "/universities" },
-        { label: "Writing Tutor", href: "/student/coaching" },
         { label: t("nav.verify"), href: "/verify" },
         { label: t("nav.pricing"), href: "/pricing" },
       ],
@@ -23,9 +22,7 @@ export function SiteFooter() {
       links: [
         { label: t("nav.universities"), href: "/universities" },
         { label: t("footer.faculty"), href: "/instructor/courses" },
-        { label: t("nav.publishers"), href: "/publishers" },
-        { label: t("nav.authors"), href: "/authors" },
-        { label: "Become a tutor", href: "/tutor/onboarding" },
+        { label: t("footer.onboarding"), href: "/onboarding?intent=institution" },
       ],
     },
     {
@@ -50,15 +47,21 @@ export function SiteFooter() {
             </div>
             <p className="mt-5 max-w-sm text-sm leading-7 text-slate-400">{t("footer.tagline")}</p>
             <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#C5A34B]">
-              Secure · Authentic · Verified
+              Universities · Instructors · Students
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
-              <Link href="/student/coaching" className="rounded-full border border-[#167451]/40 bg-[#167451]/15 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition hover:bg-[#167451]/30">
-                Writing Tutor
+              <Link
+                href="/onboarding?intent=institution"
+                className="rounded-full border border-[#167451]/40 bg-[#167451]/15 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition hover:bg-[#167451]/30"
+              >
+                License for your university
               </Link>
-              <Link href="/tutor/onboarding" className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-white/5">
-                Become a tutor
-              </Link>
+              <a
+                href="mailto:support@veritas.io"
+                className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-white/5"
+              >
+                support@veritas.io
+              </a>
             </div>
           </div>
 
