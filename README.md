@@ -1,6 +1,8 @@
 # Veritas
 
-Veritas is a browser-native academic authorship verification platform for universities and academic institutions. It captures composition behavior, computes a live authorship health score, checks text similarity against institutional corpus and prior submissions, and seals each submission in a portable .veritas bundle with a SHA-256 hash and an Ed25519 signature.
+Veritas is a browser-native academic authorship verification platform **licensed exclusively to universities**. It captures composition behavior, computes a live authorship health score, checks text similarity against institutional corpus and prior submissions, and seals each submission in a portable .veritas bundle with a SHA-256 hash and an Ed25519 signature.
+
+Universities purchase access codes, customize branding and policy, and provision students and instructors. There are no individual, tutor, or publisher self-serve plans.
 
 ## Core product goals
 
@@ -8,7 +10,7 @@ Veritas is a browser-native academic authorship verification platform for univer
 - Score organic authorship risk in real time
 - Detect similarity against institutional corpora and other submissions
 - Seal and verify exports with cryptographic integrity checks
-- Support student, faculty, and institutional workflows in a multi-tenant setup
+- Support student, instructor, and institutional workflows in a multi-tenant setup
 
 ## Key demo accounts
 
@@ -52,25 +54,15 @@ npm run build
 npm run start
 ```
 
-## Pricing (market)
+## Licensing
 
-| Plan | Price | Focus |
-|------|-------|--------|
-| Individual | $15/month | Process monitoring + cryptographic seals |
-| Publisher | $40/month | Process + seal + editorial queues |
-| Institution | Custom | Campus LTI, proctoring, free student writing |
+| Plan | Focus |
+|------|--------|
+| University (custom) | Campus licence, Moodle-oriented onboarding, free student writing, instructor review, branding |
 
 Students at onboarded universities: unlimited free writing.
 
-## Payments
-
-Checkout at `/api/payments/checkout` for **Stripe (card)** and **PayPal**.
-
-Set `STRIPE_SECRET_KEY`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` from env.
-Without keys, pricing returns a demo success URL so flows can be tested.
-
-Stripe webhook: `POST /api/payments/webhook`  
-PayPal capture: `POST /api/payments/paypal/capture`
+To license Veritas for your institution, contact **support@veritas.io** or use institutional onboarding at `/onboarding?intent=institution`.
 
 ## Product priority
 
@@ -87,16 +79,13 @@ PayPal capture: `POST /api/payments/paypal/capture`
 
 Protected routes: `/app/*`, `/instructor/*`, `/admin/*`, `/student/*`.
 
-## Firebase path
-
-Current: Next.js + SQLite + cookie sessions. Attach Firebase Auth later via Admin `verifyIdToken` and migrate data to Firestore/Postgres.
+Roles in product: **ADMIN**, **INSTRUCTOR**, **STUDENT** only.
 
 ## Go-live checklist
 
 - [ ] `npm run build` succeeds
 - [ ] Seed demo users
 - [ ] Set `NEXT_PUBLIC_APP_URL` to production domain
-- [ ] Add Stripe + PayPal production keys
-- [ ] Configure Stripe webhook
 - [ ] Admin can log in and open `/admin/*`
 - [ ] Seal + verify flow works on `/verify`
+- [ ] Institutional onboarding path is live for sales

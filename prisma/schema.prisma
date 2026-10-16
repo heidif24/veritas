@@ -11,8 +11,6 @@ enum Role {
   ADMIN
   INSTRUCTOR
   STUDENT
-  PUBLISHER
-  TUTOR
 }
 
 model Organization {

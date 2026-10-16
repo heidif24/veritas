@@ -1,8 +1,8 @@
 import { getDb } from "@/lib/db";
 
-/** Students whose email domain matches an onboarded organisation receive free unlimited usage. */
+/** Universities license Veritas. Students at onboarded institutions get free unlimited usage. */
 export function resolveEntitlement(email: string, role: string): {
-  plan: "student_institutional_free" | "individual" | "publisher" | "institution_custom" | "none";
+  plan: "student_institutional_free" | "institution_custom" | "none";
   unlimited: boolean;
   reason: string;
 } {
@@ -22,12 +22,13 @@ export function resolveEntitlement(email: string, role: string): {
     };
   }
 
-  if (role === "PUBLISHER") {
-    return { plan: "publisher", unlimited: false, reason: "Publisher plan — $40/month." };
-  }
   if (role === "ADMIN" || role === "INSTRUCTOR") {
-    return { plan: "institution_custom", unlimited: true, reason: "Institutional custom agreement." };
+    return { plan: "institution_custom", unlimited: true, reason: "Institutional licence." };
   }
 
-  return { plan: "individual", unlimited: false, reason: "Individual plan — $15/month." };
+  return {
+    plan: "none",
+    unlimited: false,
+    reason: "Veritas is licensed to universities only. Contact support to onboard your institution.",
+  };
 }

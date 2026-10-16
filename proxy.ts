@@ -20,11 +20,27 @@ export function proxy(request: NextRequest) {
     return new NextResponse("Bad Request", { status: 400 });
   }
 
-  const protectedPrefixes = ["/app/", "/instructor/", "/admin/", "/integrity-office", "/student/", "/tutor"];
-  // Allow public tutor onboarding without session
-  const isPublicTutorOnboarding = path === "/tutor/onboarding" || path.startsWith("/tutor/onboarding/");
-  const needsAuth =
-    !isPublicTutorOnboarding && protectedPrefixes.some((p) => path === p || path.startsWith(p.endsWith("/") ? p : p + "/") || path.startsWith(p));
+  // Retired product tracks → institutional onboarding / support
+  if (
+    path === "/tutor" ||
+    path.startsWith("/tutor/") ||
+    path === "/publisher" ||
+    path.startsWith("/publisher/") ||
+    path === "/publishers" ||
+    path.startsWith("/publishers/") ||
+    path === "/individual" ||
+    path.startsWith("/individual/") ||
+    path === "/authors" ||
+    path.startsWith("/authors/")
+  ) {
+    const dest = new URL("/onboarding?intent=institution", request.url);
+    return NextResponse.redirect(dest);
+  }
+
+  const protectedPrefixes = ["/app/", "/instructor/", "/admin/", "/integrity-office", "/student/"];
+  const needsAuth = protectedPrefixes.some(
+    (p) => path === p || path.startsWith(p.endsWith("/") ? p : p + "/") || path.startsWith(p),
+  );
   if (needsAuth) {
     const session = request.cookies.get("veritas_session")?.value;
     if (!session || session.length < 16) {

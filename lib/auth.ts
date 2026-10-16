@@ -5,7 +5,7 @@ export type AuthUser = {
   id: string;
   name: string;
   email: string;
-  role: "ADMIN" | "INSTRUCTOR" | "STUDENT" | "PUBLISHER" | "TUTOR";
+  role: "ADMIN" | "INSTRUCTOR" | "STUDENT";
   organizationId?: string | null;
 };
 
@@ -26,11 +26,18 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     return null;
   }
 
+  const role = session.user.role as string;
+  // Legacy PUBLISHER / TUTOR rows (if any) are treated as STUDENT for access.
+  const normalizedRole =
+    role === "ADMIN" || role === "INSTRUCTOR" || role === "STUDENT"
+      ? (role as AuthUser["role"])
+      : "STUDENT";
+
   return {
     id: session.user.id,
     name: session.user.name,
     email: session.user.email,
-    role: session.user.role,
+    role: normalizedRole,
     organizationId: session.user.organizationId,
   };
 }
