@@ -38,6 +38,13 @@ export type Submission = {
   timestamp: string;
 };
 
+export type Pitch = {
+  title: string;
+  writer: string;
+  status: string;
+  score: number;
+};
+
 export const metrics: Stat[] = [
   { label: "Universities", value: "430+", detail: "Campuses licensing Veritas" },
   { label: "Documents processed", value: "2.4M+", detail: "Drafts, reviews, and sealed exports" },
@@ -83,6 +90,9 @@ export const pricingTiers = [
     features: ["Assignment workflows", "Instructor review tools", "Branding & tenant controls", "Moodle-oriented onboarding"],
   },
 ];
+
+/** Retired publisher track — kept so legacy pages compile during Next build. */
+export const publisherPitches: Pitch[] = [];
 
 export const courseCards: Course[] = [
   { id: "bio-240", title: "Biology 240", term: "Fall 2026", submissions: 33, risk: "Low", nextDeadline: "12 Nov" },
