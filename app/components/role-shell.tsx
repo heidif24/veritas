@@ -128,3 +128,8 @@ export const AUTHOR_NAV: NavItem[] = [
   { href: "/app/editor/new", label: "New draft", icon: "+" },
   { href: "/verify", label: "Verify", icon: "V" },
 ];
+
+/** Retired product track — kept so legacy imports do not break the build. */
+export const TUTOR_NAV: NavItem[] = [
+  { href: "/onboarding?intent=institution", label: "Contact support", icon: "!" },
+];
