@@ -28,9 +28,9 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Veritas — Prove how it was built",
+  title: "Veritas — Academic integrity for universities",
   description:
-    "Stop guessing if AI wrote it. Veritas records a cryptographic process trail and seals academic writing with Ed25519 + SHA-256 so authorship can be verified — not guessed.",
+    "Veritas is licensed exclusively to universities. Capture composition process, support instructor review, and seal submissions with cryptographic proof — customized for your campus.",
   applicationName: "Veritas",
   manifest: "/manifest.webmanifest",
   appleWebApp: {

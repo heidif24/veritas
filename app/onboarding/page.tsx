@@ -45,19 +45,24 @@ export default function InstitutionOnboardingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white px-4 py-14 text-slate-900 md:px-8">
+    <main className="min-h-screen bg-[var(--paper)] px-4 py-14 text-[var(--ink)] md:px-8">
       <div className="mx-auto max-w-6xl">
         <div className="mb-10">
-          <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-700">Onboarding</p>
-          <h1 className="mt-3 text-3xl font-black text-slate-900 md:text-4xl">Register your institution</h1>
-          <p className="mt-3 max-w-xl text-slate-600">
-            Set up your campus or organization, create the primary admin, and start configuring review workflows.
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--emerald)]">
+            Onboarding
+          </p>
+          <h1 className="mt-3 font-display text-3xl md:text-4xl">Register your institution</h1>
+          <p className="mt-3 max-w-xl text-[var(--muted)]">
+            Set up your campus or organization, create the primary admin, and start configuring
+            review workflows. Students and instructors are provisioned under your university licence.
           </p>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-          <aside className="rounded-[24px] border border-slate-200 bg-slate-50 p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Steps</p>
+          <aside className="rounded-2xl border border-[var(--line)] bg-white p-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">
+              Steps
+            </p>
             <div className="mt-5 space-y-4">
               {[
                 ["1", "Institution profile", "Name, domain, and sector"],
@@ -66,79 +71,79 @@ export default function InstitutionOnboardingPage() {
                 ["4", "Go live", "Invite faculty and open submissions"],
               ].map(([step, title, detail]) => (
                 <div key={step} className="flex gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-800">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--emerald-soft)] text-sm font-bold text-[var(--emerald)]">
                     {step}
                   </span>
                   <div>
-                    <div className="font-semibold text-slate-900">{title}</div>
-                    <p className="text-sm text-slate-600">{detail}</p>
+                    <div className="font-semibold text-[var(--ink)]">{title}</div>
+                    <p className="text-sm text-[var(--muted)]">{detail}</p>
                   </div>
                 </div>
               ))}
             </div>
+            <div className="mt-8 rounded-xl border border-[var(--emerald)]/20 bg-[var(--emerald-soft)] p-4">
+              <p className="text-sm font-semibold text-[var(--ink)]">Prefer to talk first?</p>
+              <a
+                href="mailto:support@veritas.io"
+                className="mt-1 block text-sm font-semibold text-[var(--emerald)] hover:underline"
+              >
+                support@veritas.io
+              </a>
+            </div>
           </aside>
 
-          <form onSubmit={handleSubmit} className="space-y-5 rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-5 rounded-2xl border border-[var(--line)] bg-white p-6 shadow-sm md:p-8"
+          >
             <div className="grid gap-5 md:grid-cols-2">
               <div className="md:col-span-2">
-                <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-700">
+                <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-[var(--ink)]">
                   Institution name
                 </label>
                 <input
                   id="name"
                   name="name"
                   required
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+                  className="v-input"
                   placeholder="Northbridge University"
                 />
               </div>
 
               <div>
-                <label htmlFor="slug" className="mb-1.5 block text-sm font-medium text-slate-700">
+                <label htmlFor="slug" className="mb-1.5 block text-sm font-medium text-[var(--ink)]">
                   URL slug
                 </label>
-                <input
-                  id="slug"
-                  name="slug"
-                  required
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
-                  placeholder="northbridge"
-                />
+                <input id="slug" name="slug" required className="v-input" placeholder="northbridge" />
               </div>
 
               <div>
-                <label htmlFor="sector" className="mb-1.5 block text-sm font-medium text-slate-700">
+                <label htmlFor="sector" className="mb-1.5 block text-sm font-medium text-[var(--ink)]">
                   Sector
                 </label>
-                <select
-                  id="sector"
-                  name="sector"
-                  defaultValue="Education"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
-                >
+                <select id="sector" name="sector" defaultValue="Education" className="v-input">
                   <option>Education</option>
                   <option>Healthcare</option>
                   <option>Government</option>
                   <option>Research</option>
-                  <option>Publishing</option>
                 </select>
               </div>
 
               <div>
-                <label htmlFor="adminName" className="mb-1.5 block text-sm font-medium text-slate-700">
+                <label htmlFor="adminName" className="mb-1.5 block text-sm font-medium text-[var(--ink)]">
                   Primary admin name
                 </label>
                 <input
                   id="adminName"
                   name="adminName"
                   required
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+                  className="v-input"
                   placeholder="Alicia Morgan"
                 />
               </div>
 
               <div>
-                <label htmlFor="adminEmail" className="mb-1.5 block text-sm font-medium text-slate-700">
+                <label htmlFor="adminEmail" className="mb-1.5 block text-sm font-medium text-[var(--ink)]">
                   Admin email
                 </label>
                 <input
@@ -146,13 +151,16 @@ export default function InstitutionOnboardingPage() {
                   name="adminEmail"
                   type="email"
                   required
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+                  className="v-input"
                   placeholder="admin@northbridge.edu"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label htmlFor="adminPassword" className="mb-1.5 block text-sm font-medium text-slate-700">
+                <label
+                  htmlFor="adminPassword"
+                  className="mb-1.5 block text-sm font-medium text-[var(--ink)]"
+                >
                   Initial admin password
                 </label>
                 <input
@@ -161,31 +169,28 @@ export default function InstitutionOnboardingPage() {
                   type="password"
                   required
                   minLength={8}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+                  className="v-input"
                   placeholder="Create a secure password"
                 />
               </div>
             </div>
 
             {error ? (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+              <div className="rounded-xl border border-red-200 bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">
+                {error}
+              </div>
             ) : null}
             {success ? (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{success}</div>
+              <div className="rounded-xl border border-emerald-200 bg-[var(--emerald-soft)] px-3 py-2 text-sm text-[var(--emerald-dark)]">
+                {success}
+              </div>
             ) : null}
 
             <div className="flex flex-col gap-3 pt-1 sm:flex-row">
-              <button
-                type="submit"
-                disabled={loading}
-                className="rounded-full bg-slate-900 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-60"
-              >
+              <button type="submit" disabled={loading} className="v-btn v-btn-primary disabled:opacity-60">
                 {loading ? "Creating..." : "Create institution"}
               </button>
-              <Link
-                href="/admin/tenant"
-                className="rounded-full border border-slate-200 bg-white px-6 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
+              <Link href="/admin/tenant" className="v-btn v-btn-secondary text-center">
                 Admin console
               </Link>
             </div>

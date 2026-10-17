@@ -16,29 +16,33 @@ export default function UniversitiesPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
+    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
       <section className="mx-auto max-w-6xl px-6 pb-12 pt-16">
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-700">{t("uni.badge")}</p>
-        <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight md:text-5xl">{t("uni.title")}</h1>
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">{t("uni.sub")}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--emerald)]">
+          {t("uni.badge")}
+        </p>
+        <h1 className="mt-4 max-w-3xl font-display text-4xl tracking-tight md:text-5xl">
+          {t("uni.title")}
+        </h1>
+        <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">{t("uni.sub")}</p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/onboarding?intent=institution" className="rounded-full bg-slate-900 px-6 py-3 text-sm font-bold text-white hover:bg-slate-800">
+          <Link href="/onboarding?intent=institution" className="v-btn v-btn-primary">
             {t("uni.cta.pricing")}
           </Link>
-          <Link href="/register" className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          <Link href="/platform" className="v-btn v-btn-secondary">
             {t("uni.cta.preview")}
           </Link>
         </div>
       </section>
 
-      <section className="border-y border-slate-100 bg-slate-50">
+      <section className="border-y border-[var(--line)] bg-white">
         <div className="mx-auto max-w-6xl px-6 py-14">
-          <h2 className="text-2xl font-black tracking-tight md:text-3xl">{t("uni.section")}</h2>
+          <h2 className="font-display text-2xl md:text-3xl">{t("uni.section")}</h2>
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) => (
-              <div key={f.t} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="text-base font-bold text-slate-900">{f.t}</div>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{f.d}</p>
+              <div key={f.t} className="v-card p-6 transition hover:border-[var(--emerald)]/30">
+                <div className="text-base font-semibold text-[var(--ink)]">{f.t}</div>
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{f.d}</p>
               </div>
             ))}
           </div>
@@ -46,10 +50,10 @@ export default function UniversitiesPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-16">
-        <div className="rounded-3xl border border-cyan-200 bg-gradient-to-r from-cyan-50 to-violet-50 p-8 md:p-10">
-          <h2 className="text-2xl font-black text-slate-900">{t("uni.students.title")}</h2>
-          <p className="mt-3 max-w-2xl text-slate-600">{t("uni.students.body")}</p>
-          <Link href="/onboarding?intent=institution" className="mt-6 inline-flex rounded-full bg-slate-900 px-6 py-3 text-sm font-bold text-white hover:bg-slate-800">
+        <div className="rounded-3xl border border-[var(--emerald)]/20 bg-[var(--emerald-soft)] p-8 md:p-10">
+          <h2 className="font-display text-2xl text-[var(--ink)]">{t("uni.students.title")}</h2>
+          <p className="mt-3 max-w-2xl text-[var(--muted)]">{t("uni.students.body")}</p>
+          <Link href="/onboarding?intent=institution" className="v-btn v-btn-primary mt-6">
             {t("uni.cta.onboard")}
           </Link>
         </div>

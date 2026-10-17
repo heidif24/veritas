@@ -6,9 +6,18 @@ import { useLocale } from "@/app/components/locale-provider";
 export default function PricingPage() {
   const { t } = useLocale();
 
+  const items = [
+    "Student writing, submission, and process monitoring",
+    "Instructor assignment and review workflows",
+    "Cryptographic seals and verification",
+    "Institutional branding and tenant controls",
+    "Students covered at no individual cost",
+    "Priority onboarding and support",
+  ];
+
   return (
     <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
-      <section className="mx-auto max-w-6xl px-6 pb-6 pt-12 text-center md:pt-14">
+      <section className="mx-auto max-w-6xl px-6 pb-6 pt-14 text-center">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--emerald)]">
           {t("nav.pricing")}
         </p>
@@ -22,7 +31,7 @@ export default function PricingPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-6">
-        <div className="rounded-2xl border border-[var(--emerald)]/25 bg-[var(--emerald-soft)] px-5 py-4 text-left sm:text-center">
+        <div className="rounded-2xl border border-[var(--emerald)]/25 bg-[var(--emerald-soft)] px-5 py-4 text-center">
           <p className="text-sm font-semibold text-[var(--ink)]">Students write free</p>
           <p className="mt-1 text-sm text-[var(--muted)]">
             Once your university is onboarded, students with an institutional email get unlimited
@@ -32,7 +41,7 @@ export default function PricingPage() {
       </section>
 
       <section className="mx-auto max-w-3xl px-6 pb-14">
-        <div className="v-card flex flex-col rounded-2xl border border-[var(--emerald)] bg-[var(--emerald-soft)]/40 p-8 shadow-md ring-1 ring-[var(--emerald)]/20">
+        <div className="v-card flex flex-col rounded-2xl border-[var(--emerald)]/40 p-8 shadow-md ring-1 ring-[var(--emerald)]/15">
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
             University & institution
           </div>
@@ -45,14 +54,7 @@ export default function PricingPage() {
             campus.
           </p>
           <ul className="mt-5 flex-1 space-y-2.5 text-sm text-[var(--ink)]">
-            {[
-              "Student writing, submission, and process monitoring",
-              "Instructor assignment and review workflows",
-              "Cryptographic seals and verification",
-              "Institutional branding and tenant controls",
-              "Students covered at no individual cost",
-              "Priority onboarding and support",
-            ].map((f) => (
+            {items.map((f) => (
               <li key={f} className="flex items-start gap-2.5">
                 <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--emerald-soft)] text-[10px] font-bold text-[var(--emerald)]">
                   ✓
