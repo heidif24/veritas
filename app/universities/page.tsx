@@ -16,46 +16,72 @@ export default function UniversitiesPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
-      <section className="mx-auto max-w-6xl px-6 pb-12 pt-16">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--emerald)]">
-          {t("uni.badge")}
-        </p>
-        <h1 className="mt-4 max-w-3xl font-display text-4xl tracking-tight md:text-5xl">
-          {t("uni.title")}
-        </h1>
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">{t("uni.sub")}</p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/onboarding?intent=institution" className="v-btn v-btn-primary">
-            {t("uni.cta.pricing")}
-          </Link>
-          <Link href="/platform" className="v-btn v-btn-secondary">
-            {t("uni.cta.preview")}
-          </Link>
-        </div>
-      </section>
-
-      <section className="border-y border-[var(--line)] bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-14">
-          <h2 className="font-display text-2xl md:text-3xl">{t("uni.section")}</h2>
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((f) => (
-              <div key={f.t} className="v-card p-6 transition hover:border-[var(--emerald)]/30">
-                <div className="text-base font-semibold text-[var(--ink)]">{f.t}</div>
-                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{f.d}</p>
-              </div>
-            ))}
+    <main className="bg-[var(--paper)] text-[var(--ink)]">
+      <section className="m-band">
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 md:py-20 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--emerald)]">
+              {t("uni.badge")}
+            </p>
+            <h1 className="mt-4 max-w-3xl font-display text-4xl leading-[1.08] tracking-tight md:text-5xl">
+              {t("uni.title")}
+            </h1>
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">{t("uni.sub")}</p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
+            <Link href="/onboarding?intent=institution" className="v-btn v-btn-primary">
+              {t("uni.cta.onboard")}
+            </Link>
+            <a href="mailto:support@veritas.io" className="v-btn v-btn-secondary">
+              support@veritas.io
+            </a>
+            <Link href="/platform" className="v-btn v-btn-ghost">
+              {t("uni.cta.preview")}
+            </Link>
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-16">
-        <div className="rounded-3xl border border-[var(--emerald)]/20 bg-[var(--emerald-soft)] p-8 md:p-10">
-          <h2 className="font-display text-2xl text-[var(--ink)]">{t("uni.students.title")}</h2>
-          <p className="mt-3 max-w-2xl text-[var(--muted)]">{t("uni.students.body")}</p>
-          <Link href="/onboarding?intent=institution" className="v-btn v-btn-primary mt-6">
-            {t("uni.cta.onboard")}
-          </Link>
+        <div className="flex items-end justify-between gap-6">
+          <h2 className="font-display text-3xl md:text-4xl">{t("uni.section")}</h2>
+        </div>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((f, i) => (
+            <article key={f.t} className="m-card p-6">
+              <p className="font-mono text-[11px] text-[var(--emerald)]">{String(i + 1).padStart(2, "0")}</p>
+              <h3 className="mt-3 font-display text-2xl">{f.t}</h3>
+              <p className="mt-2 text-sm leading-7 text-[var(--muted)]">{f.d}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-t border-[var(--line)] bg-white">
+        <div className="mx-auto grid max-w-6xl gap-8 px-6 py-16 md:grid-cols-2 md:items-center">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--emerald)]">
+              How a campus buys
+            </p>
+            <h2 className="mt-3 font-display text-3xl">One licence. Your students write free.</h2>
+            <p className="mt-4 text-[var(--muted)] leading-7">{t("uni.students.body")}</p>
+          </div>
+          <ol className="space-y-4 text-sm leading-6">
+            {[
+              ["Contact support", "Tell us the institution, domains, and LMS."],
+              ["Receive codes", "We issue the campus licence and admin access."],
+              ["Customize", "Branding, policy, and instructor provisioning stay with you."],
+              ["Go live", "Students submit. Faculty review. Packages can be verified."],
+            ].map(([title, body], i) => (
+              <li key={title} className="flex gap-4 border-b border-[var(--line)] pb-4 last:border-0">
+                <span className="font-mono text-xs text-[var(--emerald)]">{String(i + 1).padStart(2, "0")}</span>
+                <div>
+                  <p className="font-semibold text-[var(--ink)]">{title}</p>
+                  <p className="text-[var(--muted)]">{body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
     </main>

@@ -21,7 +21,7 @@ export type AttemptInfo = {
   lastDocumentId?: string | null;
 };
 
-function ensureSubmissionColumns() {
+export function ensureSubmissionColumns() {
   const db = getDb();
   const cols = db.prepare(`PRAGMA table_info(submissions)`).all() as Array<{ name: string }>;
   const names = new Set(cols.map((c) => c.name));

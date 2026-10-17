@@ -1,30 +1,50 @@
 import Link from "next/link";
-import { SiteHeader } from "@/app/components/site-header";
-import { SiteFooter } from "@/app/components/site-footer";
+
+export const metadata = {
+  title: "Student fairness — Veritas",
+  description: "How students at a licensed university should read a Veritas flag.",
+};
 
 export default function FairnessPage() {
+  const steps = [
+    ["Open the evidence", "Every composition has a timeline of process signals, similarity spans, and policy checks."],
+    ["Read the factors in plain language", "Paste share, session structure, style drift, and similarity each carry an explanation."],
+    ["Notice the confidence", "Short drafts and sparse event streams produce wider uncertainty. A thin record is not a confession."],
+    ["Talk to your instructor", "Faculty can accept the work, ask for revision, or refer it to the integrity office."],
+    ["Appeal if you need to", "File an explanation. Appeals are logged for the office your university designates."],
+  ];
+
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <SiteHeader />
-      <main className="mx-auto max-w-3xl px-6 py-16">
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-700">Student fairness</p>
-        <h1 className="mt-3 text-4xl font-black tracking-tight">Why was I flagged?</h1>
-        <p className="mt-4 text-lg leading-8 text-slate-600">
-          Flags are <strong>evidence for review</strong>, not a verdict. Here is how to read them and what you can do.
-        </p>
-        <ol className="mt-10 list-decimal space-y-6 pl-5 text-sm leading-7 text-slate-700">
-          <li><strong className="text-slate-900">Open your evidence report</strong> — every composition has a timeline of process signals, similarity spans, and policy checks.</li>
-          <li><strong className="text-slate-900">Read the plain-language factors</strong> — paste share, session structure, style drift, and similarity each carry an explanation.</li>
-          <li><strong className="text-slate-900">Confidence bands</strong> — short drafts and sparse event streams produce wider uncertainty.</li>
-          <li><strong className="text-slate-900">Talk to your instructor</strong> — faculty can accept, request revision, or refer to the integrity office.</li>
-          <li><strong className="text-slate-900">Appeal</strong> — file an appeal with your explanation. Appeals are logged for the integrity office.</li>
-        </ol>
-        <div className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
-          Veritas will never market “100% AI detection.” We market authorship evidence you and your institution can defend.
+    <main className="bg-[var(--paper)] text-[var(--ink)]">
+      <section className="m-band">
+        <div className="mx-auto max-w-3xl px-6 py-16">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--emerald)]">Student fairness</p>
+          <h1 className="mt-4 font-display text-4xl leading-[1.08] md:text-5xl">Why was I flagged?</h1>
+          <p className="mt-5 text-lg leading-8 text-[var(--muted)]">
+            A flag is evidence for a person to read. It is not a grade, and it is not a finding. This is how to
+            read it inside a licensed university.
+          </p>
         </div>
-        <Link href="/methodology" className="mt-8 inline-block text-sm font-semibold text-cyan-700 hover:underline">Read the full methodology →</Link>
-      </main>
-      <SiteFooter />
-    </div>
+      </section>
+      <section className="mx-auto max-w-3xl px-6 py-12">
+        <ol className="space-y-4">
+          {steps.map(([title, body], i) => (
+            <li key={title} className="m-card grid gap-3 p-5 sm:grid-cols-[3rem_1fr]">
+              <span className="font-mono text-xs text-[var(--emerald)]">{String(i + 1).padStart(2, "0")}</span>
+              <div>
+                <h2 className="font-semibold">{title}</h2>
+                <p className="mt-1 text-sm leading-7 text-[var(--muted)]">{body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-8 text-sm leading-7 text-[var(--muted)]">
+          Veritas will not market “100% AI detection.” The product is authorship evidence a university can defend.
+        </p>
+        <Link href="/methodology" className="mt-4 inline-block text-sm font-semibold text-[var(--emerald)] hover:underline">
+          Read the methodology →
+        </Link>
+      </section>
+    </main>
   );
 }

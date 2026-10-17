@@ -1,27 +1,30 @@
-"use client";
-
 import Link from "next/link";
 
 export default function RegisterPage() {
   return (
-    <main className="min-h-screen bg-[var(--paper)] px-4 py-14 text-[var(--ink)] md:px-8">
-      <div className="mx-auto max-w-2xl text-center">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--emerald)]">
-          Universities only
-        </p>
-        <h1 className="mt-3 font-display text-3xl md:text-4xl">
-          Veritas is licensed to universities
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-[var(--muted)]">
-          There is no individual, tutor, or publisher self-serve signup. Your university licenses
-          Veritas, customizes it for campus, and provisions students and instructors.
-        </p>
+    <main className="bg-[var(--paper)] text-[var(--ink)]">
+      <section className="m-band">
+        <div className="mx-auto max-w-6xl px-6 py-16 md:py-20">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--emerald)]">
+            Universities only
+          </p>
+          <h1 className="mt-4 max-w-3xl font-display text-4xl leading-[1.08] md:text-5xl">
+            Accounts come from the university.
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">
+            There is no self-serve signup for individuals, tutors, or publishers. A campus licenses Veritas,
+            then provisions students and instructors.
+          </p>
+        </div>
+      </section>
 
-        <div className="mt-10 rounded-2xl border border-[var(--line)] bg-white p-8 text-left shadow-sm">
-          <h2 className="font-display text-xl text-[var(--ink)]">For university administrators</h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-            Contact support to purchase access codes, set up your tenant, branding, and Moodle
-            integration. Students at onboarded institutions write free.
+      <section className="mx-auto grid max-w-6xl gap-5 px-6 py-14 md:grid-cols-2">
+        <article className="m-card p-8">
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--emerald)]">For the institution</p>
+          <h2 className="mt-3 font-display text-3xl">Start a licence conversation</h2>
+          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+            Contact support with the university name, domains, and how faculty should launch from Moodle or
+            another LMS. We issue access and help you customize branding and policy.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/onboarding?intent=institution" className="v-btn v-btn-primary">
@@ -31,26 +34,20 @@ export default function RegisterPage() {
               support@veritas.io
             </a>
           </div>
-        </div>
+        </article>
 
-        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white p-8 text-left shadow-sm">
-          <h2 className="font-display text-xl text-[var(--ink)]">Already have campus access?</h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-            If your university is onboarded, sign in with your institutional account. Student and
-            instructor accounts are issued by your institution.
+        <article className="m-card p-8">
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--emerald)]">Already on campus</p>
+          <h2 className="mt-3 font-display text-3xl">Sign in with your account</h2>
+          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+            If your university is licensed, use the email the institution gave you. Student writing, submission,
+            and instructor review are unchanged.
           </p>
           <Link href="/login" className="v-btn v-btn-secondary mt-6">
             Sign in
           </Link>
-        </div>
-
-        <p className="mt-10 text-sm text-[var(--muted)]">
-          Questions?{" "}
-          <a href="mailto:support@veritas.io" className="font-semibold text-[var(--emerald)] hover:underline">
-            Contact support
-          </a>
-        </p>
-      </div>
+        </article>
+      </section>
     </main>
   );
 }

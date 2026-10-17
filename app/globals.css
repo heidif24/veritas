@@ -302,3 +302,56 @@ h1, h2, h3, .font-display {
   0%, 100% { opacity: 0.75; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.15); }
 }
+
+/* ── Marketing system (public pages only) ── */
+.m-kicker {
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #8fd4b4;
+}
+
+.m-rule {
+  height: 1px;
+  width: 3.5rem;
+  background: linear-gradient(90deg, #c5a34b, transparent);
+}
+
+.folio {
+  position: relative;
+  border-radius: 1.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)),
+    #0c1210;
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.45);
+}
+
+.folio::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  border-radius: 1.6rem 1.6rem 0 0;
+  background: linear-gradient(90deg, #167451, #c5a34b);
+}
+
+.m-band {
+  background:
+    radial-gradient(ellipse 60% 90% at 0% -10%, rgba(22, 116, 81, 0.1), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, var(--paper) 100%);
+  border-bottom: 1px solid var(--line);
+}
+
+.m-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 1.15rem;
+  box-shadow: 0 1px 0 rgba(16, 24, 21, 0.03);
+}
+
+.m-card:hover {
+  border-color: color-mix(in srgb, var(--emerald) 35%, var(--line));
+}
+

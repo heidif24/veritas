@@ -8,18 +8,14 @@ import { useLocale } from "@/app/components/locale-provider";
 
 /** Workspace quick access — fills credentials and signs in. No demo branding on the public surface. */
 const ROLE_ACCOUNTS = [
-  { role: "Admin", email: "admin@veritas.io", password: "admin123" },
-  { role: "Lecturer", email: "instructor@veritas.io", password: "instructor123" },
+  { role: "University admin", email: "admin@veritas.io", password: "admin123" },
+  { role: "Instructor", email: "instructor@veritas.io", password: "instructor123" },
   { role: "Student", email: "student@veritas.io", password: "student123" },
-  { role: "Publisher", email: "publisher@veritas.io", password: "publisher123" },
-  { role: "Writing tutor", email: "tutor@veritas.io", password: "tutor123" },
 ];
 
 function workspaceForRole(role: string) {
-  if (role === "TUTOR") return "/tutor";
   if (role === "ADMIN") return "/admin";
   if (role === "INSTRUCTOR") return "/instructor";
-  if (role === "PUBLISHER") return "/publisher";
   return "/student";
 }
 
@@ -71,14 +67,16 @@ export default function LoginPage() {
         <div className="mb-8 flex flex-col items-center text-center">
           <VeritasLogo href={undefined} size="lg" showWordmark={false} />
           <h1 className="mt-4 font-display text-3xl text-[var(--ink)]">{t("login.title")}</h1>
-          <p className="mt-2 text-sm text-[var(--muted)]">{t("login.sub")}</p>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Institutional accounts only. Students and instructors sign in here.
+          </p>
         </div>
 
         <div className="mb-5 rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
-            Sign in by role
+            Campus roles
           </p>
-          <p className="mt-1 text-xs text-[var(--muted)]">Choose a workspace to continue.</p>
+          <p className="mt-1 text-xs text-[var(--muted)]">Open the workspace your university assigned.</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {ROLE_ACCOUNTS.map((acc) => (
               <button
@@ -130,13 +128,9 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-6 text-center text-sm text-[var(--muted)]">
-          {t("login.new")}{" "}
-          <Link href="/register" className="font-semibold text-[var(--emerald)] hover:underline">
-            {t("login.create")}
-          </Link>
-          {" · "}
-          <Link href="/tutor/onboarding" className="font-semibold text-[var(--ink)] hover:underline">
-            Become a writing tutor
+          Campus not licensed yet?{" "}
+          <Link href="/onboarding?intent=institution" className="font-semibold text-[var(--emerald)] hover:underline">
+            Contact support
           </Link>
         </p>
       </div>

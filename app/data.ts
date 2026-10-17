@@ -63,22 +63,22 @@ export const features: Feature[] = [
   {
     title: "Provenance you can show",
     description: "Reviewers see a clear trail of drafting, sources, and revisions — not just a final file.",
-    accent: "from-cyan-500/30 to-blue-500/30",
+    accent: "from-emerald-500/15 to-emerald-500/5",
   },
   {
     title: "Fair originality signals",
     description: "Paste patterns, similarity, and composition health surface early so writers can improve before submission.",
-    accent: "from-violet-500/30 to-purple-500/30",
+    accent: "from-emerald-500/10 to-transparent",
   },
   {
     title: "Cryptographic sealing",
     description: "Final work is sealed so any later change is immediately visible to verifiers.",
-    accent: "from-emerald-500/30 to-teal-500/30",
+    accent: "from-emerald-500/20 to-teal-500/10",
   },
   {
     title: "Campus customization",
     description: "Universities brand the experience, set policy, and provision students and instructors under one licence.",
-    accent: "from-orange-500/30 to-amber-500/30",
+    accent: "from-amber-500/15 to-transparent",
   },
 ];
 

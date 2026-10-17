@@ -1,37 +1,58 @@
 import Link from "next/link";
-import { SiteHeader } from "@/app/components/site-header";
-import { SiteFooter } from "@/app/components/site-footer";
+
+export const metadata = {
+  title: "Methodology — Veritas",
+  description: "What Veritas measures for universities, and what it does not claim.",
+};
 
 export default function MethodologyPage() {
+  const layers = [
+    ["01", "Behaviour", "Keystroke timing, paste and delete events, focus, and revision ratios captured while a student writes in the studio."],
+    ["02", "Structure", "Session shape, bulk inserts, late-paste concentration, and how the draft grew."],
+    ["03", "Text", "Institutional corpus and cross-submission similarity, with quoted material down-weighted. External providers only when the university configures them."],
+    ["04", "Style", "Light stylometric drift against earlier drafts of the same piece, when snapshots exist."],
+    ["05", "Custody", "A cryptographic seal — hash and signature — and public verification of the portable package."],
+    ["06", "Policy", "Course genre and thresholds map signals to allow, warn, or hold. Faculty can always override."],
+  ];
+
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <SiteHeader />
-      <main className="mx-auto max-w-3xl px-6 py-16">
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-700">Transparency</p>
-        <h1 className="mt-3 text-4xl font-black tracking-tight">What Veritas measures — and what it does not claim</h1>
-        <p className="mt-4 text-lg leading-8 text-slate-600">
-          Veritas produces <strong>authorship evidence packages</strong> for human review. It does not issue automated
-          misconduct findings and does not claim certainty that text is or is not AI-generated.
-        </p>
-        <section className="mt-12 space-y-8 text-sm leading-7 text-slate-700">
-          <div><h2 className="text-lg font-bold text-slate-900">1. Behavioural layer</h2><p className="mt-2">Keystroke timing, paste/delete events, focus loss, and revision ratios captured while writing in Integrity Studio.</p></div>
-          <div><h2 className="text-lg font-bold text-slate-900">2. Structural layer</h2><p className="mt-2">Session segmentation, bulk-insert detection, late-paste concentration, and growth curves over the writing session.</p></div>
-          <div><h2 className="text-lg font-bold text-slate-900">3. Text layer</h2><p className="mt-2">Institutional corpus and cross-submission similarity, citation-aware down-weighting of quoted material, and paraphrase-oriented span overlap. Optional licensed external providers when configured.</p></div>
-          <div><h2 className="text-lg font-bold text-slate-900">4. Style layer</h2><p className="mt-2">Lightweight stylometric drift against earlier drafts of the same composition when snapshots exist.</p></div>
-          <div><h2 className="text-lg font-bold text-slate-900">5. Custody layer</h2><p className="mt-2">Cryptographic seal (hash + signature) and public verification of the portable .veritas package.</p></div>
-          <div><h2 className="text-lg font-bold text-slate-900">6. Policy layer</h2><p className="mt-2">Course genre and thresholds map signals to allow / warn / block — always overridable by faculty.</p></div>
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-            <h2 className="text-lg font-bold text-amber-950">What we do not claim</h2>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-amber-950/90">
-              <li>That any percentage proves AI authorship beyond reasonable doubt</li>
-              <li>That behavioural signals cannot be adversarially manipulated</li>
-              <li>That absence of flags means original scholarly work in every sense</li>
-            </ul>
-          </div>
-        </section>
-        <Link href="/fairness" className="mt-10 inline-block text-sm font-semibold text-cyan-700 hover:underline">Student fairness: why was I flagged? →</Link>
-      </main>
-      <SiteFooter />
-    </div>
+    <main className="bg-[var(--paper)] text-[var(--ink)]">
+      <section className="m-band">
+        <div className="mx-auto max-w-3xl px-6 py-16">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--emerald)]">Methodology</p>
+          <h1 className="mt-4 font-display text-4xl leading-[1.08] md:text-5xl">
+            Evidence for review. Not an automated verdict.
+          </h1>
+          <p className="mt-5 text-lg leading-8 text-[var(--muted)]">
+            Veritas produces authorship evidence packages for universities. It does not issue misconduct findings,
+            and it does not claim certainty that text is or is not machine-written.
+          </p>
+        </div>
+      </section>
+      <section className="mx-auto max-w-3xl px-6 py-12">
+        <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+          {layers.map(([n, title, body]) => (
+            <li key={n} className="grid gap-2 py-5 sm:grid-cols-[3rem_1fr]">
+              <span className="font-mono text-xs text-[var(--emerald)]">{n}</span>
+              <div>
+                <h2 className="font-display text-2xl">{title}</h2>
+                <p className="mt-1 text-sm leading-7 text-[var(--muted)]">{body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-8 rounded-2xl border border-[#C5A34B]/40 bg-[var(--gold-soft)] p-6 text-sm leading-7 text-[#5c4a1e]">
+          <h2 className="font-display text-2xl text-[var(--ink)]">What we do not claim</h2>
+          <ul className="mt-3 list-disc space-y-1 pl-5">
+            <li>That any percentage proves machine authorship beyond reasonable doubt</li>
+            <li>That behavioural signals cannot be manipulated</li>
+            <li>That a clean report means the scholarship is original in every sense</li>
+          </ul>
+        </div>
+        <Link href="/fairness" className="mt-8 inline-block text-sm font-semibold text-[var(--emerald)] hover:underline">
+          Student fairness: why was I flagged? →
+        </Link>
+      </section>
+    </main>
   );
 }

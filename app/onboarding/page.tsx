@@ -45,18 +45,25 @@ export default function InstitutionOnboardingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--paper)] px-4 py-14 text-[var(--ink)] md:px-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-10">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--emerald)]">
-            Onboarding
+    <main className="bg-[var(--paper)] text-[var(--ink)]">
+      <section className="m-band">
+        <div className="mx-auto max-w-6xl px-6 py-14">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--emerald)]">
+            Contact support
           </p>
-          <h1 className="mt-3 font-display text-3xl md:text-4xl">Register your institution</h1>
-          <p className="mt-3 max-w-xl text-[var(--muted)]">
-            Set up your campus or organization, create the primary admin, and start configuring
-            review workflows. Students and instructors are provisioned under your university licence.
+          <h1 className="mt-3 max-w-2xl font-display text-4xl leading-[1.08] md:text-5xl">
+            Tell us about the university.
+          </h1>
+          <p className="mt-4 max-w-xl text-[var(--muted)] leading-7">
+            Licences are not sold on a public checkout. Send the campus details below, or write directly to{" "}
+            <a className="font-semibold text-[var(--emerald)]" href="mailto:support@veritas.io">
+              support@veritas.io
+            </a>
+            . Students and instructors are provisioned after the university is onboarded.
           </p>
         </div>
+      </section>
+      <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
 
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <aside className="rounded-2xl border border-[var(--line)] bg-white p-6">

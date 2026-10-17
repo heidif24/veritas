@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export const metadata = {
   title: "Refund Policy — Veritas",
-  description: "Refunds for Veritas subscriptions and writing tutor sessions.",
+  description: "How university licences of Veritas are billed and corrected.",
 };
 
 export default function RefundPage() {
@@ -15,38 +15,38 @@ export default function RefundPage() {
 
         <div className="mt-10 space-y-6 text-sm leading-7 text-[var(--muted)]">
           <section className="v-card p-6">
-            <h2 className="font-display text-xl text-[var(--ink)]">Subscriptions</h2>
+            <h2 className="font-display text-xl text-[var(--ink)]">University licences</h2>
             <p className="mt-2">
-              Individual and publisher monthly plans may be cancelled at any time. Fees already charged for the current
-              billing period are generally non-refundable unless required by law or a billing error occurred. Institution
-              contracts follow the terms in the signed agreement.
+              Veritas is sold to universities under a written agreement or quote. Fees follow that agreement.
+              Amounts already invoiced for a current term are generally non-refundable unless the law requires it
+              or a billing error occurred. There are no individual, tutor, or publisher subscriptions to cancel.
             </p>
           </section>
 
           <section className="v-card p-6">
-            <h2 className="font-display text-xl text-[var(--ink)]">Writing tutor sessions</h2>
+            <h2 className="font-display text-xl text-[var(--ink)]">Billing errors</h2>
             <p className="mt-2">
-              Coaching is charged per booked session. If a tutor cancels or technical failure prevents the session,
-              you may request a full credit or refund of that session fee. No-shows by the student after a confirmed
-              booking may not be refundable. Platform service fees on completed sessions are non-refundable once the
-              session is marked complete and the tutor is paid.
+              If a campus was charged in error, the contracting administrator should write to support within 14 days
+              with the invoice reference. Approved corrections are returned to the original payment method where the
+              provider allows it.
             </p>
           </section>
 
           <section className="v-card p-6">
             <h2 className="font-display text-xl text-[var(--ink)]">How to request</h2>
             <p className="mt-2">
-              Contact support through your account or institutional admin within 14 days of the charge, with the
-              invoice or session ID. Approved refunds are returned to the original payment method where the provider
-              allows it.
+              Write to{" "}
+              <a className="font-semibold text-[var(--ink)]" href="mailto:support@veritas.io">
+                support@veritas.io
+              </a>{" "}
+              from the institutional admin contact, with the invoice reference.
             </p>
           </section>
 
           <section className="v-card p-6 border-[var(--gold)]/30 bg-[var(--gold-soft)]">
-            <h2 className="font-display text-xl text-[var(--ink)]">Demo mode</h2>
+            <h2 className="font-display text-xl text-[var(--ink)]">Test billing</h2>
             <p className="mt-2 text-[#7a6220]">
-              While payment providers are in demo or test mode, no live charges are taken. Demo checkouts must not be
-              treated as real payments.
+              If a payment provider is in test mode, no live charge is taken. Test checkouts are not invoices.
             </p>
           </section>
         </div>

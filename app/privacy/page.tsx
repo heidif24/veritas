@@ -17,8 +17,9 @@ export default function PrivacyPage() {
           <section className="v-card p-6">
             <h2 className="font-display text-xl text-[var(--ink)]">1. Who we are</h2>
             <p className="mt-2">
-              Veritas provides cryptographic process seals and writing integrity tools for students, instructors,
-              institutions, publishers, and writing tutors. This policy explains what data we process and why.
+              Veritas provides academic integrity tools licensed to universities: writing process records, instructor
+              review, and cryptographic seals. This policy explains what data we process and why. Students and
+              instructors are covered through their institution.
             </p>
           </section>
 
@@ -26,17 +27,17 @@ export default function PrivacyPage() {
             <h2 className="font-display text-xl text-[var(--ink)]">2. Data we collect</h2>
             <ul className="mt-2 list-disc space-y-1 pl-5">
               <li>Account details: name, email, role, organisation affiliation</li>
-              <li>Documents you create, revise, seal, or share for coaching</li>
-              <li>Writing process signals used for integrity and coaching routing (not sold to advertisers)</li>
+              <li>Documents you create, revise, submit, or seal for a course</li>
+              <li>Writing process signals used for integrity review (not sold to advertisers)</li>
               <li>Session metadata for login security (IP, device fingerprint where enabled)</li>
-              <li>Payment-related identifiers when you buy plans or tutor hours (processed by Stripe/PayPal)</li>
+              <li>Billing identifiers for a university licence, when a contract uses a payment provider</li>
             </ul>
           </section>
 
           <section className="v-card p-6">
             <h2 className="font-display text-xl text-[var(--ink)]">3. How we use data</h2>
             <ul className="mt-2 list-disc space-y-1 pl-5">
-              <li>Provide sealing, verification, course, and tutoring features</li>
+              <li>Provide sealing, verification, assignment, and submission features</li>
               <li>Secure accounts and prevent abuse</li>
               <li>Improve product reliability and academic support workflows</li>
               <li>Comply with legal obligations</li>

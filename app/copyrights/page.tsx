@@ -26,9 +26,9 @@ export default function CopyrightsPage() {
           <section className="v-card p-6">
             <h2 className="font-display text-xl text-[var(--ink)]">Your academic work</h2>
             <p className="mt-2">
-              Students and authors retain ownership of the writing they produce. Veritas processes and stores content
-              only to provide sealing, verification, institutional workflows, and optional tutoring. Tutors may view
-              shared drafts only for the purpose of guidance during a booked session.
+              Students retain ownership of the writing they produce. Veritas processes and stores that work only to
+              provide the university’s sealing, verification, and review workflows. The institution does not transfer
+              copyright to Veritas by using the platform.
             </p>
           </section>
 

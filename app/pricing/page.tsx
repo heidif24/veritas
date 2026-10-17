@@ -1,100 +1,69 @@
 "use client";
 
 import Link from "next/link";
-import { useLocale } from "@/app/components/locale-provider";
+
+const included = [
+  ["Writing studio", "The student composition environment already in use — drafts, process, submission."],
+  ["Instructor review", "Assignments, folders, deadlines, and evidence beside the paper."],
+  ["Seals & verification", "Signed packages that hold after they leave the campus system."],
+  ["Tenant & branding", "The university’s name, colours, and policy — not a shared public brand."],
+  ["Student access", "Covered by the licence. No individual plan, no card at signup."],
+  ["Support", "Onboarding with the people who will run the campus, not a self-serve trial."],
+];
 
 export default function PricingPage() {
-  const { t } = useLocale();
-
-  const items = [
-    "Student writing, submission, and process monitoring",
-    "Instructor assignment and review workflows",
-    "Cryptographic seals and verification",
-    "Institutional branding and tenant controls",
-    "Students covered at no individual cost",
-    "Priority onboarding and support",
-  ];
-
   return (
-    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
-      <section className="mx-auto max-w-6xl px-6 pb-6 pt-14 text-center">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--emerald)]">
-          {t("nav.pricing")}
-        </p>
-        <h1 className="mx-auto mt-3 max-w-3xl font-display text-3xl md:text-4xl">
-          Licensed exclusively to universities
-        </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-base text-[var(--muted)]">
-          Veritas is sold only to universities and academic institutions. Your campus licenses the
-          platform, customizes branding and policy, and provisions students and instructors.
-        </p>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-6 pb-6">
-        <div className="rounded-2xl border border-[var(--emerald)]/25 bg-[var(--emerald-soft)] px-5 py-4 text-center">
-          <p className="text-sm font-semibold text-[var(--ink)]">Students write free</p>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            Once your university is onboarded, students with an institutional email get unlimited
-            free access automatically. No individual or publisher self-serve plans.
+    <main className="bg-[var(--paper)] text-[var(--ink)]">
+      <section className="m-band">
+        <div className="mx-auto max-w-6xl px-6 py-16 md:py-20">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--emerald)]">Licensing</p>
+          <h1 className="mt-4 max-w-3xl font-display text-4xl leading-[1.08] md:text-5xl">
+            One agreement with the university.
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">
+            Veritas is not sold to individuals, tutors, or publishers. A campus licenses the platform,
+            customizes it, and issues access. Students write under that licence.
           </p>
         </div>
       </section>
 
-      <section className="mx-auto max-w-3xl px-6 pb-14">
-        <div className="v-card flex flex-col rounded-2xl border-[var(--emerald)]/40 p-8 shadow-md ring-1 ring-[var(--emerald)]/15">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
-            University & institution
+      <section className="mx-auto grid max-w-6xl gap-10 px-6 py-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <aside className="m-card overflow-hidden">
+          <div className="bg-[#101815] px-7 py-8 text-white">
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C5A34B]">University licence</p>
+            <p className="mt-4 font-display text-5xl">Custom</p>
+            <p className="mt-3 text-sm leading-7 text-zinc-400">
+              Scoped to enrolment, faculties, and how you connect Moodle or your LMS. Quoted with support —
+              never a public checkout.
+            </p>
           </div>
-          <div className="mt-3 flex items-baseline gap-1">
-            <span className="font-display text-3xl text-[var(--ink)]">Custom</span>
+          <div className="space-y-3 px-7 py-6">
+            <Link href="/onboarding?intent=institution" className="v-btn v-btn-primary w-full">
+              Contact support
+            </Link>
+            <a href="mailto:support@veritas.io" className="v-btn v-btn-secondary w-full">
+              support@veritas.io
+            </a>
+            <p className="text-center text-xs leading-5 text-[var(--muted)]">
+              Tell us the institution, approximate students, and whether you need LTI.
+            </p>
           </div>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-            Campus licence with Moodle/LTI-ready workflows, faculty review, branding, and policy
-            controls. Codes and access are issued to your institution — you customize for your
-            campus.
-          </p>
-          <ul className="mt-5 flex-1 space-y-2.5 text-sm text-[var(--ink)]">
-            {items.map((f) => (
-              <li key={f} className="flex items-start gap-2.5">
-                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--emerald-soft)] text-[10px] font-bold text-[var(--emerald)]">
-                  ✓
-                </span>
-                {f}
+        </aside>
+
+        <div>
+          <h2 className="font-display text-3xl">What the licence covers</h2>
+          <ul className="mt-6 divide-y divide-[var(--line)] border-y border-[var(--line)]">
+            {included.map(([title, body]) => (
+              <li key={title} className="grid gap-1 py-4 sm:grid-cols-[11rem_1fr] sm:gap-6">
+                <span className="font-semibold">{title}</span>
+                <span className="text-sm leading-7 text-[var(--muted)]">{body}</span>
               </li>
             ))}
           </ul>
-          <Link href="/onboarding?intent=institution" className="v-btn v-btn-primary mt-6 w-full">
-            Contact support to license
-          </Link>
-          <a
-            href="mailto:support@veritas.io"
-            className="mt-3 text-center text-sm font-semibold text-[var(--emerald)] hover:underline"
-          >
-            support@veritas.io
-          </a>
-        </div>
-
-        <p className="mt-8 text-center text-xs text-[var(--muted)]">
-          Individual, tutor, and publisher plans are no longer offered. All access is through a
-          university licence.
-        </p>
-      </section>
-
-      <section className="border-t border-[var(--line)] bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-12 text-center">
-          <h2 className="font-display text-xl text-[var(--ink)]">Ready to bring Veritas to campus?</h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-7 text-[var(--muted)]">
-            Tell us about your institution. We will issue access codes, help you customize branding
-            and policy, and connect Moodle or your LMS where needed.
+          <p className="mt-6 text-sm leading-7 text-[var(--muted)]">
+            Individual, tutor, and publisher plans are retired. If a campus is already licensed, students and
+            instructors sign in — they do not buy a seat.
           </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/onboarding?intent=institution" className="v-btn v-btn-primary">
-              Start institutional onboarding
-            </Link>
-            <a href="mailto:support@veritas.io" className="v-btn v-btn-secondary">
-              Email support
-            </a>
-          </div>
         </div>
       </section>
     </main>
