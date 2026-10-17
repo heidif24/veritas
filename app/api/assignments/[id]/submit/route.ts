@@ -9,6 +9,8 @@ import { listSubmittedDocumentsByHashes } from "@/lib/db";
 import { advancedSimilarityCheck, type SourceDoc } from "@/lib/plagiarism/advanced";
 import type { CompositionOperation } from "@/lib/composition-health";
 import { scoreCompositionHealth } from "@/lib/composition-health";
+import { loadDocumentTelemetry, saveDocumentTelemetry } from "@/lib/telemetry-store";
+import { linkAssignmentDocument } from "@/lib/assignment-link";
 
 export const runtime = "nodejs";
 
@@ -41,36 +43,42 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "Document not found or not owned by you" }, { status: 404 });
     }
 
-    const text = String(document.content || "").replace(/<[^>]+>/g, " ");
+    const text = String(document.content || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
     if (text.trim().length < 40) {
       return NextResponse.json({ error: "Write more before submitting (at least ~40 characters)." }, { status: 400 });
     }
 
-    let ops: CompositionOperation[] = [];
-    let focusLosses = 0;
-    try {
-      const row = getDb()
-        .prepare("SELECT telemetry_json FROM documents WHERE id = ?")
-        .get(documentId) as { telemetry_json?: string } | undefined;
-      const tel = JSON.parse(row?.telemetry_json || "{}");
-      if (Array.isArray(tel.ops)) {
-        ops = tel.ops.map((o: { type?: string; kind?: string; timestamp?: number; chars?: number }) => ({
-          timestamp: Number(o.timestamp || Date.now()),
-          kind: (o.kind || o.type || "type") as CompositionOperation["kind"],
-          chars: Number(o.chars || 1),
-        }));
+    const stored = loadDocumentTelemetry(documentId);
+    let ops: CompositionOperation[] = stored?.ops ?? [];
+    let focusLosses = stored?.focusLosses ?? 0;
+    if (!ops.length) {
+      try {
+        const row = getDb()
+          .prepare("SELECT telemetry_json FROM documents WHERE id = ?")
+          .get(documentId) as { telemetry_json?: string } | undefined;
+        const tel = JSON.parse(row?.telemetry_json || "{}");
+        if (Array.isArray(tel.ops)) {
+          ops = tel.ops.map((o: { type?: string; kind?: string; timestamp?: number; chars?: number }) => ({
+            timestamp: Number(o.timestamp || Date.now()),
+            kind: (o.kind || o.type || "type") as CompositionOperation["kind"],
+            chars: Number(o.chars || 1),
+          }));
+        }
+        focusLosses = Number(tel.blurCount || tel.tabSwitches || focusLosses || 0);
+      } catch {
+        /* optional */
       }
-      focusLosses = Number(tel.blurCount || tel.tabSwitches || 0);
-    } catch {
-      /* optional */
     }
-    if (Array.isArray(body.ops)) {
+    if (Array.isArray(body.ops) && body.ops.length >= ops.length) {
       ops = body.ops.map((o: Record<string, unknown>) => ({
         timestamp: Number(o.timestamp || Date.now()),
         kind: (o.kind || o.type || "type") as CompositionOperation["kind"],
         chars: Number(o.chars || 1),
       }));
     }
+    if (typeof body.focusLosses === "number") focusLosses = body.focusLosses;
+    saveDocumentTelemetry(documentId, { ops, focusLosses });
+    linkAssignmentDocument({ documentId, assignmentId, userId: user.id });
 
     let similarityScore = 0;
     let matchedSegments: Array<{
@@ -153,6 +161,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       aiLabel: ai.label,
       similarityDetails,
       aiDetails: ai,
+      contentSnapshot: text,
     });
 
     const updatedAttempts = getAttemptInfo(assignmentId, user.id);
@@ -180,8 +189,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       },
       message:
         updatedAttempts.remainingAttempts > 0
-          ? `Submitted (attempt ${nextAttempt} of ${updatedAttempts.maxAttempts}). You may edit and resubmit ${updatedAttempts.remainingAttempts} more time(s) before the deadline.`
-          : `Submitted (attempt ${nextAttempt} of ${updatedAttempts.maxAttempts}). No further resubmissions are allowed.`,
+          ? `Submitted (attempt ${nextAttempt} of ${updatedAttempts.maxAttempts}). Similarity and AI checks are below. You may edit the highlighted parts and resubmit ${updatedAttempts.remainingAttempts} more time(s) before the deadline.`
+          : `Submitted (attempt ${nextAttempt} of ${updatedAttempts.maxAttempts}). No further edits or resubmissions are allowed.`,
+      plainText: text,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Submit failed";

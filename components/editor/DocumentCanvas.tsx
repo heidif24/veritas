@@ -14,6 +14,7 @@ type Props = {
   onFooterChange?: (value: string) => void;
   pageNumber?: number;
   totalPages?: number;
+  readOnly?: boolean;
 };
 
 const INCH = 96;
@@ -89,6 +90,7 @@ export function DocumentCanvas({
   onFooterChange,
   pageNumber = 1,
   totalPages = 1,
+  readOnly = false,
 }: Props) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
@@ -217,7 +219,7 @@ export function DocumentCanvas({
             >
               <div
                 ref={headerRef}
-                contentEditable
+                contentEditable={!readOnly}
                 suppressContentEditableWarning
                 onInput={(e) => onHeaderChange?.((e.target as HTMLDivElement).innerText)}
                 className="min-h-[1.25em] rounded px-1 outline-none focus:bg-cyan-50/50"
@@ -230,7 +232,7 @@ export function DocumentCanvas({
             */}
             <div
               ref={editorRef}
-              contentEditable
+              contentEditable={!readOnly}
               suppressContentEditableWarning
               role="textbox"
               aria-multiline="true"
@@ -270,7 +272,7 @@ export function DocumentCanvas({
             >
               <div
                 ref={footerRef}
-                contentEditable
+                contentEditable={!readOnly}
                 suppressContentEditableWarning
                 onInput={(e) => onFooterChange?.((e.target as HTMLDivElement).innerText)}
                 className="min-h-[1.25em] rounded px-1 outline-none focus:bg-cyan-50/50"

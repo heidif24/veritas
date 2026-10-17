@@ -37,6 +37,7 @@ function ensureSubmissionColumns() {
   add("similarity_details_json", "TEXT");
   add("ai_details_json", "TEXT");
   add("submitted_at", "TEXT");
+  add("content_snapshot", "TEXT");
 }
 
 export function getAttemptInfo(assignmentId: string, authorId: string): AttemptInfo {
@@ -57,7 +58,7 @@ export function getAttemptInfo(assignmentId: string, authorId: string): AttemptI
     };
   }
 
-  const maxAttempts = Number(assignment.max_attempts ?? 3) || 3;
+  const maxAttempts = 3;
   const dueAt = assignment.due_at ?? null;
   const isPastDue = dueAt ? new Date(dueAt).getTime() < Date.now() : false;
 
@@ -138,6 +139,7 @@ export function recordSubmission(input: {
   sealedHash?: string | null;
   similarityDetails?: unknown;
   aiDetails?: unknown;
+  contentSnapshot?: string | null;
 }) {
   ensureSubmissionColumns();
   const id = `sub_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
@@ -146,8 +148,8 @@ export function recordSubmission(input: {
     .prepare(
       `INSERT INTO submissions
        (id, assignment_id, document_id, author_id, status, health_score, similarity_score,
-        sealed_hash, attempt_number, ai_score, ai_label, similarity_details_json, ai_details_json, submitted_at, created_at)
-       VALUES (?, ?, ?, ?, 'submitted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        sealed_hash, attempt_number, ai_score, ai_label, similarity_details_json, ai_details_json, submitted_at, created_at, content_snapshot)
+       VALUES (?, ?, ?, ?, 'submitted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       id,
@@ -164,6 +166,7 @@ export function recordSubmission(input: {
       input.aiDetails ? JSON.stringify(input.aiDetails) : null,
       now,
       now,
+      input.contentSnapshot ?? null,
     );
   return id;
 }
@@ -175,3 +178,38 @@ export function updateAssignmentDueAt(assignmentId: string, dueAt: string | null
 }
 
 export type { AssignmentRecord };
+
+/** Product rule: a student may submit at most 3 times (initial + edits). */
+export function capAttempts(raw: number | null | undefined) {
+  const n = Number(raw ?? 3);
+  if (!Number.isFinite(n) || n < 1) return 3;
+  return Math.min(3, Math.floor(n));
+}
+
+/**
+ * Lecturer folders release student work only after the deadline.
+ * A future deadline (including one the lecturer just extended) keeps the folder closed
+ * and lets students with attempts remaining submit again.
+ */
+export function folderRelease(dueAt: string | null | undefined, now = Date.now()) {
+  if (!dueAt) {
+    return {
+      released: false,
+      reason: "No deadline is set. Submissions stay with the student until you set a due date and it passes.",
+    };
+  }
+  const time = new Date(dueAt).getTime();
+  if (Number.isNaN(time)) {
+    return { released: false, reason: "The deadline is not a valid date." };
+  }
+  if (time > now) {
+    return {
+      released: false,
+      reason: `This assignment is still open until ${new Date(dueAt).toLocaleString()}. Student work appears in the folder after the deadline. Extending the deadline reopens submissions for students who have attempts left.`,
+    };
+  }
+  return {
+    released: true,
+    reason: "The deadline has passed. These are the latest submissions from each student.",
+  };
+}

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { getAssignment } from "@/lib/assignments";
+import { folderRelease } from "@/lib/submission-policy";
 import { withSecurityHeaders } from "@/lib/security";
 
 export const runtime = "nodejs";
@@ -16,6 +17,20 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const { id: assignmentId } = await params;
     const db = getDb();
     const assignment = getAssignment(assignmentId);
+    if (assignment) {
+      const release = folderRelease(assignment.due_at ?? null);
+      if (!release.released) {
+        return withSecurityHeaders(
+          NextResponse.json({
+            assignment: { id: assignment.id, title: assignment.title, dueAt: assignment.due_at ?? null },
+            submissions: [],
+            released: false,
+            releaseMessage: release.reason,
+            summary: { total: 0, sealed: 0, needsReview: 0, avgAuthenticity: null, avgGrade: null },
+          }),
+        );
+      }
+    }
 
     // If assignment missing, still try to return linked submissions or sealed docs for demo continuity
     const rows = db
@@ -125,7 +140,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         status: String(row.submission_status || row.document_status || "submitted"),
         authenticityScore: authenticity,
         similarityScore:
-          row.similarity_score != null ? Math.round(Number(row.similarity_score) * 100) : null,
+          row.similarity_score != null
+            ? Number(row.similarity_score) <= 1
+              ? Math.round(Number(row.similarity_score) * 100)
+              : Math.round(Number(row.similarity_score))
+            : null,
         sealed: Boolean(row.document_sealed_hash || row.submission_sealed_hash),
         submittedAt: String(row.submitted_at || ""),
         grade: caseRow?.score != null ? Number(caseRow.score) : null,

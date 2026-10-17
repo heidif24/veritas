@@ -23,7 +23,7 @@ export default function NewAssignmentPage() {
   const [instructions, setInstructions] = useState("");
   const [dueAt, setDueAt] = useState("");
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(60);
-  const [maxAttempts, setMaxAttempts] = useState(1);
+  const maxAttempts = 3;
   const [genre, setGenre] = useState("essay");
   const [requireSeal, setRequireSeal] = useState(true);
   const [similarityThreshold, setSimilarityThreshold] = useState(20);
@@ -167,7 +167,8 @@ export default function NewAssignmentPage() {
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Schedule & attempts</p>
             <label className="mt-3 block text-xs font-semibold text-slate-600">{t("assignment.due")}<input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
-            <label className="mt-3 block text-xs font-semibold text-slate-600">Max attempts<input type="number" min={1} max={10} value={maxAttempts} onChange={(e) => setMaxAttempts(Number(e.target.value))} className="mt-1 w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
+            <label className="mt-3 block text-xs font-semibold text-slate-600">Max attempts<input type="number" min={3} max={3} value={3} readOnly className="mt-1 w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm" /></label>
+            <p className="mt-1 text-[11px] text-slate-500">Students can submit, then edit and resubmit, up to 3 times. After the third submission, or after the deadline, the work is locked.</p>
             <label className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600"><input type="checkbox" checked={requireSeal} onChange={(e) => setRequireSeal(e.target.checked)} />{t("assignment.proctored")}</label>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

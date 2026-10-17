@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 export default function NewDocumentPage() {
   const router = useRouter();
@@ -10,6 +10,27 @@ export default function NewDocumentPage() {
   const [title, setTitle] = useState("Untitled document");
   const [documentType, setDocumentType] = useState("essay");
   const [error, setError] = useState("");
+  const [openingAssignment, setOpeningAssignment] = useState(false);
+
+  useEffect(() => {
+    const assignment = new URLSearchParams(window.location.search).get("assignment");
+    if (!assignment) return;
+    setOpeningAssignment(true);
+    void fetch(`/api/assignments/${encodeURIComponent(assignment)}/draft`, { method: "POST" })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.documentId) {
+          setError(payload.error || "Could not open this assignment.");
+          setOpeningAssignment(false);
+          return;
+        }
+        router.replace(`/app/editor/${encodeURIComponent(payload.documentId)}?assignment=${encodeURIComponent(assignment)}`);
+      })
+      .catch(() => {
+        setError("Could not open this assignment.");
+        setOpeningAssignment(false);
+      });
+  }, [router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,7 +74,7 @@ export default function NewDocumentPage() {
     <main className="min-h-screen bg-[#f3f3f3] px-4 py-12 text-slate-900">
       <div className="mx-auto max-w-lg rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b579a]">New document</p>
-        <h1 className="mt-2 text-2xl font-bold text-slate-900">Start writing</h1>
+        <h1 className="mt-2 text-2xl font-bold text-slate-900">{openingAssignment ? "Opening assignment…" : "Start writing"}</h1>
         <p className="mt-2 text-sm text-slate-600">
           Opens in a familiar word-processor layout with originality checks and sealed export.
         </p>

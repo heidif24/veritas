@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -38,6 +38,7 @@ function stripHtml(html: string) {
 
 export default function EditorPage() {
   const params = useParams();
+  const router = useRouter();
   const id = String(params?.id ?? "");
 
   const [title, setTitle] = useState("Untitled document");
@@ -57,6 +58,17 @@ export default function EditorPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [ops, setOps] = useState<CompositionOperation[]>([]);
   const [focusLosses, setFocusLosses] = useState(0);
+  const [focusTimestamps, setFocusTimestamps] = useState<number[]>([]);
+  const [assignmentId, setAssignmentId] = useState("");
+  const [attemptInfo, setAttemptInfo] = useState<{
+    canSubmit?: boolean;
+    reason?: string;
+    attemptCount?: number;
+    maxAttempts?: number;
+    remainingAttempts?: number;
+    isPastDue?: boolean;
+  } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [sealedHash, setSealedHash] = useState("");
   const [liveTransparency, setLiveTransparency] = useState<{
     continuity?: string;
@@ -70,6 +82,7 @@ export default function EditorPage() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transparencyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPlainLen = useRef(0);
+  const pendingPasteChars = useRef(0);
   const sessionStart = useRef(Date.now());
 
   const plainText = useMemo(() => stripHtml(content), [content]);
@@ -101,6 +114,14 @@ export default function EditorPage() {
         setFooter(doc.footer || "");
         if (doc.sealedHash) setSealedHash(doc.sealedHash);
         lastPlainLen.current = stripHtml(doc.content || "").length;
+        const tel = await fetch(`/api/documents/${encodeURIComponent(id)}/telemetry`).then((r) => r.json()).catch(() => null);
+        if (cancelled || !tel) return;
+        if (Array.isArray(tel.telemetry?.ops)) setOps(tel.telemetry.ops);
+        if (typeof tel.telemetry?.focusLosses === "number") setFocusLosses(tel.telemetry.focusLosses);
+        if (Array.isArray(tel.telemetry?.focusLossTimestamps)) setFocusTimestamps(tel.telemetry.focusLossTimestamps);
+        const fromQuery = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("assignment") || "" : "";
+        if (tel.assignmentId || fromQuery) setAssignmentId(tel.assignmentId || fromQuery);
+        if (tel.attemptInfo) setAttemptInfo(tel.attemptInfo);
       } catch {
         if (!cancelled) setError("Failed to load document.");
       } finally {
@@ -152,8 +173,12 @@ export default function EditorPage() {
     const len = plainText.length;
     const delta = len - lastPlainLen.current;
     if (delta === 0) return;
-    const kind: CompositionOperation["kind"] =
-      delta > 12 ? "paste" : delta < 0 ? "delete" : "type";
+    if (delta > 0 && pendingPasteChars.current > 0) {
+      pendingPasteChars.current = Math.max(0, pendingPasteChars.current - delta);
+      lastPlainLen.current = len;
+      return;
+    }
+    const kind: CompositionOperation["kind"] = delta < 0 ? "delete" : "type";
     setOps((prev) => [...prev.slice(-400), { timestamp: Date.now(), kind, chars: Math.abs(delta) }]);
     lastPlainLen.current = len;
   }, [plainText, loading]);
@@ -188,10 +213,28 @@ export default function EditorPage() {
   }, [ops, focusLosses, plainText, loading]);
 
   useEffect(() => {
-    const onBlur = () => setFocusLosses((n) => n + 1);
-    window.addEventListener("blur", onBlur);
-    return () => window.removeEventListener("blur", onBlur);
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        const stamp = Date.now();
+        setFocusLosses((n) => n + 1);
+        setFocusTimestamps((prev) => [...prev.slice(-39), stamp]);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
+
+  useEffect(() => {
+    if (loading || !id || ops.length === 0) return;
+    const timer = setTimeout(() => {
+      void fetch(`/api/documents/${encodeURIComponent(id)}/telemetry`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ops, focusLosses, focusLossTimestamps: focusTimestamps }),
+      }).catch(() => {});
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [ops, focusLosses, focusTimestamps, id, loading]);
 
   async function handleSeal() {
     if (!id) return;
@@ -286,10 +329,73 @@ export default function EditorPage() {
   function handlePaste(e: ClipboardEvent<HTMLDivElement>) {
     const text = e.clipboardData?.getData("text/plain") || "";
     if (text.length > 0) {
+      pendingPasteChars.current += text.length;
       setOps((prev) => [
         ...prev.slice(-400),
         { timestamp: Date.now(), kind: "paste", chars: text.length },
       ]);
+    }
+  }
+
+  const locked =
+    Boolean(assignmentId) &&
+    attemptInfo != null &&
+    attemptInfo.canSubmit === false &&
+    ((attemptInfo.attemptCount ?? 0) > 0 || attemptInfo.isPastDue);
+
+  async function handleSubmitAssignment() {
+    if (!id || !assignmentId) return;
+    if (plainText.trim().length < 40) {
+      setError("Write more before submitting (at least ~40 characters).");
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    try {
+      await persist({ silent: true });
+      await fetch(`/api/documents/${encodeURIComponent(id)}/telemetry`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ops, focusLosses, focusLossTimestamps: focusTimestamps }),
+      });
+      const res = await fetch(`/api/assignments/${encodeURIComponent(assignmentId)}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId: id,
+          ops,
+          focusLosses,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Could not submit.");
+        if (data.attemptInfo) setAttemptInfo(data.attemptInfo);
+        return;
+      }
+      try {
+        sessionStorage.setItem(
+          `veritas-results-${assignmentId}`,
+          JSON.stringify({
+            message: data.message,
+            attemptNumber: data.attemptNumber,
+            attemptInfo: data.attemptInfo,
+            similarity: data.similarity,
+            ai: data.ai,
+            plainText: data.plainText,
+            documentId: id,
+          }),
+        );
+      } catch {
+        /* session storage optional */
+      }
+      if (data.attemptInfo) setAttemptInfo(data.attemptInfo);
+      setStatus("submitted");
+      router.push(`/student/assignment/${encodeURIComponent(assignmentId)}/results`);
+    } catch {
+      setError("Submit failed.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -359,13 +465,32 @@ export default function EditorPage() {
           <button
             type="button"
             onClick={() => void handleSeal()}
-            disabled={sealing || status === "submitted" || status === "sealed"}
+            disabled={sealing || status === "submitted" || status === "sealed" || locked}
             className="rounded bg-[#2b579a] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1e3f6f] disabled:opacity-50"
           >
             {sealing ? "Sealing…" : status === "submitted" || status === "sealed" ? "Sealed" : "Seal"}
           </button>
+          {assignmentId ? (
+            <button
+              type="button"
+              onClick={() => void handleSubmitAssignment()}
+              disabled={submitting || locked || attemptInfo?.canSubmit === false}
+              className="rounded bg-[#167451] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f5a3e] disabled:opacity-50"
+            >
+              {submitting ? "Checking…" : "Submit assignment"}
+            </button>
+          ) : null}
         </div>
       </div>
+
+      {assignmentId ? (
+        <div className="shrink-0 border-b border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] text-emerald-900">
+          Assignment · attempt {(attemptInfo?.attemptCount ?? 0) + (attemptInfo?.canSubmit ? 1 : 0)} of {attemptInfo?.maxAttempts ?? 3}
+          {attemptInfo?.canSubmit === false
+            ? ` · ${attemptInfo.reason || "Submissions are closed."}`
+            : " · Submit runs similarity, then the AI check. You can edit highlighted parts and resubmit up to 3 times before the deadline."}
+        </div>
+      ) : null}
 
       {/* Ribbon tabs */}
       <div className="shrink-0 border-b border-slate-300 bg-white">
@@ -525,10 +650,11 @@ export default function EditorPage() {
             theme="light"
             header={header}
             footer={footer}
-            onHeaderChange={setHeader}
-            onFooterChange={setFooter}
+            onHeaderChange={locked ? undefined : setHeader}
+            onFooterChange={locked ? undefined : setFooter}
             pageNumber={1}
             totalPages={1}
+            readOnly={locked}
           />
         </div>
 

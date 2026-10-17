@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { getAssignment } from "@/lib/assignments";
-import { listLatestSubmissionPerStudent, listSubmissionsForAssignment } from "@/lib/submission-policy";
+import { folderRelease, listLatestSubmissionPerStudent, listSubmissionsForAssignment } from "@/lib/submission-policy";
 import { getDb } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -31,7 +31,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       ? listSubmissionsForAssignment(assignmentId)
       : listLatestSubmissionPerStudent(assignmentId);
 
-    const submissions = rows.map((r) => ({
+    const release = folderRelease(assignment.due_at ?? null);
+    const submissions = release.released
+      ? rows.map((r) => ({
       submissionId: r.id,
       documentId: r.document_id,
       authorId: r.author_id,
@@ -45,15 +47,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       healthScore: r.health_score != null ? Number(r.health_score) : null,
       status: r.status,
       submittedAt: r.submitted_at || r.created_at,
-    }));
+    }))
+      : [];
 
     return NextResponse.json({
       assignment: {
         id: assignment.id,
         title: assignment.title,
         dueAt: assignment.due_at ?? null,
-        maxAttempts: assignment.max_attempts ?? 3,
+        maxAttempts: 3,
       },
+      released: release.released,
+      releaseMessage: release.reason,
+      pendingCount: rows.length,
       count: submissions.length,
       submissions,
     });

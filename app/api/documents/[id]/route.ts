@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createDocumentRevision, prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { rateLimit, clientIp, sanitizeHtml, sanitizePlainText, withSecurityHeaders } from "@/lib/security";
+import { getAssignmentLinkForDocument } from "@/lib/assignment-link";
+import { getAttemptInfo } from "@/lib/submission-policy";
 
 export const runtime = "nodejs";
 
@@ -48,9 +50,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     if (currentDocument.status === "submitted" || (currentDocument as { sealedHash?: string | null }).sealedHash) {
-      return withSecurityHeaders(
-        NextResponse.json({ error: "Sealed documents cannot be edited." }, { status: 409 }),
-      );
+      const link = getAssignmentLinkForDocument(id);
+      const attempt = link && link.userId === user.id ? getAttemptInfo(link.assignmentId, user.id) : null;
+      if (!attempt?.canSubmit) {
+        return withSecurityHeaders(
+          NextResponse.json({ error: attempt?.reason || "Sealed documents cannot be edited." }, { status: 409 }),
+        );
+      }
     }
 
     const body = await request.json().catch(() => ({}));

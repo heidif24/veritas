@@ -29,28 +29,43 @@ export default function InstructorFolderPage() {
   const [rows, setRows] = useState<SubmissionRow[]>([]);
   const [dueInput, setDueInput] = useState("");
   const [savingDue, setSavingDue] = useState(false);
+  const [released, setReleased] = useState(false);
+  const [releaseMessage, setReleaseMessage] = useState("");
+  const [pendingCount, setPendingCount] = useState(0);
+
+  function applyFolder(data: {
+    error?: string;
+    assignment?: { title?: string; dueAt?: string | null };
+    submissions?: SubmissionRow[];
+    released?: boolean;
+    releaseMessage?: string;
+    pendingCount?: number;
+  }) {
+    if (data.error) {
+      setError(data.error);
+      return;
+    }
+    setTitle(data.assignment?.title || "Assignment folder");
+    setDueAt(data.assignment?.dueAt ?? null);
+    if (data.assignment?.dueAt) {
+      try {
+        setDueInput(new Date(data.assignment.dueAt).toISOString().slice(0, 16));
+      } catch {
+        /* */
+      }
+    }
+    setReleased(Boolean(data.released));
+    setReleaseMessage(data.releaseMessage || "");
+    setPendingCount(Number(data.pendingCount || 0));
+    setRows(data.submissions || []);
+  }
 
   useEffect(() => {
     if (!assignmentId) return;
     setLoading(true);
     void fetch(`/api/assignments/${encodeURIComponent(assignmentId)}/folder`)
       .then((r) => r.json())
-      .then((data) => {
-        if (data.error) {
-          setError(data.error);
-          return;
-        }
-        setTitle(data.assignment?.title || "Assignment folder");
-        setDueAt(data.assignment?.dueAt ?? null);
-        if (data.assignment?.dueAt) {
-          try {
-            setDueInput(new Date(data.assignment.dueAt).toISOString().slice(0, 16));
-          } catch {
-            /* */
-          }
-        }
-        setRows(data.submissions || []);
-      })
+      .then((data) => applyFolder(data))
       .catch(() => setError("Could not load folder"))
       .finally(() => setLoading(false));
   }, [assignmentId]);
@@ -67,7 +82,10 @@ export default function InstructorFolderPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) setError(data.error || "Failed to update deadline");
-      else setDueAt(data.assignment?.due_at ?? body.dueAt);
+      else {
+        const refreshed = await fetch(`/api/assignments/${encodeURIComponent(assignmentId)}/folder`).then((r) => r.json());
+        applyFolder(refreshed);
+      }
     } catch {
       setError("Network error");
     } finally {
@@ -107,6 +125,13 @@ export default function InstructorFolderPage() {
           <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">{error}</p>
         ) : null}
 
+        {!loading && !released ? (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            {releaseMessage || "Submissions stay hidden until the deadline passes."}
+            {pendingCount ? ` ${pendingCount} submission${pendingCount === 1 ? "" : "s"} on file, not yet released.` : ""}
+          </p>
+        ) : null}
+
         {loading ? (
           <p className="text-sm text-slate-500">Loading submissions…</p>
         ) : (
@@ -126,7 +151,7 @@ export default function InstructorFolderPage() {
                 {rows.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
-                      No submissions yet for this assignment.
+                      {released ? "No submissions were recorded before the deadline." : "Student work appears here after the deadline."}
                     </td>
                   </tr>
                 ) : (
@@ -153,6 +178,11 @@ export default function InstructorFolderPage() {
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-500">
                         {r.submittedAt ? new Date(r.submittedAt).toLocaleString() : "—"}
+                        <div>
+                          <Link href={`/instructor/review/${r.documentId}`} className="font-semibold text-[#167451] hover:underline">
+                            Review
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))
